@@ -38,3 +38,12 @@ class Asset:
                 state, is_animated
             )
         return None
+
+    @classmethod
+    def _from_collectibles_nameplate(cls, state: State, nameplate_asset: str | None) -> Asset | None:
+        if nameplate_asset is not None:
+            return cls(
+                f"{cls.CDN_URL}/assets/collectibles/{nameplate_asset}asset.webm",
+                state, True
+            )
+        return None
