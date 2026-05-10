@@ -6,6 +6,6 @@ class Users:
         self._state = state
 
     async def fetch(self, user_id: int) -> User:
-        return User(self._state, await self._state.request(
+        return User(await self._state.request(
             Path("GET", "users/{user_id}", user_id=user_id)
         ))
