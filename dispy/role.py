@@ -1,5 +1,4 @@
 from typing import Any
-from .http import State
 from .asset import Asset
 from .flags import RoleFlags
 
@@ -10,14 +9,12 @@ class RoleColors:
         self.tertiary = data.get("tertiary_color")
 
 class Role:
-    def __init__(self, state: State, data: dict[str, Any]):
-        self._state = state
-            
+    def __init__(self, data: dict[str, Any]):            
         self.id = int(data["id"])
         self.name: str = data["name"]
         self.colors = RoleColors(data["colors"])
-        self.hoist: bool = data["host"]
-        self.icon = Asset._from_role_icon(state, self.id, data.get("icon"))
+        self.hoist: bool = data["hoist"]
+        self.icon = Asset._from_role_icon(self.id, data.get("icon"))
         self.emoj: str | None = data.get("unicode_emoji")
         self.position: int = data["position"]
         #implement permissions later

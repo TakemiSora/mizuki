@@ -1,17 +1,14 @@
 from typing import Any
-from .http import State
 from .asset import Asset
 from .enums import GuildVerificationLevel, GuildNotificationLevel, GuildExplicitContentLevel
 
 class Guild:
-    def __init__(self, state: State, data: dict[str, Any]):
-        self._state = state
-
+    def __init__(self, data: dict[str, Any]):
         self.id = int(data["id"])
         self.name: str = data["name"]
-        self.icon = Asset._from_guild_avatar(state, self.id, data.get("icon"))
-        self.splash = Asset._from_guild_splash(state, self.id, data.get("splash")) 
-        self.discovery_splash = Asset._from_guild_discovery_splash(state, self.id, data.get("discovery_splash"))
+        self.icon = Asset._from_guild_avatar(self.id, data.get("icon"))
+        self.splash = Asset._from_guild_splash(self.id, data.get("splash")) 
+        self.discovery_splash = Asset._from_guild_discovery_splash(self.id, data.get("discovery_splash"))
         self.owner_id = int(data["owner_id"])
         self.afk_channel_id = int(data["afk_channel_id"]) if data.get("afk_channel_id") else None
         self.afk_timeout = data["afk_timeout"]
@@ -25,8 +22,8 @@ class Guild:
     
     def __eq__(self, obj: object) -> bool:
         if isinstance(obj, self.__class__):
-            return self.sku_id == obj.sku_id
+            return self.id == obj.id
         return NotImplemented
     
     def __hash__(self) -> int:
-        return self.sku_id
+        return self.id

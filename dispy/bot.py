@@ -9,7 +9,7 @@ class Bot:
     ):
         self.token = token
         self._state = State()
-        self.users = Users(self._state)
+        self.users = Users()
 
     async def connect(self) -> None:
         self._state.session = aiohttp.ClientSession(
