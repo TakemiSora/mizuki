@@ -42,7 +42,7 @@ class State:
         self._buckets_keys: dict[str, str] = {}
         self._buckets: dict[str, RateLimitBucket] = {}
         
-    async def request(self, path: Path, **kwargs) -> Any:
+    async def request(self, path: Path, **kwargs: Any) -> Any:
         await self._global_ratelimit.wait()
         
         bucket_id = self._buckets_keys.get(path.route_key)

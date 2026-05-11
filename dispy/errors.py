@@ -12,3 +12,6 @@ class Forbidden(HTTPException):
 
 class Unauthorized(HTTPException):
     pass
+
+class ImproperToken(HTTPException):
+    pass

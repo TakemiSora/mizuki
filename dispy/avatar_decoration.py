@@ -1,11 +1,17 @@
 from __future__ import annotations
 from typing import Any
 from .asset import Asset
+from .snowflake import Snowflake
+from datetime import datetime
 
 class AvatarDecoration:
     def __init__(self, data: dict[str, Any]):
-        self.sku_id = int(data["sku_id"])
+        self.sku_id = Snowflake(data["sku_id"])
         self.asset = Asset._from_user_avatar_decoration(data["asset"])
+        
+    @property
+    def created_at(self) -> datetime:
+        return self.sku_id.created_at
 
     @classmethod
     def _from_dict(cls, data: dict[str, Any] | None) -> AvatarDecoration | None:

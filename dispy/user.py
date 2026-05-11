@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Any
 from .asset import Asset
 from .flags import UserFlags
@@ -5,10 +6,12 @@ from .enums import NitroType
 from .collectibles import Nameplate
 from .primary_guild import UserPrimaryGuild
 from .avatar_decoration import AvatarDecoration
+from .snowflake import Snowflake
+from datetime import datetime
 
 class User:
     def __init__(self, data: dict[str, Any]):
-        self.id: int = int(data["id"])
+        self.id = Snowflake(data["id"])
         self.name: str = data["username"]
         self.discriminator: str | None = data.get("discriminator")
         self.global_name: str | None = data.get("global_name")
@@ -39,6 +42,14 @@ class User:
     
     def __hash__(self) -> int:
         return self.id
+            
+    @classmethod
+    def _from_dict(cls, data: dict[str, Any] | None) -> User | None:
+        return cls(data) if data is not None else None
+            
+    @property
+    def created_at(self) -> datetime:
+        return self.id.created_at
 
     @property
     def nitro(self) -> NitroType | None:

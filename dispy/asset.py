@@ -1,4 +1,5 @@
 from __future__ import annotations
+from .enums import StickerFormatType
 
 class Asset:
     CDN_URL = "https://cdn.discordapp.com"
@@ -6,6 +7,9 @@ class Asset:
     def __init__(self, url: str, animated: bool):
         self.url = url
         self.animated = animated
+        
+    def __str__(self) -> str:
+        return self.url
 
     @classmethod
     def _from_user_avatar(cls, user_id: int, avatar_hash: str | None) -> Asset | None:
@@ -87,3 +91,30 @@ class Asset:
                 False
             )
         return None
+        
+    @classmethod
+    def _from_custom_emoji(cls, emoji_id: int | None, is_animated: bool) -> Asset | None:
+        if emoji_id is not None:
+            return cls(
+                f"{cls.CDN_URL}/emojis/{emoji_id}.webp{"?animated=true" if is_animated else ""}",
+                is_animated
+            )
+        return None
+        
+    @classmethod
+    def _from_guild_banner(cls, guild_id: int, banner_hash: str | None) -> Asset | None:
+        if banner_hash is not None:
+            is_animated = banner_hash.startswith("a_")
+            return cls(
+                f"{cls.CDN_URL}/guilds/{guild_id}/{banner_hash}.webp{"?animated=true" if is_animated else ""}",
+                is_animated
+            )
+        return None
+        
+    @classmethod
+    def _from_sticker(cls, sticker_type: StickerFormatType, sticker_id: int) -> Asset:
+        is_animated = sticker_type != StickerFormatType.PNG
+        return cls(
+            f"{cdn.CDN_URL}/stickers/{sticker_id}.{str(sticker_type)}",
+            is_animated
+        )
