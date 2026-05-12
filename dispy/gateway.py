@@ -44,6 +44,9 @@ class GatewayClient:
 
         if self._ws:
             await self._ws.close()
+            
+        if self._session:
+            await self._session.close()
 
     async def _listen(self):
         async for msg in self._ws:
@@ -57,7 +60,7 @@ class GatewayClient:
             sequence = payload["s"]
             event = payload["t"]
 
-            if self._sequence is None:
+            if sequence is not None:
                 self._sequence = sequence
 
             handler = self._handlers.get(op)

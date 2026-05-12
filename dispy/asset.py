@@ -115,6 +115,6 @@ class Asset:
     def _from_sticker(cls, sticker_type: StickerFormatType, sticker_id: int) -> Asset:
         is_animated = sticker_type != StickerFormatType.PNG
         return cls(
-            f"{cdn.CDN_URL}/stickers/{sticker_id}.{str(sticker_type)}",
+            f"{cls.CDN_URL}/stickers/{sticker_id}.{str(sticker_type)}",
             is_animated
         )

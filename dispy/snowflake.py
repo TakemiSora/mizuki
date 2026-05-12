@@ -8,7 +8,7 @@ class Snowflake(int):
     
     @property
     def created_at(self) -> datetime:
-        timestamp = ((self.id >> 22) + self._DISCORD_EPOCH) / 1000
+        timestamp = ((self >> 22) + self._DISCORD_EPOCH) / 1000
         return datetime.fromtimestamp(timestamp, UTC)
         
     @classmethod
