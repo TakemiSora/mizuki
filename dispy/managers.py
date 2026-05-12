@@ -2,6 +2,10 @@ from .user import User
 from .http import State, Path
 
 class Users:
+    __slots__ = (
+        "_state"
+    )
+    
     def __init__(self, state: State):
         self._state = state
 

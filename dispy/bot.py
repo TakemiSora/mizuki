@@ -7,6 +7,13 @@ from .flags import IntentFlags
 from .errors import Unauthorized, ImproperToken
 
 class Bot:
+    __slots__ = (
+        "intents",
+        "_state",
+        "_gateway_client",
+        "users"
+    )
+    
     def __init__(
         self,
         intents: IntentFlags

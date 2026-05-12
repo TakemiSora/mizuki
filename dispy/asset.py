@@ -2,6 +2,11 @@ from __future__ import annotations
 from .enums import StickerFormatType
 
 class Asset:
+    __slots__ = (
+        "url",
+        "animated"
+    )
+    
     CDN_URL = "https://cdn.discordapp.com"
 
     def __init__(self, url: str, animated: bool):

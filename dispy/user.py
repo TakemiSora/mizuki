@@ -1,32 +1,32 @@
 from __future__ import annotations
-from typing import Any
 from .asset import Asset
 from .flags import UserFlags
-from .enums import NitroType
+from .enums import PremiumType
 from .collectibles import Nameplate
 from .primary_guild import UserPrimaryGuild
 from .avatar_decoration import AvatarDecoration
 from .snowflake import Snowflake
 from datetime import datetime
+from .payloads.user import UserPayload
 
 class User:
-    def __init__(self, data: dict[str, Any]):
+    def __init__(self, data: UserPayload):
         self.id = Snowflake(data["id"])
-        self.name: str = data["username"]
-        self.discriminator: str | None = data.get("discriminator")
-        self.global_name: str | None = data.get("global_name")
-        self.avatar = Asset._from_user_avatar(self.id, data.get("avatar"))
-        self.bot: bool = data.get("bot", False)
-        self.system: bool = data.get("system", False)
-        self.mfa_enabled: bool = data.get("mfa_enabled", False)
+        self.name = data["username"]
+        self.discriminator = data["discriminator"]
+        self.global_name  = data["global_name"]
+        self.avatar = Asset._from_user_avatar(self.id, data["avatar"])
+        self.bot = data.get("bot", False)
+        self.system = data.get("system", False)
+        self.mfa_enabled = data.get("mfa_enabled", False)
         self.banner = Asset._from_user_banner(self.id, data.get("banner"))
-        self.accent_color: int | None = data.get("accent_color")
-        self.locale: str | None = data.get("locale")
-        self.verified: bool = data.get("verified", False)
-        self.email: str | None = data.get("email")
+        self.accent_color = data.get("accent_color")
+        self.locale = data.get("locale")
+        self.verified = data.get("verified", False)
+        self.email= data.get("email")
         self.flags = UserFlags._from_int(data.get("flags"))
         self.public_flags = UserFlags._from_int(data.get("public_flags"))
-        self._nitro_type: int | None = data.get("premium_type")
+        self._premium_type = data.get("premium_type")
         self.avatar_decoration = AvatarDecoration._from_dict(data.get("avatar_decoration_data"))
         nameplate_data = (data.get("collectibles") or {}).get("nameplate")
         self.nameplate = Nameplate._from_dict(nameplate_data)
@@ -44,7 +44,7 @@ class User:
         return self.id
             
     @classmethod
-    def _from_dict(cls, data: dict[str, Any] | None) -> User | None:
+    def _from_dict(cls, data: UserPayload | None) -> User | None:
         return cls(data) if data is not None else None
             
     @property
@@ -52,10 +52,10 @@ class User:
         return self.id.created_at
 
     @property
-    def nitro(self) -> NitroType | None:
+    def premium(self) -> PremiumType | None:
         """
-        Returns `NitroType.NONE` if the user has no Nitro or you are missing `identify.premium` scope.
+        Returns `PremiumType.NONE` if the user has no Nitro or you are missing `identify.premium` scope.
         """
-        if self._nitro_type is None:
+        if self._premium_type is None:
             return None
-        return NitroType(self._nitro_type)
+        return PremiumType(self._premium_type)

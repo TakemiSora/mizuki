@@ -5,20 +5,21 @@ from .asset import Asset
 from .user import User
 from .snowflake import Snowflake
 from datetime import datetime
+from .payloads.sticker import StickerPayload
 
 class Sticker:
-    def __init__(self, data: dict[str, Any]):
+    def __init__(self, data: StickerPayload):
         self.id = Snowflake(data["id"])
         self.pack_id = Snowflake._from_str(data.get("pack_id"))
-        self.name: str = data["name"]
-        self.description: str | None = data["description"]
-        self.tags: str = data["tags"]
+        self.name = data["name"]
+        self.description = data["description"]
+        self.tags = data["tags"]
         self.type = StickerType(data["type"])
         self.format_type = StickerFormatType(data["format_type"])
-        self.available: bool = data.get("available", False)
+        self.available = data.get("available", False)
         self.guild_id = sint(data.get("guild_id"))
         self.user = User._from_dict(data.get("user"))
-        self.sort_value = sint(data.get("sort_value"))
+        self.sort_value = data.get("sort_value")
         self.asset = Asset._from_sticker(self.format_type, self.id)
         
     def __eq__(self, obj: object) -> bool:

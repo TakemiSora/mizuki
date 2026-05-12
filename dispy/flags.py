@@ -27,7 +27,7 @@ class RoleFlags(IntFlag):
     IN_PROMPT = 1 << 0
 
     @classmethod
-    def _from_int(cls, flags: int | None) -> UserFlags | None:
+    def _from_int(cls, flags: int | None) -> RoleFlags | None:
         if flags is not None:
             return cls(flags)
         return None
@@ -67,3 +67,10 @@ class IntentFlags(IntFlag):
     def standard(cls) -> IntentFlags:
         priviledged = cls.GUILD_PRESENCES | cls.MESSAGE_CONTENT | cls.GUILD_MEMBERS
         return cls.all() & ~priviledged
+
+class SystemChannelFlags(IntFlag):
+    SUPPRESS_JOIN_NOTIFICATIONS = 1 << 0
+    SUPPRESS_PREMIUM_SUBSCRIPTIONS = 1 << 1
+    SUPPRESS_GUILD_REMINDER_NOTIFICATIONS = 1 << 2
+    SUPPRESS_JOIN_NOTIFICATION_REPLIES = 1 << 3
+    SUPPRESS_ROLE_SUBSCRIPTION_PURCHASE_NOTIFICATIONS = 1 << 4

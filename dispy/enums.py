@@ -1,6 +1,6 @@
 from enum import IntEnum, StrEnum
 
-class NitroType(IntEnum):
+class PremiumType(IntEnum):
     NONE = 0
     CLASSIC = 1
     NITRO = 2

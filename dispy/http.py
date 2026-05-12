@@ -5,6 +5,15 @@ from urllib.parse import quote
 from .errors import NotFound, HTTPException, Forbidden, Unauthorized
 
 class Path:
+    __slots__ = (
+        "method",
+        "url",
+        "channel_id",
+        "guild_id",
+        "webhook_id",
+        "webhook_token"
+    )
+    
     def __init__(self, method: str, url: str, **parameters):
         self.method = method
         if parameters:
@@ -22,6 +31,12 @@ class Path:
         return f"{self.method}:{self.url}+{"+".join(str(val) for val in [self.channel_id, self.guild_id, self.webhook_id, self.webhook_token])}"
 
 class RateLimitBucket:
+    __slots__ = (
+        "remaining",
+        "reset_after",
+        "lock"
+    )
+    
     def __init__(self, remaining: int, reset_after: float):
         self.remaining = remaining
         self.reset_after = reset_after
@@ -34,6 +49,13 @@ class RateLimitBucket:
         self.reset_after = float(headers.get("X-RateLimit-Reset-After", 0.1))
 
 class State:
+    __slots__ = (
+        "session",
+        "_global_ratelimit",
+        "_buckets_keys",
+        "_buckets"
+    )
+    
     def __init__(self):
         self.session: aiohttp.ClientSession | None = None
 
@@ -49,6 +71,8 @@ class State:
         bucket = self._buckets.get(bucket_id) if bucket_id else None
 
         async with (bucket.lock if bucket else asyncio.Lock()):
+            assert self.session is not None, "Cannot call session without intializing first."
+                
             async with self.session.request(path.method, path.url, **kwargs) as resp:
                 new_bucket_id = resp.headers.get("X-RateLimit-Bucket")
 
@@ -81,8 +105,9 @@ class State:
                         case 404: raise NotFound(resp.status, message)
                         case _: raise HTTPException(resp.status, message)
 
-                bucket = self._buckets.get(new_bucket_id)
-                if bucket and bucket.remaining == 0:
-                    await asyncio.sleep(bucket.reset_after)
+                if new_bucket_id:
+                    bucket = self._buckets.get(new_bucket_id)
+                    if bucket and bucket.remaining == 0:
+                        await asyncio.sleep(bucket.reset_after)
 
                 return await resp.json()

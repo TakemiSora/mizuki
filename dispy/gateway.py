@@ -6,6 +6,19 @@ from typing import Any
 from .flags import IntentFlags
 
 class GatewayClient:
+    __slots__ = (
+        "token",
+        "intents",
+        "_ws",
+        "_sequence",
+        "_last_ack",
+        "_heartbeat_interval",
+        "_heartbeat_task",
+        "_listen_task",
+        "_session",
+        "_handlers"
+    )
+    
     URL = "wss://gateway.discord.gg/?v=10&encoding=json"
 
     def __init__(self, token: str, intents: IntentFlags):
@@ -27,6 +40,7 @@ class GatewayClient:
         }
 
     async def _send(self, data: dict[str, Any]):
+        assert self._ws is not None, "Attempted to use websocket without connecting."
         await self._ws.send_json(data)
 
     async def connect(self):
@@ -49,6 +63,7 @@ class GatewayClient:
             await self._session.close()
 
     async def _listen(self):
+        assert self._ws is not None, "Attempted to use websocket without connecting."
         async for msg in self._ws:
             if msg.type != aiohttp.WSMsgType.TEXT:
                 continue
@@ -70,6 +85,7 @@ class GatewayClient:
     async def _heartbeat_loop(self):
         while True:
             if not self._last_ack:
+                assert self._ws is not None, "Attempted to use websocket without connecting."
                 return await self._ws.close()
             self._last_ack = False
 
@@ -78,6 +94,7 @@ class GatewayClient:
                 "d": self._sequence
             })
             
+            assert self._heartbeat_interval is not None, "Attempted to use heartbeat without connecting."
             await asyncio.sleep(self._heartbeat_interval)
 
     async def _handle_heartbeat_ack(self, _, __):
