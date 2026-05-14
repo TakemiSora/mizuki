@@ -2,17 +2,18 @@ from typing import TypedDict, NotRequired
 from .avatar_decoration import AvatarDecorationPayload
 from .collectibles import CollectiblePayload
 from .primary_guild import UserPrimaryGuildPayload
+from ._types import CDNHash, Snowflake
 
 class UserPayload(TypedDict):
-    id: str
+    id: Snowflake
     username: str
     discriminator: str
     global_name: str | None
-    avatar: str | None
+    avatar: CDNHash | None
     bot: NotRequired[bool]
     system: NotRequired[bool]
     mfa_enabled: NotRequired[bool]
-    banner: NotRequired[str | None]
+    banner: NotRequired[CDNHash | None]
     accent_color: NotRequired[int | None]
     locale: NotRequired[str]
     verified: NotRequired[bool]

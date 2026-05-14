@@ -1,15 +1,16 @@
 from typing import TypedDict, NotRequired
 from .user import UserPayload
+from ._types import Snowflake
 
 class PartialEmojiPayload(TypedDict):
-    id: str | None
+    id: Snowflake | None
     name: str | None
     animated: NotRequired[bool]
 
 class EmojiPayload(TypedDict):
-    id: str
+    id: Snowflake
     name: str
-    roles: list[int]
+    roles: list[Snowflake]
     user: NotRequired[UserPayload]
     require_colons: NotRequired[bool]
     managed: NotRequired[bool]
