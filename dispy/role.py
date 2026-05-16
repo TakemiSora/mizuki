@@ -6,6 +6,10 @@ from .snowflake import Snowflake
 from datetime import datetime
 from .payloads.role import RoleColorsPayload, RoleTagsPayload, RolePayload
 
+__all__ = (
+    "Role",
+)
+
 class RoleColors:
     __slots__ = (
         "primary",
@@ -19,6 +23,15 @@ class RoleColors:
         self.tertiary = data["tertiary_color"]
         
 class RoleTags:
+    __slots__ = (
+        "bot_id",
+        "integration_id",
+        "premium_subscriber",
+        "subscription_listing_id",
+        "available_for_purchase",
+        "guild_connections"
+    )
+    
     def __init__(self, data: RoleTagsPayload):
         self.bot_id = Snowflake._from_str(data.get("bot_id"))
         self.integration_id = Snowflake._from_str(data.get("integration_id"))

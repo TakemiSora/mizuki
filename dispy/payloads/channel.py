@@ -34,13 +34,14 @@ class ForumTagPayload(TypedDict):
 class DefaultReactionPayload(TypedDict):
     emoji_id: Snowflake | None
     emoji_name: str | None
-    
-class GuildChannelResponse(TypedDict):
+
+class BaseChannelPayload(TypedDict):
     id: Snowflake
-    type: Literal[0, 2, 4, 5, 13, 14, 15]
     last_message_id: NotRequired[Snowflake | None]
     flags: int
     last_pin_timestamp: NotRequired[ISO8601Timestamp | None]
+
+class BasePublicChannelPayload(BaseChannelPayload):
     guild_id: Snowflake
     name: str
     parent_id: NotRequired[Snowflake | None]
@@ -49,7 +50,10 @@ class GuildChannelResponse(TypedDict):
     user_limit: NotRequired[int]
     rtc_region: NotRequired[str | None]
     video_quality_mode: NotRequired[int]
-    permissions: NotRequired[str]
+    permissions: NotRequired[Permissions]
+
+class GuildChannelPayload(BasePublicChannelPayload):
+    type: Literal[0, 2, 4, 5, 13, 14, 15]
     topic: NotRequired[str | None]
     default_auto_archive_duration: NotRequired[int]
     default_thread_rate_limit_per_user: NotRequired[int]
@@ -61,42 +65,12 @@ class GuildChannelResponse(TypedDict):
     default_sort_order: NotRequired[int | None]
     default_forum_layout: NotRequired[int]
 
-class PrivateChannelResponse(TypedDict):
-    id: Snowflake
+class PrivateChannelPayload(BaseChannelPayload):
     type: Literal[1]
-    last_message_id: NotRequired[Snowflake | None]
-    flags: int
-    last_pin_timestamp: NotRequired[ISO8601Timestamp | None]
     recipients: list[UserPayload]
 
-class PrivateGroupChannelResponse(TypedDict):
-    id: Snowflake
-    type: Literal[3]
-    last_message_id: NotRequired[Snowflake | None]
-    flags: int
-    last_pin_timestamp: NotRequired[ISO8601Timestamp | None]
-    recipients: list[UserPayload]
-    name: str | None
-    icon: CDNHash | None
-    owner_id: Snowflake
-    managed: NotRequired[bool]
-    application_id: NotRequired[Snowflake]
-
-class ThreadResponse(TypedDict):
-    id: Snowflake
+class ThreadPayload(BasePublicChannelPayload):
     type: Literal[10, 11, 12]
-    last_message_id: NotRequired[Snowflake | None]
-    flags: int
-    last_pin_timestamp: NotRequired[ISO8601Timestamp | None]
-    guild_id: int
-    name: str
-    parent_id: NotRequired[Snowflake | None]
-    rate_limit_per_user: NotRequired[int]
-    bitrate: NotRequired[int]
-    user_limit: NotRequired[int]
-    rtc_region: NotRequired[str | None]
-    video_quality_mode: NotRequired[int]
-    permissions: NotRequired[str]
     owner_id: Snowflake
     thread_metadata: ThreadMetaDataPayload
     message_count: int

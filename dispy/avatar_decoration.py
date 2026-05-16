@@ -4,6 +4,10 @@ from .snowflake import Snowflake
 from datetime import datetime
 from .payloads.avatar_decoration import AvatarDecorationPayload
 
+__all__ = (
+    "AvatarDecoration",
+)
+
 class AvatarDecoration:
     __slots__ = (
         "sku_id",

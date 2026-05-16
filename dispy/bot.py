@@ -6,6 +6,10 @@ from .gateway import GatewayClient
 from .flags import IntentFlags
 from .errors import Unauthorized, ImproperToken
 
+__all__ = (
+    "Bot",
+)
+
 class Bot:
     __slots__ = (
         "intents",

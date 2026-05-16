@@ -7,6 +7,10 @@ from .snowflake import Snowflake
 from datetime import datetime
 from .payloads.sticker import StickerPayload
 
+__all__ = (
+    "Sticker",
+)
+
 class Sticker:
     def __init__(self, data: StickerPayload):
         self.id = Snowflake(data["id"])

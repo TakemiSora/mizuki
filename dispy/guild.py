@@ -15,6 +15,10 @@ from .snowflake import Snowflake
 from datetime import datetime
 from .payloads.guild import GuildPayload
 
+__all__ = (
+    "Guild",
+)
+
 class Guild:
     __slots__ = (
         "id",

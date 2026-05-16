@@ -1,6 +1,10 @@
 from __future__ import annotations
 from .enums import StickerFormatType
 
+__all__ = (
+    "Asset",
+)
+
 class Asset:
     __slots__ = (
         "url",
@@ -123,3 +127,23 @@ class Asset:
             f"{cls.CDN_URL}/stickers/{sticker_id}.{str(sticker_type)}",
             is_animated
         )
+    
+    @classmethod
+    def _from_member_avatar(cls, guild_id: int, member_id: int, member_avatar_hash: str | None) -> Asset | None:
+        if member_avatar_hash is not None:
+            is_animated = member_avatar_hash.startswith("a_")
+            return cls(
+                f"{cls.CDN_URL}/guilds/{guild_id}/users/{member_id}/avatars/{member_avatar_hash}.webp{"?animated=true" if is_animated else ""}",
+                is_animated
+            )
+        return None
+
+    @classmethod
+    def _from_member_banner(cls, guild_id: int, member_id: int, member_banner_hash: str | None) -> Asset | None:
+        if member_banner_hash is not None:
+            is_animated = member_banner_hash.startswith("a_")
+            return cls(
+                f"{cls.CDN_URL}/guilds/{guild_id}/users/{member_id}/banners/{member_banner_hash}.webp{"?animated=true" if is_animated else ""}",
+                is_animated
+            )
+        return None

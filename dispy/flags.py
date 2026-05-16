@@ -1,6 +1,15 @@
 from __future__ import annotations
 from enum import IntFlag
 
+__all__ = (
+    "UserFlags",
+    "RoleFlags",
+    "IntentFlags",
+    "SystemChannelFlags",
+    "GuildMemberFlags",
+    "ChannelFlags"
+)
+
 class UserFlags(IntFlag):
     STAFF = 1 << 0
     PARTNER = 1 << 1
@@ -74,3 +83,20 @@ class SystemChannelFlags(IntFlag):
     SUPPRESS_GUILD_REMINDER_NOTIFICATIONS = 1 << 2
     SUPPRESS_JOIN_NOTIFICATION_REPLIES = 1 << 3
     SUPPRESS_ROLE_SUBSCRIPTION_PURCHASE_NOTIFICATIONS = 1 << 4
+
+class GuildMemberFlags(IntFlag):
+    DID_REJOIN = 1 << 0
+    COMPLETED_ONBOARDING = 1 << 1
+    BYPASSES_VERIFICATION = 1 << 2
+    STARTED_ONBOARDING = 1 << 3
+    IS_GUEST = 1 << 4
+    STARTED_HOME_ACTIONS = 1 << 5
+    COMPLETED_HOME_ACTIONS = 1 << 6
+    AUTOMOD_QUARANTINED_USERNAME = 1 << 7
+    DM_SETTINGS_UPSELL_ACKNOWLEDGED = 1 << 8
+    AUTOMOD_QUARANTINED_GUILD_TAG = 1 << 9
+
+class ChannelFlags(IntFlag):
+    PINNED = 1 << 1
+    REQUIRE_TAG = 1 << 4
+    HIDE_MEDIA_DOWNLOAD_OPTIONS = 1 << 15

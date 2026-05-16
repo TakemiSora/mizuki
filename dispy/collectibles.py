@@ -4,6 +4,10 @@ from .snowflake import Snowflake
 from datetime import datetime
 from .payloads.collectibles import NameplatePayload
 
+__all__ = (
+    "Nameplate",
+)
+
 # currently a flat nameplate type instead of collectibles until discord has another collectible type
 class Nameplate:
     __slots__ = (

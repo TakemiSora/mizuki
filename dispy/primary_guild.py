@@ -4,6 +4,10 @@ from .snowflake import Snowflake
 from datetime import datetime
 from .payloads.primary_guild import UserPrimaryGuildPayload
 
+__all__ = (
+    "UserPrimaryGuild",
+)
+
 class UserPrimaryGuild:
     __slots__ = (
         "id",

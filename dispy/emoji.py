@@ -3,6 +3,13 @@ from .asset import Asset
 from .snowflake import Snowflake
 from datetime import datetime
 from .payloads.emoji import PartialEmojiPayload, EmojiPayload
+from .payloads.channel import DefaultReactionPayload
+
+__all__ = (
+    "PartialEmoji",
+    "Emoji",
+    "DefaultReaction"
+)
 
 class PartialEmoji:
     __slots__ = (
@@ -63,3 +70,8 @@ class Emoji:
         
     def __hash__(self) -> int:
         return self.id
+
+class DefaultReaction:
+    def __init__(self, data: DefaultReactionPayload):
+        self.emoji_id = Snowflake._from_str(data["emoji_id"])
+        self.emoji_name = data["emoji_name"]

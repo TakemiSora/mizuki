@@ -1,3 +1,11 @@
+__all__ = (
+    "HTTPException",
+    "NotFound",
+    "Forbidden",
+    "Unauthorized",
+    "ImproperToken"
+)
+
 class HTTPException(Exception):
     def __init__(self, status: int, message: str):
         self.status = status

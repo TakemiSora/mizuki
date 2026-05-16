@@ -9,6 +9,10 @@ from .snowflake import Snowflake
 from datetime import datetime
 from .payloads.user import UserPayload
 
+__all__ = (
+    "User",
+)
+
 class User:
     def __init__(self, data: UserPayload):
         self.id = Snowflake(data["id"])
