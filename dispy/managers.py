@@ -1,4 +1,4 @@
-from .types.user import User
+from .objects.user import User
 from .http import State, Path
 
 class Users:

@@ -4,7 +4,7 @@ from .http import State, Path
 from .managers import Users
 from .gateway import GatewayClient
 from .flags import IntentFlags
-from .types.errors import Unauthorized, ImproperToken
+from .objects.errors import Unauthorized, ImproperToken
 
 __all__ = (
     "Bot",
