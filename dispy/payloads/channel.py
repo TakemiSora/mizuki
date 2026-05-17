@@ -1,7 +1,7 @@
 from typing import Literal, NotRequired, TypedDict
 from .member import MemberPayload
 from .user import UserPayload
-from ._types import CDNHash, ISO8601Timestamp, Permissions, Snowflake
+from ._types import ISO8601Timestamp, Permissions, Snowflake
 
 class ChannelPermissionOverwritePayload(TypedDict):
     id: Snowflake
@@ -78,3 +78,26 @@ class ThreadPayload(BasePublicChannelPayload):
     total_message_sent: int
     applied_tags: list[Snowflake]
     member: ThreadMemberPayload
+    
+class ChannelMentionPayload(TypedDict):
+    id: Snowflake
+    guild_id: Snowflake
+    type: Literal[0, 2, 5, 10, 11, 13, 14, 15, 16]
+    name: str
+
+class PartialBasePublicChannelPayload(BaseChannelPayload):
+    guild_id: Snowflake
+    name: str
+    parent_id: NotRequired[Snowflake | None]
+    rate_limit_per_user: NotRequired[int]
+    permissions: NotRequired[Permissions]
+        
+class PartialGuildChannelPayload(PartialBasePublicChannelPayload):
+    type: Literal[0, 2, 4, 5, 13, 14, 15]
+    topic: NotRequired[str | None]
+    position: int
+    nsfw: NotRequired[bool]
+
+class PartialThreadPayload(PartialBasePublicChannelPayload):
+    type: Literal[10, 11, 12]
+    thread_metadata: ThreadMetaDataPayload
