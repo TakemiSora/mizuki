@@ -2,7 +2,7 @@ from __future__ import annotations
 from .asset import Asset
 from .snowflake import Snowflake
 from datetime import datetime
-from .payloads.primary_guild import UserPrimaryGuildPayload
+from ..payloads.primary_guild import UserPrimaryGuildPayload
 
 __all__ = (
     "UserPrimaryGuild",

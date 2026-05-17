@@ -1,13 +1,13 @@
 from __future__ import annotations
 from .asset import Asset
-from .flags import UserFlags
-from .enums import PremiumType
+from ..flags import UserFlags
+from ..enums.user import PremiumType
 from .collectibles import Nameplate
 from .primary_guild import UserPrimaryGuild
 from .avatar_decoration import AvatarDecoration
 from .snowflake import Snowflake
 from datetime import datetime
-from .payloads.user import UserPayload
+from ..payloads.user import UserPayload
 
 __all__ = (
     "User",

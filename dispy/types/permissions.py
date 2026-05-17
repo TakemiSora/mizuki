@@ -1,7 +1,7 @@
 from enum import IntFlag
-from .payloads.channel import ChannelPermissionOverwritePayload
+from ..payloads.channel import ChannelPermissionOverwritePayload
 from .snowflake import Snowflake
-from .enums import ChannelPermissionOverwriteType
+from ..enums.channel import ChannelPermissionOverwriteType
 from typing import Self
 
 __all__ = (

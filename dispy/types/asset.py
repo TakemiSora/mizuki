@@ -1,5 +1,5 @@
 from __future__ import annotations
-from .enums import StickerFormatType
+from ..enums.sticker import StickerFormatType
 
 __all__ = (
     "Asset",

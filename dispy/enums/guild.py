@@ -1,10 +1,6 @@
-from enum import IntEnum as BaseIntEnum, StrEnum as BaseStrEnum
-from typing import Self
+from ._types import IntEnum, StrEnum
 
 __all__ = (
-    "PremiumType",
-    "StickerType",
-    "StickerFormatType",
     "GuildVerificationLevel",
     "GuildNotificationLevel",
     "GuildExplicitContentLevel",
@@ -12,51 +8,8 @@ __all__ = (
     "GuildPremiumTier",
     "GuildNSFWLevel",
     "GuildFeature",
-    "ChannelType",
-    "ChannelPermissionOverwriteType",
-    "VideoQualityMode",
-    "SortOrderType",
-    "ForumLayoutType"
 )
-
-class IntEnum(BaseIntEnum):
-    @classmethod
-    def _from_val(cls, val: int | None) -> Self | None:
-        if val is not None:
-            return cls(val)
-        return None
-        
-class StrEnum(BaseStrEnum):
-    @classmethod
-    def _from_val(cls, val: str | None) -> Self | None:
-        if val is not None:
-            return cls(val)
-        return None
-
-class PremiumType(IntEnum):
-    NONE = 0
-    CLASSIC = 1
-    NITRO = 2
-    BASIC = 3
     
-class StickerType(IntEnum):
-    STICKER = 1
-    GUILD = 2
-    
-class StickerFormatType(IntEnum):
-    PNG = 1
-    APNG = 2
-    LOTTIE = 3
-    GIF = 4
-    
-    def __str__(self) -> str:
-        return {
-            1: "png",
-            2: "png",
-            3: "lottie",
-            4: "gif"
-        }[self.value]
-
 class GuildVerificationLevel(IntEnum):
     NONE = 0
     LOW = 1
@@ -122,35 +75,3 @@ class GuildFeature(StrEnum):
     GUESTS_ENABLED = "GUESTS_ENABLED"
     GUILD_TAGS = "GUILD_TAGS"
     ENHANCED_ROLE_COLORS = "ENHANCED_ROLE_COLORS"
-
-class ChannelType(IntEnum):
-    GUILD_TEXT = 0
-    DM = 1
-    GUILD_VOICE = 1
-    GROUP_DM = 3
-    GUILD_CATEGORY = 4
-    GUILD_ANNOUNCEMENT = 5
-    ANNOUNCEMENT_THREAD = 10
-    PUBLIC_THREAD = 11
-    PRIVATE_THREAD = 12
-    GUILD_STAGE_VOICE = 13
-    GUILD_DIRECTORY = 14
-    GUILD_FORUM = 15
-    GUILD_MEDIA = 16
-
-class ChannelPermissionOverwriteType(IntEnum):
-    ROLE = 0
-    MEMBER = 1
-
-class VideoQualityMode(IntEnum):
-    AUTO = 1
-    FULL = 2
-
-class SortOrderType(IntEnum):
-    LATEST_ACTIVITY = 0
-    CREATION_DATE = 1
-
-class ForumLayoutType(IntEnum):
-    NOT_SET = 0
-    LIST_VIEW = 1
-    GALLERY_VIEW = 2

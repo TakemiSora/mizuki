@@ -1,6 +1,6 @@
 from __future__ import annotations
 from datetime import datetime, UTC
-from .utils import sint
+from ..utils import sint
 
 class Snowflake(int):
     _DISCORD_EPOCH = 1420070400000

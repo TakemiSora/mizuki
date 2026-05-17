@@ -1,10 +1,10 @@
 from __future__ import annotations
 from .asset import Asset
-from .flags import RoleFlags
+from ..flags import RoleFlags
 from .permissions import Permissions
 from .snowflake import Snowflake
 from datetime import datetime
-from .payloads.role import RoleColorsPayload, RoleTagsPayload, RolePayload
+from ..payloads.role import RoleColorsPayload, RoleTagsPayload, RolePayload
 
 __all__ = (
     "Role",

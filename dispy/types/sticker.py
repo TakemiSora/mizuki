@@ -1,11 +1,10 @@
-from typing import Any
-from .utils import sint
-from .enums import StickerType, StickerFormatType
+from ..utils import sint
+from ..enums.sticker import StickerType, StickerFormatType
 from .asset import Asset
 from .user import User
 from .snowflake import Snowflake
 from datetime import datetime
-from .payloads.sticker import StickerPayload
+from ..payloads.sticker import StickerPayload
 
 __all__ = (
     "Sticker",

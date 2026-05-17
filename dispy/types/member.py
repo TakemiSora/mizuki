@@ -1,10 +1,10 @@
 from datetime import datetime, timezone
-from .payloads.member import MemberPayload
+from ..payloads.member import MemberPayload
 from .user import User
 from .asset import Asset
-from .flags import GuildMemberFlags
+from ..flags import GuildMemberFlags
 from .permissions import Permissions
-from .utils import siso, sint
+from ..utils import siso, sint
 from .avatar_decoration import AvatarDecoration
 from .collectibles import Nameplate
 from .snowflake import Snowflake

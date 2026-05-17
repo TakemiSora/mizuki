@@ -1,10 +1,10 @@
 from datetime import datetime
-from .payloads.channel import *
+from ..payloads.channel import *
 from .snowflake import Snowflake
-from .enums import ChannelType, VideoQualityMode, SortOrderType, ForumLayoutType
-from .flags import ChannelFlags
+from ..enums.channel import ChannelType, VideoQualityMode, SortOrderType, ForumLayoutType
+from ..flags import ChannelFlags
 from .permissions import Permissions, ChannelPermissionOverwrite
-from .utils import siso
+from ..utils import siso
 from .member import Member
 from .user import User
 

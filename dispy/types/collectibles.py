@@ -2,7 +2,7 @@ from __future__ import annotations
 from .asset import Asset
 from .snowflake import Snowflake
 from datetime import datetime
-from .payloads.collectibles import NameplatePayload
+from ..payloads.collectibles import NameplatePayload
 
 __all__ = (
     "Nameplate",

@@ -2,7 +2,7 @@ from __future__ import annotations
 from .asset import Asset
 from .snowflake import Snowflake
 from datetime import datetime
-from .payloads.avatar_decoration import AvatarDecorationPayload
+from ..payloads.avatar_decoration import AvatarDecorationPayload
 
 __all__ = (
     "AvatarDecoration",
