@@ -1,4 +1,3 @@
-from __future__ import annotations
 from .asset import Asset
 from .snowflake import Snowflake
 from datetime import datetime
@@ -26,12 +25,6 @@ class Nameplate:
     @property
     def created_at(self) -> datetime:
         return self.sku_id.created_at
-
-    @classmethod
-    def _from_dict(cls, data: NameplatePayload | None) -> Nameplate | None:
-        if data is not None:
-            return cls(data)
-        return None
     
     def __eq__(self, obj: object) -> bool:
         if isinstance(obj, self.__class__):

@@ -4,7 +4,7 @@ from .snowflake import Snowflake
 from ..enums.channel import ChannelType, VideoQualityMode, SortOrderType, ForumLayoutType
 from ..flags import ChannelFlags
 from .permissions import Permissions, ChannelPermissionOverwrite
-from ..utils import siso
+from ..utils import siso, scls
 from .member import Member
 from .user import User
 
@@ -50,7 +50,7 @@ class ThreadMember:
         self.join_timestamp = datetime.fromisoformat(data["join_timestamp"])
         self.flags = data["flags"]
         if guild_id and user_id:
-            self.member = Member._from_dict(data.get("member"), guild_id=guild_id, user_id=user_id)
+            self.member = scls(Member, data.get("member"), guild_id=guild_id, user_id=user_id)
         else:
             self.member = None
 
@@ -118,8 +118,8 @@ class BasePublicChannel(BaseChannel):
         self.bitrate = data.get("bitrate")
         self.user_limit = data.get("user_limit")
         self.rtc_region = data.get("rtc_region")
-        self.video_quality_mode = VideoQualityMode._from_val(data.get("video_quality_mode"))
-        self.permissions = Permissions._from_val(data.get("permissions"))
+        self.video_quality_mode = scls(VideoQualityMode, data.get("video_quality_mode"))
+        self.permissions = scls(Permissions, data.get("permissions"))
 
 class GuildChannel(BasePublicChannel):
     __slots__ = (
@@ -145,8 +145,8 @@ class GuildChannel(BasePublicChannel):
         self.permission_overwrites = [ChannelPermissionOverwrite(p) for p in data.get("permission_overwrites", [])]
         self.nsfw = data.get("nsfw", False)
         self.available_tags = [ForumTag(f) for f in data.get("available_tags", [])]
-        self.default_sort_order = SortOrderType._from_val(data.get("default_sort_order"))
-        self.default_forum_layout = ForumLayoutType._from_val(data.get("default_forum_layout"))
+        self.default_sort_order = scls(SortOrderType, data.get("default_sort_order"))
+        self.default_forum_layout = scls(ForumLayoutType, data.get("default_forum_layout"))
         
 class ThreadChannel(BasePublicChannel):
     __slots__ = (

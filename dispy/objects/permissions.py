@@ -61,12 +61,6 @@ class Permissions(IntFlag):
     USE_EXTERNAL_APPS = 1 << 50
     PIN_MESSAGES = 1 << 51
     BYPASS_SLOWMODE = 1 << 52
-    
-    @classmethod
-    def _from_val(cls, val: str | None)  -> Self | None:
-        if val is not None:
-            return cls(int(val))
-        return None
 
 class ChannelPermissionOverwrite:
     def __init__(self, data: ChannelPermissionOverwritePayload):
@@ -74,9 +68,3 @@ class ChannelPermissionOverwrite:
         self.type = ChannelPermissionOverwriteType(data["type"])
         self.allow = Permissions(int(data["allow"]))
         self.deny = Permissions(int(data["deny"]))
-        
-    @classmethod
-    def _from_data(cls, data: ChannelPermissionOverwritePayload | None) -> Self | None:
-        if data is not None:
-            return cls(data)
-        return None

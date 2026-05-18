@@ -4,6 +4,7 @@ from .snowflake import Snowflake
 from datetime import datetime
 from ..payloads.emoji import PartialEmojiPayload, EmojiPayload
 from ..payloads.channel import DefaultReactionPayload
+from ..utils import scls
 
 __all__ = (
     "PartialEmoji",
@@ -56,7 +57,7 @@ class Emoji:
         self.id = Snowflake(data["id"])
         self.name = data["name"]
         self.roles = data["roles"] # maybe later when cache and everything is working ill do full zrole Obkects
-        self.user = User._from_dict(data.get("user"))
+        self.user = scls(User, data.get("user"))
         self.require_colons = data.get("require_colons", False)
         self.managed = data.get("managed", False)
         self.animated = data.get("animated", False)

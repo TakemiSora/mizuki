@@ -1,4 +1,4 @@
-from ..utils import sint
+from ..utils import sint, scls
 from ..enums.sticker import StickerType, StickerFormatType
 from .asset import Asset
 from .user import User
@@ -21,7 +21,7 @@ class Sticker:
         self.format_type = StickerFormatType(data["format_type"])
         self.available = data.get("available", False)
         self.guild_id = sint(data.get("guild_id"))
-        self.user = User._from_dict(data.get("user"))
+        self.user = scls(User, data.get("user"))
         self.sort_value = data.get("sort_value")
         self.asset = Asset._from_sticker(self.format_type, self.id)
         

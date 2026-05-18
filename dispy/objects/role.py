@@ -1,10 +1,10 @@
-from __future__ import annotations
 from .asset import Asset
 from ..flags import RoleFlags
 from .permissions import Permissions
 from .snowflake import Snowflake
 from datetime import datetime
 from ..payloads.role import RoleColorsPayload, RoleTagsPayload, RolePayload
+from ..utils import scls
 
 __all__ = (
     "Role",
@@ -39,11 +39,7 @@ class RoleTags:
         self.subscription_listing_id = Snowflake._from_str(data.get("subscription_listing_id"))
         self.available_for_purchase = "available_for_purchase" in data
         self.guild_connections = "guild_connections" in data
-        
-    @classmethod
-    def _from_dict(cls, data: RoleTagsPayload | None) -> RoleTags | None:
-        return cls(data) if data is not None else None
-            
+    
 class Role:
     def __init__(self, data: RolePayload):            
         self.id = Snowflake(data["id"])
@@ -56,7 +52,7 @@ class Role:
         self.permissions = Permissions(int(data["permissions"]))
         self.managed= data["managed"]
         self.mentionable = data["mentionable"]
-        self.tags = RoleTags._from_dict(data.get("tags"))
+        self.tags = scls(RoleTags, data.get("tags"))
         self.flags = RoleFlags(data["flags"])
         
     def __eq__(self, obj: object) -> bool:

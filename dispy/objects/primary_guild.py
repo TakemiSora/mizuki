@@ -1,4 +1,3 @@
-from __future__ import annotations
 from .asset import Asset
 from .snowflake import Snowflake
 from datetime import datetime
@@ -21,12 +20,6 @@ class UserPrimaryGuild:
         self.enabled = data["identity_enabled"]
         self.tag= data["tag"]
         self.badge = Asset._from_guild_tag_badge(self.id, data["badge"])
-
-    @classmethod
-    def _from_dict(cls, data: UserPrimaryGuildPayload | None) -> UserPrimaryGuild | None:
-        if data is not None:
-            return cls(data)
-        return None
         
     @property
     def created_at(self) -> datetime | None:

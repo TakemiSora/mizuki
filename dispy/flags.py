@@ -1,5 +1,5 @@
-from __future__ import annotations
 from enum import IntFlag
+from typing import Self
 
 __all__ = (
     "UserFlags",
@@ -26,20 +26,8 @@ class UserFlags(IntFlag):
     CERTIFIED_MODERATOR = 1 << 18
     BOT_HTTP_INTERACTIONS = 1 << 19
 
-    @classmethod
-    def _from_int(cls, flags: int | None) -> UserFlags | None:
-        if flags is not None:
-            return cls(flags)
-        return None
-
 class RoleFlags(IntFlag):
     IN_PROMPT = 1 << 0
-
-    @classmethod
-    def _from_int(cls, flags: int | None) -> RoleFlags | None:
-        if flags is not None:
-            return cls(flags)
-        return None
     
 class IntentFlags(IntFlag):
     GUILDS = 1 << 0
@@ -65,7 +53,7 @@ class IntentFlags(IntFlag):
     DIRECT_MESSAGE_POLLS = 1 << 25
 
     @classmethod
-    def all(cls) -> IntentFlags:
+    def all(cls) -> Self:
         val = 0
         for f in cls:
             val |= f
@@ -73,7 +61,7 @@ class IntentFlags(IntFlag):
         return cls(val)
 
     @classmethod
-    def standard(cls) -> IntentFlags:
+    def standard(cls) -> Self:
         priviledged = cls.GUILD_PRESENCES | cls.MESSAGE_CONTENT | cls.GUILD_MEMBERS
         return cls.all() & ~priviledged
 

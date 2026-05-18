@@ -1,4 +1,3 @@
-from __future__ import annotations
 from .asset import Asset
 from ..flags import UserFlags
 from ..enums.user import PremiumType
@@ -8,6 +7,7 @@ from .avatar_decoration import AvatarDecoration
 from .snowflake import Snowflake
 from datetime import datetime
 from ..payloads.user import UserPayload
+from ..utils import scls
 
 __all__ = (
     "User",
@@ -28,13 +28,13 @@ class User:
         self.locale = data.get("locale")
         self.verified = data.get("verified", False)
         self.email= data.get("email")
-        self.flags = UserFlags._from_int(data.get("flags"))
-        self.public_flags = UserFlags._from_int(data.get("public_flags"))
+        self.flags = scls(UserFlags, data.get("flags"))
+        self.public_flags = scls(UserFlags, data.get("public_flags"))
         self._premium_type = data.get("premium_type")
-        self.avatar_decoration = AvatarDecoration._from_dict(data.get("avatar_decoration_data"))
+        self.avatar_decoration = scls(AvatarDecoration, data.get("avatar_decoration_data"))
         nameplate_data = (data.get("collectibles") or {}).get("nameplate")
-        self.nameplate = Nameplate._from_dict(nameplate_data)
-        self.primary_guild = UserPrimaryGuild._from_dict(data.get("primary_guild"))
+        self.nameplate = scls(Nameplate, nameplate_data)
+        self.primary_guild = scls(UserPrimaryGuild, data.get("primary_guild"))
 
     def __str__(self) -> str:
         return self.name
@@ -46,10 +46,6 @@ class User:
     
     def __hash__(self) -> int:
         return self.id
-            
-    @classmethod
-    def _from_dict(cls, data: UserPayload | None) -> User | None:
-        return cls(data) if data is not None else None
             
     @property
     def created_at(self) -> datetime:

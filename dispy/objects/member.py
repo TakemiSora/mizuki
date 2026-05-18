@@ -4,11 +4,10 @@ from .user import User
 from .asset import Asset
 from ..flags import GuildMemberFlags
 from .permissions import Permissions
-from ..utils import siso, sint
+from ..utils import siso, sint, scls
 from .avatar_decoration import AvatarDecoration
 from .collectibles import Nameplate
 from .snowflake import Snowflake
-from typing import Self
 
 __all__ = (
     "Member",
@@ -57,17 +56,11 @@ class Member:
         self.pending = data.get("pending", False)
         self.permissions = Permissions(sint(data.get("permissions", "0")))
         self.communication_disabled_until = siso(data.get("communication_disabled_until"))
-        self.avatar_decoration_data = AvatarDecoration._from_dict(data.get("avatar_decoration_data"))
+        self.avatar_decoration_data = scls(AvatarDecoration, data.get("avatar_decoration_data"))
         collectibles = data.get("collectibles")
         nameplate = collectibles.get("nameplate") if collectibles else None
-        self.nameplate = Nameplate._from_dict(nameplate)
-        
-    @classmethod
-    def _from_dict(cls, data: MemberPayload | None, *, guild_id: int, user_id: int) -> Self | None:
-        if data is not None:
-            return cls(data, guild_id=guild_id, user_id=user_id)
-        return None
-
+        self.nameplate = scls(Nameplate, nameplate)
+    
     @property
     def is_timed_out(self) -> bool:
         return datetime.now(timezone.utc) > self.communication_disabled_until if self.communication_disabled_until else False

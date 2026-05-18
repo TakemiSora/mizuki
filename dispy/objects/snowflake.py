@@ -1,4 +1,4 @@
-from __future__ import annotations
+from typing import Self
 from datetime import datetime, UTC
 from ..utils import sint
 
@@ -12,6 +12,6 @@ class Snowflake(int):
         return datetime.fromtimestamp(timestamp, UTC)
         
     @classmethod
-    def _from_str(cls, id: str | None) -> Snowflake | None:
+    def _from_str(cls, id: str | None) -> Self | None:
         val = sint(id)
         return cls(val) if val else None

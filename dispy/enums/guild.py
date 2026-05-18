@@ -1,4 +1,4 @@
-from ._types import IntEnum, StrEnum
+from enum import IntEnum, StrEnum
 
 __all__ = (
     "GuildVerificationLevel",

@@ -1,4 +1,4 @@
-from ._types import IntEnum
+from enum import IntEnum
 
 __all__ = (
     "ChannelType",
