@@ -41,7 +41,7 @@ from datetime import datetime
 __all__ = (
     "Attachment",
     "MessageReference",
-    "MessageAcitvity",
+    "MessageActivity",
     "PartialMessage",
     "MessageSnapshot",
     "MessageInteractionMetadata",
@@ -115,7 +115,7 @@ class MessageReference:
         self.guild_id = Snowflake._from_str(data.get("guild_id"))
         self.fail_if_not_exists = data.get("fail_if_not_exists", True)
 
-class MessageAcitvity:
+class MessageActivity:
     __slots__ = (
         "type",
         "party_id"
@@ -229,7 +229,7 @@ class PollResult:
         "answer_counts"
     )
 
-    def __init_(self, data: PollResultPayload):
+    def __init__(self, data: PollResultPayload):
         self.is_finalized = data["is_finalized"]
         self.answer_counts = [PollAnswerCount(p) for p in data["answer_counts"]]
 
@@ -305,7 +305,7 @@ class Message(PartialMessage):
         self.nonce = data.get("nonce")
         self.pinned = data["pinned"]
         self.webhook_id = Snowflake._from_str(data.get("webhook_id"))
-        self.activity = scls(MessageAcitvity, data.get("activity"))
+        self.activity = scls(MessageActivity, data.get("activity"))
         self.application = data.get("application") # placehodler
         self.application_id = Snowflake._from_str(data.get("application_id"))
         self.message_reference = scls(MessageReference, data.get("message_reference"))

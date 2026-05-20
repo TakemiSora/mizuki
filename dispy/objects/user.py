@@ -50,7 +50,6 @@ class User:
         self.verified = data.get("verified", False)
         self.email= data.get("email")
         self.flags = UserFlags(data.get("flags", 0))
-        self.public_flags = UserFlags(data.get("flags", 0))
         self._premium_type = data.get("premium_type")
         self.avatar_decoration = scls(AvatarDecoration, data.get("avatar_decoration_data"))
         nameplate_data = (data.get("collectibles") or {}).get("nameplate")

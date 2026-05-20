@@ -51,7 +51,7 @@ class MessageType(IntEnum):
 
 class AuthorizingIntegrationOwnerType(IntEnum):
     GUILD_INSTALL = 0
-    USER_INSTALL = 0
+    USER_INSTALL = 1
 
 class PollLayoutType(IntEnum):
     DEFAULT = 1
