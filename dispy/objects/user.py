@@ -29,7 +29,6 @@ class User:
         "verified",
         "email",
         "flags",
-        "public_flags",
         "_premium_type",
         "avatar_decoration",
         "nameplate",
