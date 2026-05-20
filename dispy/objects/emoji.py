@@ -1,3 +1,4 @@
+from dispy.payloads.message import ReactionCountDetailPayload, ReactionPayload
 from .user import User
 from .asset import Asset
 from .snowflake import Snowflake
@@ -9,7 +10,9 @@ from ..utils import scls
 __all__ = (
     "PartialEmoji",
     "Emoji",
-    "DefaultReaction"
+    "DefaultReaction",
+    "Reaction",
+    "ReactionCountDetail"
 )
 
 class PartialEmoji:
@@ -73,6 +76,39 @@ class Emoji:
         return self.id
 
 class DefaultReaction:
+    __slots__ = (
+        "emoji_id",
+        "emoji_name"
+    )
+
     def __init__(self, data: DefaultReactionPayload):
         self.emoji_id = Snowflake._from_str(data["emoji_id"])
         self.emoji_name = data["emoji_name"]
+
+class ReactionCountDetail:
+    __slots__ = (
+        "burst",
+        "normal"
+    )
+
+    def __init__(self, data: ReactionCountDetailPayload):
+        self.burst = data["burst"]
+        self.normal = data["normal"]
+
+class Reaction:
+    __slots__ = (
+        "count",
+        "count_detail",
+        "me",
+        "me_burst",
+        "emoji",
+        "burst_colors"
+    )
+    
+    def __init__(self, data: ReactionPayload):
+        self.count = data["count"]
+        self.count_detail = ReactionCountDetail(data["count_detail"])
+        self.me = data["me"]
+        self.me_burst = data["me_burst"]
+        self.emoji = PartialEmoji(data["emoji"])
+        self.burst_colors = data["burst_colors"]

@@ -1,4 +1,5 @@
 from datetime import datetime
+from .errors import UnknownChannelType
 from ..payloads.channel import *
 from .snowflake import Snowflake
 from ..enums.channel import ChannelType, VideoQualityMode, SortOrderType, ForumLayoutType
@@ -7,6 +8,7 @@ from .permissions import Permissions, ChannelPermissionOverwrite
 from ..utils import siso, scls
 from .member import Member
 from .user import User
+from typing import cast, overload
 
 __all__ = (
     "ThreadMetaData",
@@ -14,7 +16,8 @@ __all__ = (
     "ForumTag",
     "GuildChannel",
     "ThreadChannel",
-    "PrivateChannel"
+    "PrivateChannel",
+    "ChannelMention"
 )
 
 class ThreadMetaData:
@@ -181,3 +184,51 @@ class PrivateChannel(BaseChannel):
         super().__init__(data)
         self.recipients = [User(u) for u in data["recipients"]]
         self.type = ChannelType(data["type"])
+
+class ChannelMention:
+    __slots__ = (
+        "id",
+        "guild_id",
+        "type",
+        "name"
+    )
+
+    def __init__(self, data: ChannelMentionPayload):
+        self.id = Snowflake(data["id"])
+        self.guild_id = Snowflake(data["guild_id"])
+        self.type = ChannelType(data["type"])
+        self.name = data["name"]
+
+@overload
+def parse_channel_payload(data: GuildChannelPayload) -> GuildChannel: ...
+
+@overload
+def parse_channel_payload(data: ThreadPayload) -> ThreadChannel: ...
+
+@overload
+def parse_channel_payload(data: PrivateChannelPayload) -> PrivateChannel: ...
+
+def parse_channel_payload(data: GuildChannelPayload | ThreadPayload | PrivateChannelPayload) -> GuildChannel | ThreadChannel | PrivateChannel:
+    match ChannelType(data["type"]):
+        case ChannelType.DM:
+            return PrivateChannel(cast(PrivateChannelPayload, data))
+        case (
+            ChannelType.ANNOUNCEMENT_THREAD
+            | ChannelType.PUBLIC_THREAD
+            | ChannelType.PRIVATE_THREAD
+        ):
+            return ThreadChannel(cast(ThreadPayload, data))
+        case (
+            ChannelType.GUILD_TEXT
+            | ChannelType.GUILD_VOICE
+            | ChannelType.GUILD_CATEGORY
+            | ChannelType.GUILD_ANNOUNCEMENT
+            | ChannelType.GUILD_STAGE_VOICE
+            | ChannelType.GUILD_FORUM
+            | ChannelType.GUILD_DIRECTORY
+            | ChannelType.GUILD_FORUM
+            | ChannelType.GUILD_MEDIA
+        ):
+            return GuildChannel(cast(GuildChannelPayload, data))
+        case _:
+            raise UnknownChannelType(data["type"])

@@ -49,7 +49,7 @@ class MessageReferencePayload(TypedDict, total=False):
     guild_id: Snowflake
     fail_if_not_exists: bool
     
-class BaseMessagePayload(TypedDict):
+class PartialMessagePayload(TypedDict):
     content: str | None
     embeds: list[EmbedPayload]
     attachments: list[AttachmentPayload]
@@ -58,15 +58,12 @@ class BaseMessagePayload(TypedDict):
     flags: NotRequired[int]
     mentions: list[UserPayload]
     mention_roles: list[Snowflake]
-    
-class PartialMessagePayload(BaseMessagePayload):
-    type: Literal[
-        0, 6, 7, 8, 9,
-        10, 11, 12, 14, 15, 16, 17, 18, 19,
-        20, 22, 23, 24, 25, 26, 27, 28, 29,
-        31, 32, 36, 37, 38, 39,
-        44, 46,
-    ]
+    type: Required[Literal[
+        0, 1, 2, 6, 7, 8, 9,
+        10, 11, 12, 14, 15, 16, 17, 18, 19, 20,
+        21, 22, 23, 24, 25, 26, 27, 28, 29, 31,
+        32, 36, 37, 38, 39, 44, 46,
+    ]]
     
 class MessageSnapshotPayload(TypedDict):
     message: PartialMessagePayload
@@ -79,13 +76,7 @@ class MessageInteractionMetadataPayload(TypedDict):
     original_response_message_id: Snowflake
     target_user: NotRequired[UserPayload]
     target_message_id: NotRequired[Snowflake]
-    
-class ResolvedDataPayload(TypedDict, total=False):
-    users: dict[Snowflake, UserPayload]
-    members: dict[Snowflake, PartialMemberPayload]
-    roles: dict[Snowflake, RolePayload]
-    channels: dict[Snowflake, PartialGuildChannelPayload | PartialGuildChannelPayload]
-    
+
 class RoleSubscriptionDataPayload(TypedDict):
     role_subscription_listing_id: Snowflake
     tier_name: str
@@ -105,7 +96,7 @@ class PollAnswerCountPayload(TypedDict):
     count: int
     me_voted: bool
     
-class PollResultsPayload(TypedDict):
+class PollResultPayload(TypedDict):
     is_finalized: bool
     answer_counts: list[PollAnswerCountPayload]
     
@@ -115,7 +106,7 @@ class PollPayload(TypedDict):
     expiry: ISO8601Timestamp | None
     allow_multiselect: bool
     layout_type: Literal[1]
-    results: NotRequired[PollResultsPayload]
+    results: NotRequired[PollResultPayload]
     
 class SharedClientThemePayload(TypedDict):
     colors: list[str]
@@ -127,7 +118,7 @@ class MessageActivityPayload(TypedDict):
     type: Literal[1, 2, 3, 5]
     party_id: NotRequired[str]
         
-class MessagePayload(BaseMessagePayload, total=False):
+class MessagePayload(PartialMessagePayload, total=False):
     id: Required[Snowflake]
     channel_id: Required[Snowflake]
     author: Required[UserPayload]
@@ -138,12 +129,6 @@ class MessagePayload(BaseMessagePayload, total=False):
     nonce: str | int
     pinned: Required[bool]
     webhook_id: Snowflake
-    type: Required[Literal[
-        0, 1, 2, 6, 7, 8, 9,
-        10, 11, 12, 14, 15, 16, 17, 18, 19, 20,
-        21, 22, 23, 24, 25, 26, 27, 28, 29, 31,
-        32, 36, 37, 38, 39, 44, 46,
-    ]]
     activity: MessageActivityPayload
     application: dict[str, Any]
     application_id: Snowflake

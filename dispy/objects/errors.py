@@ -3,7 +3,8 @@ __all__ = (
     "NotFound",
     "Forbidden",
     "Unauthorized",
-    "ImproperToken"
+    "ImproperToken",
+    "UnknownChannelType"
 )
 
 class HTTPException(Exception):
@@ -22,4 +23,7 @@ class Unauthorized(HTTPException):
     pass
 
 class ImproperToken(HTTPException):
+    pass
+
+class UnknownChannelType(Exception):
     pass

@@ -53,7 +53,7 @@ class BasePublicChannelPayload(BaseChannelPayload):
     permissions: NotRequired[Permissions]
 
 class GuildChannelPayload(BasePublicChannelPayload):
-    type: Literal[0, 2, 4, 5, 13, 14, 15]
+    type: Literal[0, 2, 4, 5, 13, 14, 15, 16]
     topic: NotRequired[str | None]
     default_auto_archive_duration: NotRequired[int]
     default_thread_rate_limit_per_user: NotRequired[int]

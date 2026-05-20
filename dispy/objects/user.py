@@ -14,6 +14,27 @@ __all__ = (
 )
 
 class User:
+    __slots__ = (
+        "id",
+        "name",
+        "discriminator",
+        "global_name",
+        "avatar",
+        "bot",
+        "system",
+        "mfa_enabled",
+        "banner",
+        "accent_color",
+        "locale",
+        "verified",
+        "email",
+        "flags",
+        "public_flags",
+        "_premium_type",
+        "avatar_decoration",
+        "nameplate",
+        "primary_guild"
+    )
     def __init__(self, data: UserPayload):
         self.id = Snowflake(data["id"])
         self.name = data["username"]
@@ -28,8 +49,8 @@ class User:
         self.locale = data.get("locale")
         self.verified = data.get("verified", False)
         self.email= data.get("email")
-        self.flags = scls(UserFlags, data.get("flags"))
-        self.public_flags = scls(UserFlags, data.get("public_flags"))
+        self.flags = UserFlags(data.get("flags", 0))
+        self.public_flags = UserFlags(data.get("flags", 0))
         self._premium_type = data.get("premium_type")
         self.avatar_decoration = scls(AvatarDecoration, data.get("avatar_decoration_data"))
         nameplate_data = (data.get("collectibles") or {}).get("nameplate")

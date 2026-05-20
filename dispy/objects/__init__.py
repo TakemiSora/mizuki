@@ -4,7 +4,9 @@ from .channel import *
 from .collectibles import *
 from .emoji import *
 from .errors import *
+from .embed import *
 from .member import *
+from .message import *
 from .permissions import *
 from .primary_guild  import *
 from .role import *

@@ -1,7 +1,7 @@
 import aiohttp
 import asyncio
 from .http import State, Path
-from .managers import Users
+from .managers import Users, Messages, Channels, Guilds
 from .gateway import GatewayClient
 from .flags import IntentFlags
 from .objects.errors import Unauthorized, ImproperToken
@@ -15,7 +15,10 @@ class Bot:
         "intents",
         "_state",
         "_gateway_client",
-        "users"
+        "users",
+        "messages",
+        "channels",
+        "guilds"
     )
     
     def __init__(
@@ -26,6 +29,9 @@ class Bot:
         self._state = State()
         self._gateway_client: GatewayClient | None = None
         self.users = Users(self._state)
+        self.messages = Messages(self._state)
+        self.channels = Channels(self._state)
+        self.guilds = Guilds(self._state)
 
     def run(self, token: str) -> None:
         asyncio.run(self.start(token))
@@ -48,7 +54,7 @@ class Bot:
             self._gateway_client = GatewayClient(token, self.intents)
             await self._gateway_client.connect()
             await self._gateway_client.wait_until_closed()
-        except KeyboardInterrupt:
+        except asyncio.CancelledError:
             pass
         finally:
             await self.stop()
