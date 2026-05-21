@@ -21,17 +21,17 @@ class GatewayClient:
     
     URL = "wss://gateway.discord.gg/?v=10&encoding=json"
 
-    def __init__(self, token: str, intents: IntentFlags):
+    def __init__(self, session: aiohttp.ClientSession, token: str, intents: IntentFlags):
         self.token = token
         self.intents = intents
 
+        self._session = session
         self._ws: aiohttp.ClientWebSocketResponse | None = None
         self._sequence: int | None = None
         self._last_ack: bool = True
         self._heartbeat_interval: float | None = None
         self._heartbeat_task: asyncio.Task | None = None
         self._listen_task: asyncio.Task | None = None
-        self._session: aiohttp.ClientSession | None = None
 
         self._handlers = {
             0: self._handle_dispatch,
@@ -44,7 +44,6 @@ class GatewayClient:
         await self._ws.send_json(data)
 
     async def connect(self):
-        self._session = aiohttp.ClientSession()
         self._ws = await self._session.ws_connect(self.URL)
         self._listen_task = asyncio.create_task(self._listen())
 

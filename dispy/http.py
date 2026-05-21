@@ -48,16 +48,16 @@ class RateLimitBucket:
         self.remaining = int(headers.get("X-RateLimit-Remaining", 0))
         self.reset_after = float(headers.get("X-RateLimit-Reset-After", 0.1))
 
-class State:
+class HTTPClient:
     __slots__ = (
-        "session",
+        "_session",
         "_global_ratelimit",
         "_buckets_keys",
         "_buckets"
     )
     
     def __init__(self):
-        self.session: aiohttp.ClientSession | None = None
+        self._session: aiohttp.ClientSession | None = None
 
         self._global_ratelimit = asyncio.Event()
         self._global_ratelimit.set()
@@ -71,9 +71,9 @@ class State:
         bucket = self._buckets.get(bucket_id) if bucket_id else None
 
         async with (bucket.lock if bucket else asyncio.Lock()):
-            assert self.session is not None, "Cannot call session without intializing first."
+            assert self._session is not None, "Cannot call session without intializing first."
                 
-            async with self.session.request(path.method, path.url, **kwargs) as resp:
+            async with self._session.request(path.method, path.url, **kwargs) as resp:
                 new_bucket_id = resp.headers.get("X-RateLimit-Bucket")
 
                 if new_bucket_id is not None:

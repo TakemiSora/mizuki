@@ -1,6 +1,6 @@
 import aiohttp
 import asyncio
-from .http import State, Path
+from .http import HTTPClient, Path
 from .managers import Users, Messages, Channels, Guilds
 from .gateway import GatewayClient
 from .flags import IntentFlags
@@ -13,8 +13,8 @@ __all__ = (
 class Bot:
     __slots__ = (
         "intents",
-        "_state",
-        "_gateway_client",
+        "http",
+        "gateway",
         "users",
         "messages",
         "channels",
@@ -26,41 +26,42 @@ class Bot:
         intents: IntentFlags
     ):
         self.intents = intents
-        self._state = State()
-        self._gateway_client: GatewayClient | None = None
-        self.users = Users(self._state)
-        self.messages = Messages(self._state)
-        self.channels = Channels(self._state)
-        self.guilds = Guilds(self._state)
+        self.http = HTTPClient()
+        self.gateway: GatewayClient | None = None
+        self.users = Users(self.http)
+        self.messages = Messages(self.http)
+        self.channels = Channels(self.http)
+        self.guilds = Guilds(self.http)
 
     def run(self, token: str) -> None:
         asyncio.run(self.start(token))
         
     async def _verify_token(self) -> None:
         try:
-            await self._state.request(Path("GET", "users/@me"))
+            await self.http.request(Path("GET", "users/@me"))
         except Unauthorized:
             raise ImproperToken(401, "Improper token has been passed.")
 
     async def start(self, token: str) -> None:
         try:
-            self._state.session = aiohttp.ClientSession(
+            session = aiohttp.ClientSession(
                 "https://discord.com/api/v10/",
                 headers={
                     "Authorization": f"Bot {token}"
                 }
             )
+            self.http._session = session
             await self._verify_token()
-            self._gateway_client = GatewayClient(token, self.intents)
-            await self._gateway_client.connect()
-            await self._gateway_client.wait_until_closed()
+            self.gateway = GatewayClient(session, token, self.intents)
+            await self.gateway.connect()
+            await self.gateway.wait_until_closed()
         except asyncio.CancelledError:
             pass
         finally:
             await self.stop()
 
     async def stop(self) -> None:
-        if self._gateway_client:
-            await self._gateway_client.close()
-        if self._state.session:
-            await self._state.session.close()
+        if self.gateway:
+            await self.gateway.close()
+        if self.http._session:
+            await self.http._session.close()
