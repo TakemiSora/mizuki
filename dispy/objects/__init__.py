@@ -3,7 +3,6 @@ from .avatar_decoration import *
 from .channel import *
 from .collectibles import *
 from .emoji import *
-from .errors import *
 from .embed import *
 from .member import *
 from .message import *

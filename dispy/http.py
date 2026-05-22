@@ -2,7 +2,7 @@ import aiohttp
 import asyncio
 from typing import Any
 from urllib.parse import quote
-from .objects.errors import NotFound, HTTPException, Forbidden, Unauthorized
+from .errors import NotFound, HTTPException, Forbidden, Unauthorized
 
 class Path:
     __slots__ = (

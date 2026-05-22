@@ -4,7 +4,7 @@ from .http import HTTPClient, Path
 from .managers import Users, Messages, Channels, Guilds
 from .gateway import GatewayClient
 from .flags import IntentFlags
-from .objects.errors import Unauthorized, ImproperToken
+from .errors import Unauthorized, ImproperToken
 
 __all__ = (
     "Bot",
@@ -18,7 +18,8 @@ class Bot:
         "users",
         "messages",
         "channels",
-        "guilds"
+        "guilds",
+        "_session"
     )
     
     def __init__(
@@ -32,6 +33,8 @@ class Bot:
         self.messages = Messages(self.http)
         self.channels = Channels(self.http)
         self.guilds = Guilds(self.http)
+        
+        self._session: aiohttp.ClientSession | None = None
 
     def run(self, token: str) -> None:
         asyncio.run(self.start(token))
@@ -44,15 +47,15 @@ class Bot:
 
     async def start(self, token: str) -> None:
         try:
-            session = aiohttp.ClientSession(
+            self._session = aiohttp.ClientSession(
                 "https://discord.com/api/v10/",
                 headers={
                     "Authorization": f"Bot {token}"
                 }
             )
-            self.http._session = session
+            self.http._session = self._session
             await self._verify_token()
-            self.gateway = GatewayClient(session, token, self.intents)
+            self.gateway = GatewayClient(self._session, token, self.intents)
             await self.gateway.connect()
             await self.gateway.wait_until_closed()
         except asyncio.CancelledError:
@@ -63,5 +66,5 @@ class Bot:
     async def stop(self) -> None:
         if self.gateway:
             await self.gateway.close()
-        if self.http._session:
-            await self.http._session.close()
+        if self._session:
+            await self._session.close()

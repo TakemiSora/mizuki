@@ -1,5 +1,6 @@
 __all__ = (
     "HTTPException",
+    "GatewayError",
     "NotFound",
     "Forbidden",
     "Unauthorized",
@@ -12,6 +13,12 @@ class HTTPException(Exception):
         self.status = status
         self.message = message
         super().__init__(f"HTTP {status}: {message}")
+
+class GatewayError(Exception):
+    def __init__(self, status: int, message: str):
+        self.status = status
+        self.message = message
+        super().__init__(f"Gateway Closed with {status}: {message}")
 
 class NotFound(HTTPException):
     pass

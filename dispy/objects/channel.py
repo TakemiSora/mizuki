@@ -1,5 +1,5 @@
 from datetime import datetime
-from .errors import UnknownChannelType
+from ..errors import UnknownChannelType
 from ..payloads.channel import *
 from .snowflake import Snowflake
 from ..enums.channel import ChannelType, VideoQualityMode, SortOrderType, ForumLayoutType
