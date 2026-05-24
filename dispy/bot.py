@@ -52,7 +52,7 @@ class Bot:
 
     async def start(self, token: str) -> None:
         try:
-            self.storage.start_cleanup_tasks()
+            if self.storage.settings.cache_invalidation: self.storage.start_cleanup_tasks()
             self._session = aiohttp.ClientSession(
                 "https://discord.com/api/v10/",
                 headers={

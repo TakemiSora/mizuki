@@ -24,6 +24,7 @@ class CacheSettings:
         "messages",
         "channels",
         "guilds",
+        "cache_invalidation",
         "invalidation_time",
         "cleanup_interval",
         "max_users_store",
@@ -38,6 +39,7 @@ class CacheSettings:
         messages: bool = True,
         channels: bool = True,
         guilds: bool = True,
+        cache_invalidation: bool = False,
         invalidation_time: timedelta = timedelta(days=1),
         cleanup_interval: timedelta = timedelta(hours=6),
         max_users_store: int | None = None,
@@ -49,6 +51,7 @@ class CacheSettings:
         self.messages = messages
         self.channels = channels
         self.guilds = guilds
+        self.cache_invalidation = cache_invalidation
         self.invalidation_time = invalidation_time
         self.cleanup_interval = cleanup_interval
         self.max_users_store = max_users_store
