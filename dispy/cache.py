@@ -1,16 +1,11 @@
 import asyncio
 from .objects.user import User
 from .objects.message import Message
-from .objects.channel import (
-    ThreadChannel,
-    PrivateChannel,
-    GuildChannel
-)
+from .objects.channel import Channel
 from .objects.guild import Guild
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
-Channel = ThreadChannel | PrivateChannel | GuildChannel
 Cachable = User | Message | Channel | Guild
 
 @dataclass(slots=True)
@@ -122,6 +117,7 @@ class CacheStorage:
             self.guilds, guild
         )
 
+
     def _get_from_cache[T: Cachable](self, cache: dict[int, CacheEntry[T]], id: int) -> T | None:
         return item.data if (item := cache.get(id)) is not None else None
 
@@ -136,6 +132,23 @@ class CacheStorage:
 
     def get_guild(self, guild_id: int) -> Guild | None:
         return self._get_from_cache(self.guilds, guild_id)
+
+
+    def _remove_from_cache[T: Cachable](self, cache: dict[int, CacheEntry[T]], id: int) -> None:
+        cache.pop(id, None)
+
+    def remove_user(self, user_id: int) -> None:
+        self._remove_from_cache(self.users, user_id)
+    
+    def remove_message(self, message_id: int) -> None:
+        self._remove_from_cache(self.messages, message_id)
+
+    def remove_channel(self, channel_id: int) -> None:
+        self._remove_from_cache(self.channels, channel_id)
+
+    def remove_guild(self, guild_id: int) -> None:
+        self._remove_from_cache(self.guilds, guild_id)
+
 
     async def _cleanup_cache[T: Cachable](self, cache: dict[int, CacheEntry[T]]):
         while True:

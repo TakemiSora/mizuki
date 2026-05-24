@@ -77,8 +77,17 @@ class ThreadPayload(BasePublicChannelPayload):
     member_count: int
     total_message_sent: int
     applied_tags: list[Snowflake]
+
+class ThreadCreatePayload(ThreadPayload, total=False):
+    newly_created: bool
     member: ThreadMemberPayload
-    
+
+class ThreadDeletePayload(TypedDict):
+    id: Snowflake
+    guild_id: Snowflake
+    parent_id: Snowflake
+    type: Literal[10, 11, 12]
+
 class ChannelMentionPayload(TypedDict):
     id: Snowflake
     guild_id: Snowflake

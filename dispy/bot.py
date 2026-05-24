@@ -6,16 +6,20 @@ from .gateway import GatewayClient
 from .flags import IntentFlags
 from .errors import Unauthorized, ImproperToken
 from .cache import CacheSettings, CacheStorage
+from typing import Callable, Coroutine
 
 __all__ = (
     "Bot",
 )
+
+CoroFunc = Callable[..., Coroutine]
 
 class Bot:
     __slots__ = (
         "intents",
         "http",
         "gateway",
+        "_listeners",
         "storage",
         "users",
         "messages",
@@ -32,6 +36,7 @@ class Bot:
         self.intents = intents
         self.http = HTTPClient()
         self.gateway: GatewayClient | None = None
+        self._listeners: dict[str, list[CoroFunc]] = {}
 
         self.storage = CacheStorage(cache_settings or CacheSettings())
         self.users = Users(self.http, self.storage)
@@ -61,7 +66,7 @@ class Bot:
             )
             self.http._session = self._session
             await self._verify_token()
-            self.gateway = GatewayClient(self._session, token, self.intents)
+            self.gateway = GatewayClient(self, self._session, token, self.intents)
             await self.gateway.connect()
             await self.gateway.wait_until_closed()
         except asyncio.CancelledError:
@@ -74,3 +79,9 @@ class Bot:
             await self.gateway.close()
         if self._session:
             await self._session.close()
+
+    def listen(self, name: str | None = None):
+        def decorator(func: CoroFunc) -> CoroFunc:
+            self._listeners.setdefault(name or func.__name__, []).append(func)
+            return func
+        return decorator

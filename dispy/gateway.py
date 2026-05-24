@@ -1,16 +1,23 @@
+from __future__ import annotations
+
 import sys
 import asyncio
 import aiohttp
 import json
 import random
-from typing import Any
+from typing import Any, TYPE_CHECKING
 from .flags import IntentFlags
 from .errors import GatewayError
+from .event_dispatch import EventDispatcher
+
+if TYPE_CHECKING:
+    from .bot import Bot
 
 class GatewayClient:
     __slots__ = (
         "token",
         "intents",
+        "_dispatcher",
         "_ws",
         "_sequence",
         "_resume_ws_url",
@@ -45,10 +52,11 @@ class GatewayClient:
         4014: "Disallowed intents: You sent a disallowed intent for a Gateway Intent. You may have tried to specify an intent that you have not enabled or are not approved for."
     }
 
-    def __init__(self, session: aiohttp.ClientSession, token: str, intents: IntentFlags):
+    def __init__(self, bot: Bot, session: aiohttp.ClientSession, token: str, intents: IntentFlags):
         self.token = token
         self.intents = intents
 
+        self._dispatcher = EventDispatcher(bot)
         self._session = session
         self._ws: aiohttp.ClientWebSocketResponse | None = None
         self._sequence: int | None = None
@@ -204,8 +212,8 @@ class GatewayClient:
         if self._ws: await self._ws.close(code=4000)
         
     async def _handle_dispatch(self, data: dict[str, Any], event: str):
-        match event:
-            case "READY":
-                await self._handle_ready(data)
-            case _:
-                print(event, data) # placeholder
+        if event == "READY": await self._handle_ready(data)
+        else:
+            h = self._dispatcher._dispatch_handlers.get(event)
+            if h is not None:
+                await h(data)

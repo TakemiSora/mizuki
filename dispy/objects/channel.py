@@ -17,7 +17,8 @@ __all__ = (
     "GuildChannel",
     "ThreadChannel",
     "PrivateChannel",
-    "ChannelMention"
+    "ChannelMention",
+    "Channel"
 )
 
 class ThreadMetaData:
@@ -160,7 +161,6 @@ class ThreadChannel(BasePublicChannel):
         "member_count",
         "total_message_sent",
         "applied_tags",
-        "member"
     )
     
     def __init__(self, data: ThreadPayload):
@@ -172,7 +172,6 @@ class ThreadChannel(BasePublicChannel):
         self.member_count = data["member_count"]
         self.total_message_sent = data["total_message_sent"]
         self.applied_tags = [Snowflake(s) for s in data["applied_tags"]]
-        self.member = ThreadMember(data["member"])
         
 class PrivateChannel(BaseChannel):
     __slots__ = (
@@ -232,3 +231,5 @@ def parse_channel_payload(data: GuildChannelPayload | ThreadPayload | PrivateCha
             return GuildChannel(cast(GuildChannelPayload, data))
         case _:
             raise UnknownChannelType(data["type"])
+
+Channel = ThreadChannel | PrivateChannel | GuildChannel
