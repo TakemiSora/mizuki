@@ -48,11 +48,7 @@ class MessageType(IntEnum):
     GUILD_INCIDENT_REPORT_FALSE_ALARM = 39
     PURCHASE_NOTIFICATION = 44
     POLL_RESULT = 46
-
-class AuthorizingIntegrationOwnerType(IntEnum):
-    GUILD_INSTALL = 0
-    USER_INSTALL = 1
-
+    
 class PollLayoutType(IntEnum):
     DEFAULT = 1
 

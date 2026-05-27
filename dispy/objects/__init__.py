@@ -2,12 +2,14 @@ from .asset import *
 from .avatar_decoration import *
 from .channel import *
 from .collectibles import *
-from .emoji import *
+from .command import *
 from .embed import *
+from .emoji import *
 from .member import *
 from .message import *
 from .permissions import *
-from .primary_guild  import *
+from .presence import *
+from .primary_guild import *
 from .role import *
 from .sticker import *
 from .user import *
