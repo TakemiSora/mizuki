@@ -34,3 +34,6 @@ class ImproperToken(HTTPException):
 
 class UnknownChannelType(Exception):
     pass
+        
+class UnknownInteractionType(Exception):
+    pass

@@ -5,6 +5,8 @@ from .collectibles import *
 from .command import *
 from .embed import *
 from .emoji import *
+from .guild import *
+from .interaction import *
 from .member import *
 from .message import *
 from .permissions import *

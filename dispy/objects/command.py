@@ -1,13 +1,13 @@
 from ..enums.channel import ChannelType
 from ..enums.command import ApplicationCommandType, CommandHandler, CommandOptionType
-from ..enums.interaction import ApplicationIntegrationType, InteractionContextTypes
+from ..enums.interaction import ApplicationIntegrationType, InteractionContextType
 from ..payloads.command import (
     ApplicationCommandPayload,
     CommandChoicePayload,
     CommandOptionPayload,
     LocalizationPayload,
 )
-from ..utils import scls
+from ..utils import scls, sint
 from .permissions import Permissions
 from .snowflake import Snowflake
 
@@ -137,9 +137,9 @@ class ApplicationCommand:
         self.description = data["description"]
         self.description_localizations = scls(Localization, data.get("description_localizations"))
         self.options = [ApplicationCommandOption(a) for a in data.get("options", [])]
-        self.default_member_permissions = scls(Permissions, data.get("default_member_permissions"))
+        self.default_member_permissions = scls(Permissions, sint(data.get("default_member_permissions")))
         self.nsfw = data.get("nsfw", False)
         self.integration_types = [ApplicationIntegrationType(a) for a in data.get("integration_types", [])]
-        self.contexts = [InteractionContextTypes(i) for i in d] if (d := data.get("contexts")) is not None else None
+        self.contexts = [InteractionContextType(i) for i in d] if (d := data.get("contexts")) is not None else None
         self.version = Snowflake._from_str(data.get("version"))
         self.handler = scls(CommandHandler, data.get("handler"))

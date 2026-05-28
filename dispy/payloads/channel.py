@@ -1,7 +1,8 @@
 from typing import Literal, NotRequired, TypedDict
+
+from ._types import ISO8601Timestamp, Permissions, Snowflake
 from .member import MemberPayload
 from .user import UserPayload
-from ._types import ISO8601Timestamp, Permissions, Snowflake
 
 class ChannelPermissionOverwritePayload(TypedDict):
     id: Snowflake
@@ -95,7 +96,7 @@ class ChannelMentionPayload(TypedDict):
     name: str
 
 class PartialBasePublicChannelPayload(BaseChannelPayload):
-    guild_id: Snowflake
+    guild_id: NotRequired[Snowflake]
     name: str
     parent_id: NotRequired[Snowflake | None]
     rate_limit_per_user: NotRequired[int]

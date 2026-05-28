@@ -109,5 +109,5 @@ class HTTPClient:
                     bucket = self._buckets.get(new_bucket_id)
                     if bucket and bucket.remaining == 0:
                         await asyncio.sleep(bucket.reset_after)
-
-                return await resp.json()
+                
+                if "application/json" in resp.headers.get("Content-Type", ""): return await resp.json()

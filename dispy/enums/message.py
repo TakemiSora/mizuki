@@ -1,5 +1,12 @@
 from enum import IntEnum
 
+__all__ = (
+    "MessageReferenceType",
+    "MessageActivityType",
+    "MessageType",
+    "BaseThemeType"
+)
+
 class MessageReferenceType(IntEnum):
     DEFAULT = 0
     FORWARD = 1
@@ -49,9 +56,6 @@ class MessageType(IntEnum):
     PURCHASE_NOTIFICATION = 44
     POLL_RESULT = 46
     
-class PollLayoutType(IntEnum):
-    DEFAULT = 1
-
 class BaseThemeType(IntEnum):
     UNSET = 0
     DARK = 1

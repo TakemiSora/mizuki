@@ -1,19 +1,32 @@
-import aiohttp
 import asyncio
 import inspect
-from .http import HTTPClient, Path
-from .managers import Users, Messages, Channels, Guilds
-from .gateway import GatewayClient
-from .flags import IntentFlags
-from .errors import Unauthorized, ImproperToken
+from collections.abc import Callable, Coroutine
+from typing import Any
+
+import aiohttp
+
 from .cache import CacheSettings, CacheStorage
-from typing import Callable, Coroutine
+from .errors import ImproperToken, Unauthorized
+from .flags import IntentFlags
+from .gateway import GatewayClient
+from .http import HTTPClient, Path
+from .managers import Channels, Guilds, Messages, Users
 
 __all__ = (
     "Bot",
 )
 
-CoroFunc = Callable[..., Coroutine]
+type CoroFunc = Callable[..., Coroutine[Any, Any, Any]]
+
+class ApplicationCommandCallbackData:
+    __slots__ = (
+        "description",
+        "callback"
+    )
+    
+    def __init__(self, description: str, callback: CoroFunc):
+        self.description = description
+        self.callback = callback
 
 class Bot:
     __slots__ = (
@@ -21,6 +34,7 @@ class Bot:
         "http",
         "gateway",
         "_listeners",
+        "_command_callbacks",
         "storage",
         "users",
         "messages",
@@ -38,6 +52,7 @@ class Bot:
         self.http = HTTPClient()
         self.gateway: GatewayClient | None = None
         self._listeners: dict[str, list[CoroFunc]] = {}
+        self._command_callbacks: dict[str, ApplicationCommandCallbackData] = {}
 
         self.storage = CacheStorage(cache_settings or CacheSettings())
         self.users = Users(self.http, self.storage)
@@ -87,5 +102,12 @@ class Bot:
         def decorator(func: CoroFunc) -> CoroFunc:
             if not inspect.iscoroutinefunction(func): raise TypeError(f"Event listener '{func.__name__}' has to be a coroutine function.")
             self._listeners.setdefault(name or func.__name__, []).append(func)
+            return func
+        return decorator
+        
+    def command(self, *, name: str, description: str):
+        def decorator(func: CoroFunc) -> CoroFunc:
+            if not inspect.iscoroutinefunction(func): raise TypeError(f"Command callback for '{name}:{func.__name__}' has to be a coroutine function.")
+            self._command_callbacks[name] = ApplicationCommandCallbackData(description, func)
             return func
         return decorator

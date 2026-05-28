@@ -1,14 +1,20 @@
 from datetime import datetime
-from ..errors import UnknownChannelType
-from ..payloads.channel import *
-from .snowflake import Snowflake
-from ..enums.channel import ChannelType, VideoQualityMode, SortOrderType, ForumLayoutType
-from ..flags import ChannelFlags
-from .permissions import Permissions, ChannelPermissionOverwrite
-from ..utils import siso, scls
-from .member import Member
-from .user import User
 from typing import cast, overload
+
+from ..enums.channel import (
+    ChannelType,
+    ForumLayoutType,
+    SortOrderType,
+    VideoQualityMode,
+)
+from ..errors import UnknownChannelType
+from ..flags import ChannelFlags
+from ..payloads.channel import *
+from ..utils import scls, siso, sint
+from .member import Member
+from .permissions import ChannelPermissionOverwrite, Permissions
+from .snowflake import Snowflake
+from .user import User
 
 __all__ = (
     "ThreadMetaData",
@@ -17,6 +23,8 @@ __all__ = (
     "GuildChannel",
     "ThreadChannel",
     "PrivateChannel",
+    "PartialGuildChannel",
+    "PartialThreadChannel",
     "ChannelMention",
     "Channel"
 )
@@ -115,7 +123,9 @@ class BasePublicChannel(BaseChannel):
 
     def __init__(self, data: BasePublicChannelPayload, guild_id: int | None = None):
         super().__init__(data)
-        self.guild_id = Snowflake._from_str(str(guild_id) or data.get("guild_id"))
+        self.guild_id = Snowflake._from_str(str(guild_id) if guild_id is not None else data.get("guild_id"))
+        if self.guild_id is None:
+            raise ValueError(f"A PublicChannel object formed without any guild_id.")
         self.name = data["name"]
         self.parent_id = Snowflake._from_str(data.get("parent_id"))
         self.rate_limit_per_user = data.get("rate_limit_per_user")
@@ -123,7 +133,7 @@ class BasePublicChannel(BaseChannel):
         self.user_limit = data.get("user_limit")
         self.rtc_region = data.get("rtc_region")
         self.video_quality_mode = scls(VideoQualityMode, data.get("video_quality_mode"))
-        self.permissions = scls(Permissions, data.get("permissions"))
+        self.permissions = scls(Permissions, sint(data.get("permissions")))
 
 class GuildChannel(BasePublicChannel):
     __slots__ = (
@@ -183,7 +193,52 @@ class PrivateChannel(BaseChannel):
         super().__init__(data)
         self.recipients = [User(u) for u in data["recipients"]]
         self.type = ChannelType(data["type"])
-
+        
+class PartialBasePublicChannel(BaseChannel):
+    __slots__ = (
+        "guild_id",
+        "name",
+        "parent_id",
+        "rate_limit_per_user",
+        "permissions"
+    )
+    
+    def __init__(self, data: PartialBasePublicChannelPayload, guild_id: int | None = None):
+        super().__init__(data)
+        self.guild_id = Snowflake._from_str(str(guild_id) if guild_id is not None else data.get("guild_id"))
+        if self.guild_id is not None:
+            raise ValueError("A PartialPublicChannel object was formed without guild_id.")
+        self.name = data["name"]
+        self.parent_id = data.get("parent_id")
+        self.rate_limit_per_user = data.get("rate_limit_per_user")
+        self.permissions = scls(Permissions, sint(data.get("permissions")))
+        
+class PartialGuildChannel(PartialBasePublicChannel):
+    __slots__ = (
+        "type",
+        "topic",
+        "position",
+        "nsfw"
+    )
+    
+    def __init__(self, data: PartialGuildChannelPayload, guild_id: int | None):
+        super().__init__(data, guild_id)
+        self.type = ChannelType(data["type"])
+        self.topic = data.get("topic")
+        self.position = data["position"]
+        self.nsfw = data.get("nsfw", False)
+        
+class PartialThreadChannel(PartialBasePublicChannel):
+    __slots__ = (
+        "type",
+        "thread_metadata"
+    )
+    
+    def __init__(self, data: PartialThreadPayload, guild_id: int | None = None):
+        super().__init__(data, guild_id)
+        self.type = ChannelType(data["type"])
+        self.thread_metadata = ThreadMetaData(data["thread_metadata"])
+        
 class ChannelMention:
     __slots__ = (
         "id",
@@ -199,15 +254,25 @@ class ChannelMention:
         self.name = data["name"]
 
 @overload
-def parse_channel_payload(data: GuildChannelPayload, guild_id: int | None = None) -> GuildChannel: ...
+def parse_channel_payload(data: GuildChannelPayload, guild_id: int | None = None, *, partial: Literal[False] = False) -> GuildChannel: ...
 
 @overload
-def parse_channel_payload(data: ThreadPayload, guild_id: int | None = None) -> ThreadChannel: ...
+def parse_channel_payload(data: ThreadPayload, guild_id: int | None = None, *, partial: Literal[False] = False) -> ThreadChannel: ...
 
 @overload
-def parse_channel_payload(data: PrivateChannelPayload) -> PrivateChannel: ...
+def parse_channel_payload(data: PrivateChannelPayload, *, partial: bool = False) -> PrivateChannel: ...
+    
+@overload
+def parse_channel_payload(data: PartialGuildChannelPayload, guild_id: int | None = None, *, partial: Literal[True]) -> PartialGuildChannel: ...
+    
+@overload
+def parse_channel_payload(data: PartialThreadPayload, guild_id: int | None = None, *, partial: Literal[True]) -> PartialThreadChannel: ...
 
-def parse_channel_payload(data: GuildChannelPayload | ThreadPayload | PrivateChannelPayload, guild_id: int | None = None) -> GuildChannel | ThreadChannel | PrivateChannel:
+def parse_channel_payload(
+    data: GuildChannelPayload | ThreadPayload | PrivateChannelPayload | PartialGuildChannelPayload | PartialThreadPayload,
+    guild_id: int | None = None,
+    *, partial: bool = False
+) -> GuildChannel | ThreadChannel | PrivateChannel | PartialGuildChannel | PartialThreadChannel:
     match ChannelType(data["type"]):
         case ChannelType.DM:
             return PrivateChannel(cast(PrivateChannelPayload, data))
@@ -216,7 +281,7 @@ def parse_channel_payload(data: GuildChannelPayload | ThreadPayload | PrivateCha
             | ChannelType.PUBLIC_THREAD
             | ChannelType.PRIVATE_THREAD
         ):
-            return ThreadChannel(cast(ThreadPayload, data), guild_id)
+            return PartialThreadChannel(cast(PartialThreadPayload, data), guild_id) if partial else ThreadChannel(cast(ThreadPayload, data), guild_id)
         case (
             ChannelType.GUILD_TEXT
             | ChannelType.GUILD_VOICE
@@ -228,8 +293,8 @@ def parse_channel_payload(data: GuildChannelPayload | ThreadPayload | PrivateCha
             | ChannelType.GUILD_FORUM
             | ChannelType.GUILD_MEDIA
         ):
-            return GuildChannel(cast(GuildChannelPayload, data), guild_id)
+            return PartialGuildChannel(cast(PartialGuildChannelPayload, data), guild_id) if partial else GuildChannel(cast(GuildChannelPayload, data), guild_id)
         case _:
-            raise UnknownChannelType(data["type"])
+            raise UnknownChannelType(f"Recieved unknown channel type '{data["type"]}'")
 
 Channel = ThreadChannel | PrivateChannel | GuildChannel

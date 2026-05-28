@@ -8,7 +8,6 @@ from ..enums.message import (
     MessageActivityType,
     MessageReferenceType,
     MessageType,
-    PollLayoutType,
 )
 from ..flags import AttachmentFlags, MessageFlags
 from ..payloads.message import (
@@ -245,7 +244,7 @@ class Poll:
         self.answers = [PollAnswer(p) for p in data["answers"]]
         self.expiry = siso(data["expiry"])
         self.allow_multiselect= data["allow_multiselect"]
-        self.layout_type = PollLayoutType(data["layout_type"])
+        self.layout_type = data["layout_type"]
         self.results = scls(PollResult, data.get("results"))
 
 class SharedClientTheme:

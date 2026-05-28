@@ -1,15 +1,17 @@
-from .asset import Asset
-from ..flags import UserFlags
-from ..enums.user import PremiumType
-from .collectibles import Nameplate
-from .primary_guild import UserPrimaryGuild
-from .avatar_decoration import AvatarDecoration
-from .snowflake import Snowflake
 from datetime import datetime
+
+from ..enums.user import PremiumType
+from ..flags import UserFlags
 from ..payloads.user import PartialUserPayload, UserPayload
 from ..utils import scls
+from .asset import Asset
+from .avatar_decoration import AvatarDecoration
+from .collectibles import Nameplate
+from .primary_guild import UserPrimaryGuild
+from .snowflake import Snowflake
 
 __all__ = (
+    "PartialUser",
     "User",
 )
 

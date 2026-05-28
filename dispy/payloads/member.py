@@ -1,8 +1,9 @@
-from typing import NotRequired, Required, TypedDict
-from .collectibles import CollectiblePayload
-from .avatar_decoration import AvatarDecorationPayload
-from .user import UserPayload
+from typing import Required, TypedDict
+
 from ._types import CDNHash, ISO8601Timestamp, Snowflake
+from .avatar_decoration import AvatarDecorationPayload
+from .collectibles import CollectiblePayload
+from .user import UserPayload
 
 class PartialMemberPayload(TypedDict, total=False):
     nick: str | None
@@ -19,6 +20,6 @@ class PartialMemberPayload(TypedDict, total=False):
     collectibles: CollectiblePayload
     
 class MemberPayload(PartialMemberPayload):
-    user: NotRequired[UserPayload]
+    user: UserPayload
     deaf: bool
     mute: bool

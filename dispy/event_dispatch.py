@@ -1,31 +1,22 @@
 from __future__ import annotations
-
 import asyncio
-from typing import TYPE_CHECKING, Any
-from .utils import scls
+from typing import Any, TYPE_CHECKING
 
+from .enums.channel import ChannelType
+from .enums.interaction import InteractionType
+from .objects.channel import ThreadChannel, ThreadMember, parse_channel_payload
+from .objects.guild import Guild, UnavailableGuild, parse_guild_payload
+from .objects.interaction import Interaction
 from .payloads.channel import (
-    PrivateChannelPayload,
     GuildChannelPayload,
+    PrivateChannelPayload,
     ThreadCreatePayload,
     ThreadDeletePayload,
-    ThreadPayload
+    ThreadPayload,
 )
-from .objects.channel import (
-    ThreadChannel,
-    ThreadMember,
-    parse_channel_payload
-)
-from .enums.channel import ChannelType
-from .payloads.guild import (
-    GuildPayload,
-    UnavailableGuildPayload,
-)
-from .objects.guild import (
-    Guild,
-    UnavailableGuild,
-    parse_guild_payload
-)
+from .payloads.guild import GuildPayload, UnavailableGuildPayload
+from .payloads.interaction import InteractionPayload
+from .utils import scls
 
 if TYPE_CHECKING:
     from .bot import Bot
@@ -49,11 +40,16 @@ class EventDispatcher:
                 "THREAD_CREATE": self._handle_thread_create,
                 "THREAD_UPDATE": self._handle_thread_update,
                 "THREAD_DELETE": self._handle_thread_delete,
+            "INTERACTION_CREATE": self._handle_interaction_create
         }
 
     async def _dispatch(self, key: str, *args: Any):
         for f in self.bot._listeners.get(key, []):
             asyncio.create_task(f(*args))
+            
+    async def _dispatch_commands(self, name: str, interaction: Interaction, *args: Any):
+        command = self.bot._command_callbacks.get(name)
+        if command: asyncio.create_task(command.callback(interaction, *args))
             
     async def _handle_guild_create(self, data: GuildPayload | UnavailableGuildPayload):
         guild = self.bot.storage.update_guilds(g) if isinstance((g := parse_guild_payload(data)), Guild) else g
@@ -97,3 +93,12 @@ class EventDispatcher:
         type = ChannelType(data["type"])
         self.bot.storage.remove_channel(id)
         await self._dispatch("on_thread_delete", id, guild_id, parent_id, type)
+        
+    async def _handle_interaction_create(self, data: InteractionPayload):
+        guild = self.bot.guilds.get(int(g)) if (g := data.get("guild_id")) else None
+        interaction = Interaction(self.bot.http, data, guild=guild)
+        match interaction.type:
+            case InteractionType.APPLICATION_COMMAND:
+                if interaction.data: await self._dispatch_commands(interaction.data.name, interaction)
+
+        await self._dispatch("on_interaction_create", interaction)
