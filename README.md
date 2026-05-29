@@ -12,5 +12,9 @@ bot = dispy.Bot(
      intents=dispy.IntentFlags.standard()
 )
 
+@bot.command(name="ping", description="Send a ping to the bot")
+async def ping(interaction: dispy.Interaction):
+    await interaction.response.send_response("Pong!")
+
 bot.run("TOKEN-HERE")
 ```
