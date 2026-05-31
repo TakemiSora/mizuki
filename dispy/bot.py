@@ -99,7 +99,7 @@ class Bot:
 
     def run(self, token: str) -> None:
         """
-        A synchronous method to start a event loop and run the :meth:`Bot.start` method.
+        A synchronous method to start a event loop and run the :meth:`Bot.start()` method.
         
         Parameters
         ----------

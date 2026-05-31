@@ -22,14 +22,14 @@ class HTTPException(Exception):
         The error code of the HTTP error.
     message : :class:`int`
         The message of the HTTP error
-    
-    Attributes
-    ----------
-    status : :class:`int`
-        The error code of the HTTP error.
-    message : :class:`int`
-        The message of the HTTP error.
     """
+
+    status: int
+    "The error code of the HTTP error."
+
+    message: str
+    "The message of the HTTP error."
+
     def __init__(self, status: int, message: str):
         self.status = status
         self.message = message
@@ -45,122 +45,42 @@ class GatewayError(Exception):
         The error code of the HTTP error.
     message : :class:`int`
         The message of the HTTP error
-    
-    Attributes
-    ----------
-    status : :class:`int`
-        The error code of the HTTP error.
-    message : :class:`int`
-        The message of the HTTP error.
     """
+
+    status: int
+    "The error code of the HTTP error."
+
+    message: str
+    "The message of the HTTP error."
+
     def __init__(self, status: int, message: str):
         self.status = status
         self.message = message
         super().__init__(f"Gateway Closed with {status}: {message}")
 
 class NotFound(HTTPException):
-    """
-    Raised when the resource you tried to access was not found.
-
-    Parameters
-    ----------
-    status : :class:`int`
-        The error code of the HTTP error.
-    message : :class:`int`
-        The message of the HTTP error
-    
-    Attributes
-    ----------
-    status : :class:`int`
-        The error code of the HTTP error.
-    message : :class:`int`
-        The message of the HTTP error.
-    """
-    pass
+    "Raised when the resource you tried to access was not found."
 
 class Forbidden(HTTPException):
-    """
-    Raised when you are forbidden from the resource you tried to access.
-
-    Parameters
-    ----------
-    status : :class:`int`
-        The error code of the HTTP error.
-    message : :class:`int`
-        The message of the HTTP error
-    
-    Attributes
-    ----------
-    status : :class:`int`
-        The error code of the HTTP error.
-    message : :class:`int`
-        The message of the HTTP error.
-    """
-    pass
+    "Raised when you are forbidden from the resource you tried to access."
 
 class Unauthorized(HTTPException):
-    """
-    Raised when the server could not authenticate your identity.
-
-    Parameters
-    ----------
-    status : :class:`int`
-        The error code of the HTTP error.
-    message : :class:`int`
-        The message of the HTTP error
-    
-    Attributes
-    ----------
-    status : :class:`int`
-        The error code of the HTTP error.
-    message : :class:`int`
-        The message of the HTTP error.
-    """
-    pass
+    "Raised when the server could not authenticate your identity."
 
 class ImproperToken(HTTPException):
-    """
-    Raised when an improper token was passed when calling :meth:`Bot.start <dispy.bot.Bot.start>`.
-
-    Parameters
-    ----------
-    status : :class:`int`
-        The error code of the HTTP error.
-    message : :class:`int`
-        The message of the HTTP error
+    "Raised when an improper token was passed when calling :meth:`Bot.start() <dispy.bot.Bot.start>`."
     
-    Attributes
-    ----------
-    status : :class:`int`
-        The error code of the HTTP error.
-    message : :class:`int`
-        The message of the HTTP error.
-    """
-    pass
-
 class UnknownChannelType(Exception):
-    """
-    Raised when the channel parser could not parse the channel you received.
-    """
-    pass
+    "Raised when the channel parser could not parse the channel you received."
         
 class UnknownInteractionType(Exception):
-    """
-    Raised when the interaction parser could not parse the interaction you received.
-    """
-    pass
+    "Raised when the interaction parser could not parse the interaction you received."
 
 class InteractionResponded(Exception):
-    """
-    Raised when you attempt to respond to an already responded interaction.
-    """
-    pass
+    "Raised when you attempt to respond to an already responded interaction."
 
 class InteractionNotResponded(Exception):
-    """
-    Raised when you attempt to send a followup to an interaction you haven't responded to yet.
-    """
-    pass
+    "Raised when you attempt to send a followup to an interaction you haven't responded to yet."
 
 class _RateLimitedRetry(Exception):
     def __init__(self, data: dict[str, Any], retry_after: float, limit_scope: str | None, bucket_id: str | None):

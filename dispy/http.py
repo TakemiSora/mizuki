@@ -115,7 +115,7 @@ class HTTPClient:
         path : :class:`Path <dispy.http.Path>`
             The Path metadata for the request.
         **kwargs : :class:`Any <typing.Any>`
-            The keyword arguments for the request. These are passed directly to :meth:`aiohttp.ClientSession.request` method.
+            The keyword arguments for the request. These are passed directly to :meth:`aiohttp.ClientSession.request()` method.
 
         Returns
         -------
