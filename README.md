@@ -26,4 +26,4 @@ There is no current hosted documentation (yet), but a local version of the docum
 - Clone the repository.
 - Open Terminal in `docs/` folder.
 - For linux/mac, do `make html`. For windows, do `make.bat` and select HTML.
-- Open `docs/build/html/index.js`.
+- Open `docs/build/html/index.html`.
