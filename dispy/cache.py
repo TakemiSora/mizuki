@@ -122,7 +122,9 @@ class CacheSettings:
         self.max_channels_store = max_channels_store
         self.max_guilds_store = max_guilds_store
 
-class _CacheStorage:
+class CacheStorage:
+    ":meta private:"
+    
     __slots__ = (
         "settings",
         "users",

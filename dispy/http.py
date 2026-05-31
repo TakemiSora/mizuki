@@ -43,6 +43,18 @@ class Path:
     
     url: str
     "The formatted URL endpoint to make the request to."
+
+    channel_id: str | None
+    ":meta private:"
+
+    guild_id: str | None
+    ":meta private:"
+
+    webhook_id: str | None
+    ":meta private:"
+
+    webhook_token: str | None
+    ":meta private:"
     
     __slots__ = (
         "method",
@@ -66,10 +78,11 @@ class Path:
         self.webhook_token = parameters.get("webhook_token")
 
     @property
-    def route_key(self) -> str:
+    def _route_key(self) -> str:
         return f"{self.method}:{self.url}+{"+".join(str(val) for val in [self.channel_id, self.guild_id, self.webhook_id, self.webhook_token])}"
 
 class RateLimitBucket:
+    ":meta private:"
     __slots__ = (
         "remaining",
         "reset_after",
@@ -137,7 +150,7 @@ class HTTPClient:
         
         _log.debug("Attempting to make request %s: %s", path.method, path.url)
         
-        bucket_id = self._buckets_keys.get(path.route_key)
+        bucket_id = self._buckets_keys.get(path._route_key)
         bucket = self._buckets.get(bucket_id) if bucket_id else None
 
         try:
@@ -151,7 +164,7 @@ class HTTPClient:
                         if new_bucket_id not in self._buckets:
                             self._buckets[new_bucket_id] = RateLimitBucket(1, 0)
                         self._buckets[new_bucket_id].update_bucket(resp)
-                        self._buckets_keys[path.route_key] = new_bucket_id
+                        self._buckets_keys[path._route_key] = new_bucket_id
 
                     if resp.status == 429:
                         data = await resp.json()

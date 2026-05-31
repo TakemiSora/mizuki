@@ -3,19 +3,26 @@ from .objects.message import Message
 from .objects.guild import Guild
 from .objects.channel import GuildChannel, PrivateChannel, ThreadChannel, parse_channel_payload
 from .http import HTTPClient, Path
-from .cache import _CacheStorage
+from .cache import CacheStorage
 
-class _BaseManager:
+class BaseManager:
+    ":meta private:"
     __slots__ = (
         "_http",
         "_cache_storage"
     )
 
-    def __init__(self, client: HTTPClient, cache: _CacheStorage):
+    def __init__(self, client: HTTPClient, cache: CacheStorage):
         self._http = client
         self._cache_storage = cache
 
-class UserManager(_BaseManager):
+class UserManager(BaseManager):
+    """
+    Manager used to fetch :class:`User <dispy.objects.user.User>` objects.
+
+    :meta public:
+    """
+
     __slots__ = ()
 
     def get(self, user_id: int) -> User | None:
@@ -89,7 +96,13 @@ class UserManager(_BaseManager):
         """
         return self.get(user_id) or await self.fetch(user_id)
 
-class MessageManager(_BaseManager):
+class MessageManager(BaseManager):
+    """"
+    Manager used to fetch :class:`Message <dispy.objects.message.Message>` objects.
+    
+    :meta public:
+    """
+
     __slots__ = ()
 
     def get(self, message_id: int) -> Message | None:
@@ -168,7 +181,13 @@ class MessageManager(_BaseManager):
         """
         return self.get(message_id) or await self.fetch(channel_id, message_id)
 
-class ChannelManager(_BaseManager):
+class ChannelManager(BaseManager):
+    """
+    Manager used to fetch :class:`PrivateChannel <dispy.objects.channel.PrivateChannel>`, :class:`GuildChannel <dispy.objects.channel.GuildChannel>` or :class:`ThreadChannel <dispy.objects.channel.ThreadChannel>` objects.
+    
+    :meta public:
+    """
+    
     __slots__ = ()
 
     def get(self, channel_id: int) -> ThreadChannel | GuildChannel | PrivateChannel | None:
@@ -259,7 +278,13 @@ class ChannelManager(_BaseManager):
         return self.get(channel_id) or await self.fetch(channel_id)
 
 
-class GuildManager(_BaseManager):
+class GuildManager(BaseManager):
+    """
+    Manager used to fetch :class:`Guild <dispy.objects.guild.Guild>` objects.
+    
+    :meta public:
+    """
+
     __slots__ = ()
 
     def get(self, guild_id: int) -> Guild | None:

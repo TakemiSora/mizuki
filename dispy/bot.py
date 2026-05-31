@@ -6,7 +6,7 @@ from typing import Any
 
 import aiohttp
 
-from .cache import CacheSettings, _CacheStorage
+from .cache import CacheSettings, CacheStorage
 from .enums.event_dispatch import Event
 from .errors import ImproperToken, Unauthorized
 from .flags import IntentFlags
@@ -22,7 +22,9 @@ _log = logging.getLogger(__name__)
 
 type CoroFunc = Callable[..., Coroutine[Any, Any, Any]]
 
-class _ApplicationCommandCallbackData:
+class ApplicationCommandCallbackData:
+    ":meta private:"
+
     __slots__ = (
         "description",
         "callback"
@@ -87,9 +89,9 @@ class Bot:
         self.intents = intents
         self.http = HTTPClient()
         self._listeners: dict[str, list[CoroFunc]] = {}
-        self._command_callbacks: dict[str, _ApplicationCommandCallbackData] = {}
+        self._command_callbacks: dict[str, ApplicationCommandCallbackData] = {}
 
-        self._storage = _CacheStorage(cache_settings)
+        self._storage = CacheStorage(cache_settings)
         self.users = UserManager(self.http, self._storage)
         self.messages = MessageManager(self.http, self._storage)
         self.channels = ChannelManager(self.http, self._storage)
@@ -224,6 +226,6 @@ class Bot:
         """
         def decorator(func: CoroFunc) -> CoroFunc:
             if not inspect.iscoroutinefunction(func): raise TypeError(f"Command callback for '{name}:{func.__name__}' has to be a coroutine function.")
-            self._command_callbacks[name] = _ApplicationCommandCallbackData(description, func)
+            self._command_callbacks[name] = ApplicationCommandCallbackData(description, func)
             return func
         return decorator
