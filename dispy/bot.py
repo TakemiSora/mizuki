@@ -82,7 +82,7 @@ class Bot:
     )
     
     def __init__(
-        self,
+        self, *,
         intents: IntentFlags,
         cache_settings: CacheSettings = CacheSettings()
     ):

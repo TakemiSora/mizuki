@@ -4,15 +4,34 @@ from ..enums.sticker import StickerFormatType
 
 __all__ = (
     "Asset",
+    "MediaProxyAsset"
 )
 
 class Asset:
+    """
+    Represents a Discord CDN Asset.
+    
+    Parameters
+    ----------
+    url : :class:`str`
+        The URL of the Asset.
+    animated : :class:`bool`
+        Represents if an Asset is animated.
+    """
+    
+    url: str
+    "The URL of the Asset."
+    
+    animated: bool
+    "Represents if an Asset is animated."
+    
     __slots__ = (
         "url",
         "animated"
     )
     
     CDN_URL = "https://cdn.discordapp.com"
+    "The base CDN URL."
 
     def __init__(self, url: str, animated: bool):
         self.url = url
@@ -168,9 +187,24 @@ class Asset:
         return None
         
 class MediaProxyAsset:
+    """
+    Represents a discord MediaProxyAsset.
+    
+    Parameters
+    ----------
+    url : :class:`str`
+        The URL of the Asset.
+    """
+    
+    url: str
+    "The URL of the Asset."
+    
     __slots__ = (
         "url",
     )
+    
+    MEDIA_URL = "https://media.discordapp.net"
+    "The base URL."
     
     def __init__(self, url: str):
         self.url = url
@@ -178,10 +212,11 @@ class MediaProxyAsset:
     @classmethod
     def _from_image_id(cls, image_id: str | None) -> Self | None:
         if image_id is not None:
-            return cls(f"https://media.discordapp.net/{image_id}")
+            return cls(f"{cls.MEDIA_URL}/{image_id}")
         return None
         
 def activity_asset_parse(application_id: int | None, avatar_hash: str | None) -> MediaProxyAsset | Asset | None:
+    ":meta private:"
     if avatar_hash is not None:
         if avatar_hash.startswith("mp:"):
             return MediaProxyAsset._from_image_id(avatar_hash[3:])

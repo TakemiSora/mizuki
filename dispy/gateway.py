@@ -20,21 +20,10 @@ _log = logging.getLogger(__name__)
 class GatewayClient:
     """
     The Client that is used to connect and recieve events over gateway. This should **not** be constructed by the user.
-
-    Parameters
-    ----------
-    bot : :class:`Bot <dispy.bot.Bot>`
-        The bot instance that is being connected to the gateway.
-    session : :class:`aiohttp.ClientSession`
-        The session that will be used to connect to the gateway.
-    token : :class:`str`
-        The bot token used to authenticate with discord. Do not prefix this, the library will handle prefixing.        
-    intents : :class:`IntentFlags <dispy.flags.IntentFlags>`
-        The IntentFlags passed to the gateway.
     """
     
     token: str
-    "The bot token used to authenticate with discord. Do not prefix this, the library will handle prefixing."
+    "The bot token used to authenticate with discord."
     
     intents: IntentFlags
     "The IntentFlags passed to the gateway."

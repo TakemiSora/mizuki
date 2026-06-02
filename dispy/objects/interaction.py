@@ -37,6 +37,7 @@ from .snowflake import Snowflake
 from .user import User
 
 __all__ = (
+    "ResolvedData",
     "Interaction",
 )
 
@@ -332,7 +333,7 @@ class Interaction:
         self.data = parse_interaction_data(self.type, i) if (i := data.get("data")) is not None else None
         self.guild = guild
         self.guild_id = Snowflake._from_str(data.get("guild_id"))
-        self.channel = parse_channel_payload(c, partial=False) if (c := data.get("channel")) is not None else None
+        self.channel = parse_channel_payload(c, partial=True) if (c := data.get("channel")) is not None else None
         self.channel_id = Snowflake._from_str(data.get("channel_id"))
         self.member = scls(Member, data.get("member"), guild_id=self.guild_id)
         self.user = scls(User, data.get("user"))

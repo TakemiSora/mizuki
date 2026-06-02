@@ -20,6 +20,10 @@ extensions = [
     'sphinx.ext.intersphinx',
 ]
 
+autodoc_default_options = {
+    'inherited-members': True,
+}
+
 templates_path = ['_templates']
 exclude_patterns = []
 
@@ -31,7 +35,9 @@ intersphinx_mapping = {
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
+#html_theme = 'sphinx_nefertiti'
 html_theme = 'shibuya'
+
 html_static_path = ['_static']
 
 import os
@@ -39,3 +45,4 @@ import sys
 sys.path.insert(0, os.path.abspath('../../'))
 
 autodoc_member_order = 'bysource'
+add_module_names = False

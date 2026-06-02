@@ -12,7 +12,7 @@ class ChannelPermissionOverwritePayload(TypedDict):
 
 class ThreadMetaDataPayload(TypedDict):
     archived: bool
-    auto_archive_duration: int
+    auto_archive_duration: Literal[60, 1440, 4320, 10080]
     archive_timestamp: ISO8601Timestamp
     locked: bool
     invitable: NotRequired[bool]
@@ -47,10 +47,6 @@ class BasePublicChannelPayload(BaseChannelPayload):
     name: str
     parent_id: NotRequired[Snowflake | None]
     rate_limit_per_user: NotRequired[int]
-    bitrate: NotRequired[int]
-    user_limit: NotRequired[int]
-    rtc_region: NotRequired[str | None]
-    video_quality_mode: NotRequired[int]
     permissions: NotRequired[Permissions]
 
 class GuildChannelPayload(BasePublicChannelPayload):
@@ -65,6 +61,10 @@ class GuildChannelPayload(BasePublicChannelPayload):
     default_reaction_emoji: NotRequired[DefaultReactionPayload | None]
     default_sort_order: NotRequired[int | None]
     default_forum_layout: NotRequired[int]
+    bitrate: NotRequired[int]
+    user_limit: NotRequired[int]
+    rtc_region: NotRequired[str | None]
+    video_quality_mode: NotRequired[int]
 
 class PrivateChannelPayload(BaseChannelPayload):
     type: Literal[1]
@@ -94,20 +94,13 @@ class ChannelMentionPayload(TypedDict):
     guild_id: Snowflake
     type: Literal[0, 2, 5, 10, 11, 13, 14, 15, 16]
     name: str
-
-class PartialBasePublicChannelPayload(BaseChannelPayload):
-    guild_id: NotRequired[Snowflake]
-    name: str
-    parent_id: NotRequired[Snowflake | None]
-    rate_limit_per_user: NotRequired[int]
-    permissions: NotRequired[Permissions]
         
-class PartialGuildChannelPayload(PartialBasePublicChannelPayload):
+class PartialGuildChannelPayload(BasePublicChannelPayload):
     type: Literal[0, 2, 4, 5, 13, 14, 15]
     topic: NotRequired[str | None]
     position: int
     nsfw: NotRequired[bool]
 
-class PartialThreadPayload(PartialBasePublicChannelPayload):
+class PartialThreadPayload(BasePublicChannelPayload):
     type: Literal[10, 11, 12]
     thread_metadata: ThreadMetaDataPayload

@@ -2,8 +2,6 @@ from __future__ import annotations
 from typing import Literal, Required, TypedDict
 from ._types import UNIMPLEMENTED, Permissions, Snowflake
 from .channel import (
-    GuildChannelPayload,
-    ThreadPayload,
     PartialGuildChannelPayload,
     PartialThreadPayload,
     PrivateChannelPayload,
@@ -49,7 +47,7 @@ class InteractionPayload(TypedDict, total=False):
     data: InteractionData
     guild: GuildPayload
     guild_id: Snowflake
-    channel: GuildChannelPayload | ThreadPayload | PrivateChannelPayload
+    channel: PartialGuildChannelPayload | PartialThreadPayload | PrivateChannelPayload
     channel_id: Snowflake
     member: MemberPayload
     user: UserPayload

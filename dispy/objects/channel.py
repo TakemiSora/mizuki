@@ -1,5 +1,5 @@
-from datetime import datetime
-from typing import cast, overload
+from datetime import datetime, timedelta
+from typing import cast, overload, Literal
 
 from ..enums.channel import (
     ChannelType,
@@ -9,7 +9,19 @@ from ..enums.channel import (
 )
 from ..errors import UnknownChannelType
 from ..flags import ChannelFlags
-from ..payloads.channel import *
+from ..payloads.channel import (
+    ThreadMetaDataPayload,
+    ThreadMemberPayload,
+    ForumTagPayload,
+    BaseChannelPayload,
+    BasePublicChannelPayload,
+    GuildChannelPayload,
+    ThreadPayload,
+    PartialGuildChannelPayload,
+    PartialThreadPayload,
+    PrivateChannelPayload,
+    ChannelMentionPayload
+)
 from .._utils import scls, siso, sint
 from .member import Member
 from .permissions import ChannelPermissionOverwrite, Permissions
@@ -30,6 +42,28 @@ __all__ = (
 )
 
 class ThreadMetaData:
+    """
+    Represents the metadata of a thread.
+    """
+    
+    archived: bool
+    "Represents if the thread is archived."
+    
+    auto_archive_duration: timedelta
+    "The amount of time before the thread is auto-archived. Can only be 60, 1440, 4320, 10080 in terms of minutes."
+    
+    archive_timestamp: datetime
+    "Represents when the thread's archive status was last changed, used for calculating recent activity"
+    
+    locked: bool
+    "Represents if the thread is locked."
+    
+    invitable: bool
+    "Whether non-moderators can add other non-moderators to a thread, only available on Private Threads."
+    
+    create_timestamp: datetime | None
+    "Represents when the thread was created. Will be ``None`` for threads older than 2022-01-09."
+    
     __slots__ = (
         "archived",
         "auto_archive_duration",
@@ -41,32 +75,74 @@ class ThreadMetaData:
     
     def __init__(self, data: ThreadMetaDataPayload):
         self.archived = data["archived"]
-        self.auto_archive_duration = data["auto_archive_duration"]
+        self.auto_archive_duration = timedelta(minutes=data["auto_archive_duration"])
         self.archive_timestamp = datetime.fromisoformat(data["archive_timestamp"])
         self.locked = data["locked"]
         self.invitable = data.get("invitable", False)
         self.create_timestamp = siso(data.get("create_timestamp"))
         
 class ThreadMember:
+    """
+    Represents information about an user that has joined a thread.
+    """
+    
+    id: Snowflake | None
+    "The ID of the :class:`Thread <dispy.objects.channel.ThreadChannel>`. Omitted in :attr:`GUILD_CREATE <dispy.enums.event_dispatch.Event.GUILD_CREATE>`."
+    
+    user_id: Snowflake | None
+    "The ID of the :class:`User <dispy.objects.user.User>`. Omitted in :attr:`GUILD_CREATE <dispy.enums.event_dispatch.Event.GUILD_CREATE>`."
+
+    join_timestamp: datetime
+    "Time the user last joined the thread."
+    
+    notifications: bool
+    "Represents if the :class:`User <dispy.objects.user.User>` has notifications enabled."
+    
+    member: Member | None
+    "The Member Object for the user in the :class:`Guild <dispy.objects.guild.Guild>`. Omitted in :attr:`GUILD_CREATE <dispy.enums.event_dispatch.Event.GUILD_CREATE>`."
+    
     __slots__ = (
         "id",
         "user_id",
         "join_timestamp",
-        "flags",
+        "notifications",
         "member"
     )
     
     def __init__(self, data: ThreadMemberPayload, guild_id: int | None = None, user_id: int | None = None):
-        self.id = data.get("id")
-        self.user_id = data.get("user_id")
+        self.id = Snowflake._from_str(data.get("id"))
+        self.user_id = Snowflake._from_str(data.get("user_id"))
         self.join_timestamp = datetime.fromisoformat(data["join_timestamp"])
-        self.flags = data["flags"]
+        self.notifications = bool(data["flags"])
         if guild_id and user_id:
             self.member = scls(Member, data.get("member"), guild_id=guild_id, user_id=user_id)
         else:
             self.member = None
 
 class ForumTag:
+    """
+    Represents a Forum Tag which can be applied to Channels of types :attr:`GUILD_FORUM <dispy.enums.channel.ChannelType.GUILD_FORUM>` and :attr:`GUILD_MEDIA <dispy.enums.channel.ChannelType.GUILD_MEDIA>`.
+    
+    .. note::
+    
+        Atleast one of :attr:`emoji_id <dispy.objects.channel.ForumTag.emoji_id>` and :attr:`emoji_name <dispy.objects.channel.ForumTag.emoji_name>` will always be present.
+    """
+    
+    id: Snowflake
+    "The ID of the Tag."
+    
+    name: str
+    "The name of the tag. (0-20 characters long)"
+    
+    moderated: bool
+    "Whether this Tag can only be added to or removed from valid ChannelType by a member with the :attr:`MANAGE_THREADS <dispy.objects.permissions.Permissions.MANAGE_THREADS>` permission."
+    
+    emoji_id: Snowflake | None
+    "The ID of a :class:`Guild <dispy.objects.guild.Guild>`’s custom emoji."
+    
+    emoji_name: str | None
+    "The unicode character of the emoji."
+    
     __slots__ = (
         "id",
         "name",
@@ -83,6 +159,19 @@ class ForumTag:
         self.emoji_name = data["emoji_name"]
 
 class BaseChannel:
+    
+    id: Snowflake
+    "The ID of the Channel."
+    
+    last_message_id: Snowflake | None
+    "The ID of the last message (or :class:`Thread <dispy.objects.channel.ThreadChannel>` for :attr:`GUILD_FORUM <dispy.enums.channel.ChannelType.GUILD_FORUM>` and :attr:`GUILD_MEDIA <dispy.enums.channel.ChannelType.GUILD_MEDIA>`) that was sent in that channel. May or may not point to a valid message."
+    
+    flags: ChannelFlags
+    "The flags of the Channel."
+    
+    last_pin_timestamp: datetime | None
+    "The timestamp when the last pinned message was pinned. May be ``None`` if no messages are pinned."
+    
     __slots__ = (
         "id",
         "last_message_id",
@@ -106,36 +195,107 @@ class BaseChannel:
     
     @property
     def created_at(self) -> datetime:
+        """
+        The timestamp at which the Channel was created.
+        
+        Returns
+        -------
+        :class:`datetime <datetime.datetime>`
+        """
         return self.id.created_at
 
 class BasePublicChannel(BaseChannel):
+    guild_id: Snowflake
+    "The :class:`Guild <dispy.objects.guild.Guild>` ID of the Channel."
+    
+    name: str
+    "The name of the channel"
+    
+    rate_limit_per_user: int | None
+    "The amount of time an user has to wait before sending a message (Slowmode). Bots remain unaffected."
+    
+    permissions: Permissions | None
+    "Computed permissions for the invoking user in the channel, including overwrites, only included when part of the :class:`Resolved Data <dispy.objects.interaction.ResolvedData>` received on an :class:`Interaction <dispy.objects.interaction.Interaction>`. This does not include implicit permissions, which may need to be checked separately"
+    
     __slots__ = (
         "guild_id",
         "name",
         "parent_id",
         "rate_limit_per_user",
-        "bitrate",
-        "user_limit",
-        "rtc_region",
-        "video_quality_mode",
         "permissions",
     )
 
     def __init__(self, data: BasePublicChannelPayload, guild_id: int | None = None):
         super().__init__(data)
-        self.guild_id = Snowflake._from_str(str(guild_id) if guild_id is not None else data.get("guild_id"))
-        if self.guild_id is None:
-            raise ValueError(f"A PublicChannel object formed without any guild_id.")
+        resolved_guild_id = data.get("guild_id") or str(guild_id)
+        assert resolved_guild_id is not None, "A PublicChannel object formed without any guild_id."
+        self.guild_id = Snowflake(resolved_guild_id)
         self.name = data["name"]
         self.parent_id = Snowflake._from_str(data.get("parent_id"))
         self.rate_limit_per_user = data.get("rate_limit_per_user")
-        self.bitrate = data.get("bitrate")
-        self.user_limit = data.get("user_limit")
-        self.rtc_region = data.get("rtc_region")
-        self.video_quality_mode = scls(VideoQualityMode, data.get("video_quality_mode"))
         self.permissions = scls(Permissions, sint(data.get("permissions")))
 
 class GuildChannel(BasePublicChannel):
+    """
+    Represents a Channel/Category in a Guild.
+    
+    Channel Types
+    -------------
+    - :attr:`GUILD_TEXT <dispy.enums.channel.ChannelType.GUILD_TEXT>`  
+    - :attr:`GUILD_VOICE <dispy.enums.channel.ChannelType.GUILD_VOICE>`  
+    - :attr:`GUILD_CATEGORY <dispy.enums.channel.ChannelType.GUILD_CATEGORY>`  
+    - :attr:`GUILD_ANNOUNCEMENT <dispy.enums.channel.ChannelType.GUILD_ANNOUNCEMENT>`  
+    - :attr:`GUILD_STAGE_VOICE <dispy.enums.channel.ChannelType.GUILD_STAGE_VOICE>`  
+    - :attr:`GUILD_DIRECTORY <dispy.enums.channel.ChannelType.GUILD_DIRECTORY>`  
+    - :attr:`GUILD_FORUM <dispy.enums.channel.ChannelType.GUILD_FORUM>`  
+    - :attr:`GUILD_MEDIA <dispy.enums.channel.ChannelType.GUILD_MEDIA>`
+    """
+    
+    type: ChannelType
+    "The type of this Channel."
+    
+    parent_id: Snowflake | None
+    "The ID of the category (channel of :attr:`GUILD_CATEGORY <dispy.enums.channel.ChannelType.GUILD_CATEGORY>`), if any."
+    
+    topic: str | None
+    "The topic of the channel. 0-4096 character limit for :attr:`GUILD_FORUM <dispy.enums.channel.ChannelType.GUILD_FORUM>` and :attr:`GUILD_MEDIA <dispy.enums.channel.ChannelType.GUILD_MEDIA>`, 0-1024 for all others."
+    
+    default_auto_archive_duration: timedelta | None
+    "The default amount of time before a newly created :class:`thread <dispy.objects.channel.ThreadChannel>` is auto-archived. Can only be 60, 1440, 4320, 10080 in terms of minutes."
+    
+    default_thread_rate_limit_per_user: int | None
+    "The default rate limit for new :class:`threads <dispy.objects.channel.ThreadChannel>`. Does not live-update with the channel's rate limit. Bots remain unaffected."
+    
+    position: int | None
+    "Sorting position of the channel (Channels with the same position are sorted by id)"
+    
+    permission_overwrites: list[ChannelPermissionOverwrite]
+    "Explicit permission overwrites for member and roles."
+    
+    nsfw: bool
+    "Whether the channel is NSFW."
+    
+    available_tags: list[ForumTag]
+    "The list of tags that can be used in :attr:`GUILD_FORUM <dispy.enums.channel.ChannelType.GUILD_FORUM>` and :attr:`GUILD_MEDIA <dispy.enums.channel.ChannelType.GUILD_MEDIA>` channels."
+    
+    default_sort_order: SortOrderType | None
+    "Default sortorder used when posting in a :attr:`GUILD_FORUM <dispy.enums.channel.ChannelType.GUILD_FORUM>` and :attr:`GUILD_MEDIA <dispy.enums.channel.ChannelType.GUILD_MEDIA>` channel. ``None`` indicates that the setting hasn't been set by an admin."
+    
+    default_forum_layout: ForumLayoutType | None
+    "The default ForumLayout used to display posts in :attr:`GUILD_FORUM <dispy.enums.channel.ChannelType.GUILD_FORUM>` channels."
+    
+    bitrate: int | None
+    "The bitrate in bits/second for a voice channel. (:attr:`GUILD_VOICE <dispy.enums.channel.ChannelType.GUILD_VOICE>` and :attr:`GUILD_STAGE_VOICE <dispy.enums.channel.ChannelType.GUILD_STAGE_VOICE>`)."
+    
+    user_limit: int | None
+    "The User Limit for a voice channel. (:attr:`GUILD_VOICE <dispy.enums.channel.ChannelType.GUILD_VOICE>` and :attr:`GUILD_STAGE_VOICE <dispy.enums.channel.ChannelType.GUILD_STAGE_VOICE>`)."
+    
+    rtc_region: str | None
+    "The RTC Region ID for a voice channel. (:attr:`GUILD_VOICE <dispy.enums.channel.ChannelType.GUILD_VOICE>` and :attr:`GUILD_STAGE_VOICE <dispy.enums.channel.ChannelType.GUILD_STAGE_VOICE>`)."
+    
+    video_quality_mode: VideoQualityMode
+    "The VideoQualityMode of the channel, default :attr:`AUTO <dispy.enums.channel.VideoQualityMode.AUTO>`."
+    
     __slots__ = (
         "type",
         "topic",
@@ -147,13 +307,17 @@ class GuildChannel(BasePublicChannel):
         "available_tags",
         "default_sort_order",
         "default_forum_layout",
+        "bitrate",
+        "user_limit",
+        "rtc_region",
+        "video_quality_mode",
     )
 
     def __init__(self, data: GuildChannelPayload, guild_id: int | None = None):
         super().__init__(data, guild_id)
         self.type = ChannelType(data["type"])
         self.topic = data.get("topic")
-        self.default_auto_archive_duration = data.get("default_auto_archive_duration")
+        self.default_auto_archive_duration = scls(timedelta, data.get("default_auto_archive_duration"))
         self.default_thread_rate_limit_per_user = data.get("default_thread_rate_limit_per_user")
         self.position = data["position"]
         self.permission_overwrites = [ChannelPermissionOverwrite(p) for p in data.get("permission_overwrites", [])]
@@ -161,8 +325,43 @@ class GuildChannel(BasePublicChannel):
         self.available_tags = [ForumTag(f) for f in data.get("available_tags", [])]
         self.default_sort_order = scls(SortOrderType, data.get("default_sort_order"))
         self.default_forum_layout = scls(ForumLayoutType, data.get("default_forum_layout"))
+        self.bitrate = data.get("bitrate")
+        self.user_limit = data.get("user_limit")
+        self.rtc_region = data.get("rtc_region")
+        self.video_quality_mode = VideoQualityMode(data.get("video_quality_mode", 1))
         
 class ThreadChannel(BasePublicChannel):
+    """
+    Represents a Thread Channel in a Guild.
+    
+    Channel Types
+    -------------
+    - :attr:`ANNOUNCEMENT_THREAD <dispy.enums.channel.ChannelType.ANNOUNCEMENT_THREAD>`
+    - :attr:`PUBLIC_THREAD <dispy.enums.channel.ChannelType.PUBLIC_THREAD>`
+    - :attr:`PRIVATE_THREAD <dispy.enums.channel.ChannelType.PRIVATE_THREAD>`
+    """
+
+    type: ChannelType
+    "The type of this channel."
+
+    owner_id: Snowflake
+    "The owner of this thread."
+
+    thread_metadata: ThreadMetaData
+    "Metadata of the thread."
+    
+    message_count: int
+    "The amount of messages present in this thread, is inaccurate when above 50 for threads made before July 1, 2022."
+    
+    member_count: int
+    "The amount of members in this thread. Stops counting at 50."
+    
+    total_message_sent: int
+    "The total amount of messages ever sent in this thread."
+    
+    applied_tags: list[Snowflake]
+    "The tags applied to a thead in a :attr:`GUILD_FORUM <dispy.enums.channel.ChannelType.GUILD_FORUM>` and :attr:`GUILD_MEDIA <dispy.enums.channel.ChannelType.GUILD_MEDIA>` channel."
+    
     __slots__ = (
         "type",
         "owner_id",
@@ -184,6 +383,16 @@ class ThreadChannel(BasePublicChannel):
         self.applied_tags = [Snowflake(s) for s in data["applied_tags"]]
         
 class PrivateChannel(BaseChannel):
+    """
+    Represents a private (DM) channel.
+    """
+    
+    recipients: list[User]
+    "The recipients or the members of the channel."
+    
+    type: ChannelType
+    "The ChannelType of this Channel. Always :attr:`DM <dispy.enums.channel.ChannelType.DM>`."
+    
     __slots__ = (
         "recipients",
         "type"
@@ -193,27 +402,38 @@ class PrivateChannel(BaseChannel):
         super().__init__(data)
         self.recipients = [User(u) for u in data["recipients"]]
         self.type = ChannelType(data["type"])
-        
-class PartialBasePublicChannel(BaseChannel):
-    __slots__ = (
-        "guild_id",
-        "name",
-        "parent_id",
-        "rate_limit_per_user",
-        "permissions"
-    )
+  
+class PartialGuildChannel(BasePublicChannel):
+    """
+    Represents a Partial Channel/Category in a Guild.
     
-    def __init__(self, data: PartialBasePublicChannelPayload, guild_id: int | None = None):
-        super().__init__(data)
-        self.guild_id = Snowflake._from_str(str(guild_id) if guild_id is not None else data.get("guild_id"))
-        if self.guild_id is not None:
-            raise ValueError("A PartialPublicChannel object was formed without guild_id.")
-        self.name = data["name"]
-        self.parent_id = data.get("parent_id")
-        self.rate_limit_per_user = data.get("rate_limit_per_user")
-        self.permissions = scls(Permissions, sint(data.get("permissions")))
-        
-class PartialGuildChannel(PartialBasePublicChannel):
+    Channel Types
+    -------------
+    - :attr:`GUILD_TEXT <dispy.enums.channel.ChannelType.GUILD_TEXT>`  
+    - :attr:`GUILD_VOICE <dispy.enums.channel.ChannelType.GUILD_VOICE>`  
+    - :attr:`GUILD_CATEGORY <dispy.enums.channel.ChannelType.GUILD_CATEGORY>`  
+    - :attr:`GUILD_ANNOUNCEMENT <dispy.enums.channel.ChannelType.GUILD_ANNOUNCEMENT>`  
+    - :attr:`GUILD_STAGE_VOICE <dispy.enums.channel.ChannelType.GUILD_STAGE_VOICE>`  
+    - :attr:`GUILD_DIRECTORY <dispy.enums.channel.ChannelType.GUILD_DIRECTORY>`  
+    - :attr:`GUILD_FORUM <dispy.enums.channel.ChannelType.GUILD_FORUM>`  
+    - :attr:`GUILD_MEDIA <dispy.enums.channel.ChannelType.GUILD_MEDIA>`
+    """
+    
+    type: ChannelType
+    "The type of this Channel."
+    
+    parent_id: Snowflake | None
+    "The ID of the category (channel of :attr:`GUILD_CATEGORY <dispy.enums.channel.ChannelType.GUILD_CATEGORY>`), if any."
+    
+    topic: str | None
+    "The topic of the channel. 0-4096 character limit for :attr:`GUILD_FORUM <dispy.enums.channel.ChannelType.GUILD_FORUM>` and :attr:`GUILD_MEDIA <dispy.enums.channel.ChannelType.GUILD_MEDIA>`, 0-1024 for all others."
+    
+    position: int | None
+    "Sorting position of the channel (Channels with the same position are sorted by id)"
+    
+    nsfw: bool
+    "Whether the channel is NSFW."
+    
     __slots__ = (
         "type",
         "topic",
@@ -228,7 +448,23 @@ class PartialGuildChannel(PartialBasePublicChannel):
         self.position = data["position"]
         self.nsfw = data.get("nsfw", False)
         
-class PartialThreadChannel(PartialBasePublicChannel):
+class PartialThreadChannel(BasePublicChannel):
+    """
+    Represents a Thread Channel in a Guild.
+    
+    Channel Types
+    -------------
+    - :attr:`ANNOUNCEMENT_THREAD <dispy.enums.channel.ChannelType.ANNOUNCEMENT_THREAD>`
+    - :attr:`PUBLIC_THREAD <dispy.enums.channel.ChannelType.PUBLIC_THREAD>`
+    - :attr:`PRIVATE_THREAD <dispy.enums.channel.ChannelType.PRIVATE_THREAD>`
+    """
+
+    type: ChannelType
+    "The type of this channel."
+
+    thread_metadata: ThreadMetaData
+    "Metadata of the thread."
+    
     __slots__ = (
         "type",
         "thread_metadata"
@@ -240,6 +476,22 @@ class PartialThreadChannel(PartialBasePublicChannel):
         self.thread_metadata = ThreadMetaData(data["thread_metadata"])
         
 class ChannelMention:
+    """
+    Represents a minimal channel object for :attr:`Message.mention_channels <dispy.objects.message.Message.mention_channels>`.
+    """
+    
+    id: Snowflake
+    "The ID of the channel."
+    
+    guild_id: Snowflake
+    "The :class:`Guild <dispy.objects.guild.Guild>` ID of the channel."
+    
+    type: ChannelType
+    "The type of the channel."
+    
+    name: str
+    "The name of the channel."
+    
     __slots__ = (
         "id",
         "guild_id",
