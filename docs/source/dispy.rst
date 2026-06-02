@@ -8,6 +8,7 @@ Subpackages
    :maxdepth: 4
 
    dispy.enums
+   dispy.managers
    dispy.objects
 
 Submodules
@@ -57,14 +58,6 @@ dispy.http module
 -----------------
 
 .. automodule:: dispy.http
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-dispy.managers module
----------------------
-
-.. automodule:: dispy.managers
    :members:
    :show-inheritance:
    :undoc-members:

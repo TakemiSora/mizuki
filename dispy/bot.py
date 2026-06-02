@@ -12,7 +12,10 @@ from .errors import ImproperToken, Unauthorized
 from .flags import IntentFlags
 from .gateway import GatewayClient
 from .http import HTTPClient, Path
-from .managers import ChannelManager, GuildManager, MessageManager, UserManager
+from .managers.channel import ChannelManager
+from .managers.guild import GuildManager
+from .managers.message import MessageManager
+from .managers.user import UserManager
 
 __all__ = (
     "Bot",

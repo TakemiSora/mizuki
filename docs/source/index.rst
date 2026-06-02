@@ -16,7 +16,7 @@ Quick Example
    import dispy
 
    bot = dispy.Bot(
-      dispy.IntentFlags.standard()
+      intents=dispy.IntentFlags.standard()
    )
 
    @bot.command(
