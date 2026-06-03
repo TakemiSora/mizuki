@@ -1,6 +1,7 @@
 from .channel import *
 from .command import *
 from .embed import *
+from .event_dispatch import *
 from .guild import *
 from .interaction import *
 from .message import *

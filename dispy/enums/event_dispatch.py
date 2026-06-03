@@ -1,5 +1,9 @@
 from enum import StrEnum
 
+__all__ = (
+    "Event",
+)
+
 class Event(StrEnum):
     """
     The Event enum to be provided in :meth:`Bot.listen() <dispy.bot.Bot.listen>`.
@@ -34,3 +38,6 @@ class Event(StrEnum):
 
     INTERACTION_CREATE = "on_interaction_create"
     "Dispatched when an interaction is created."
+
+    READY = "on_ready"
+    "Dispatched when the gateway is ready to send new events."

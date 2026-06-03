@@ -12,6 +12,24 @@ class UserManager(BaseManager):
     """
 
     __slots__ = ()
+    
+    async def fetch_me(self) -> User:
+        """
+        Fetches the user object of the bot. This should generally not be called as it is accessible on startup via :attr:`Bot.user <dispy.bot.Bot.user>`.
+        
+        Raises
+        ------
+        :class:`HTTPException`
+            A HTTP error occured.
+        """
+        return self._cache_storage.update_users(
+            User(
+                await self._http.request(
+                    Path(
+                        "GET",
+                        "users/@me"
+            )))
+        )
 
     def get(self, user_id: int) -> User | None:
         """

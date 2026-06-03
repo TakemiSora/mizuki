@@ -36,7 +36,7 @@ LocalizationPayload = TypedDict("LocalizationPayload", {
     "ja": str,
     "zh-TW": str,
     "ko": str,
-})
+}, total=False)
 
 class CommandChoicePayload(TypedDict):
     name: str
@@ -59,19 +59,25 @@ class CommandOptionPayload(TypedDict, total=False):
     max_length: int
     autocomplete: bool
 
-class ApplicationCommandPayload(TypedDict, total=False):
-    id: Required[Snowflake]
+class BaseApplicationCommandPayload(TypedDict, total=False):
     type: Literal[1, 2, 3, 4]
-    application_id: Required[Snowflake]
-    guild_id: Snowflake
     name: Required[str]
     name_localizations: LocalizationPayload | None
-    description: Required[str]
     description_localizations: LocalizationPayload | None
     options: list[CommandOptionPayload]
-    default_member_permissions: Required[Permissions | None]
     nsfw: bool
     integration_types: list[Literal[0, 1]]
     contexts: list[Literal[0, 1, 2]] | None
+
+class PartialApplicationCommandPayload(BaseApplicationCommandPayload, total=False):
+    description: str
+    default_member_permissions: Permissions
+   
+class ApplicationCommandPayload(BaseApplicationCommandPayload, total=False):
+    id: Required[Snowflake]
+    description: Required[str]
+    guild_id: Snowflake
+    application_id: Required[Snowflake]
     version: Snowflake
     handler: Literal[1, 2]
+    default_member_permissions: Required[Permissions | None]

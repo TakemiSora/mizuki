@@ -1,0 +1,14 @@
+{
+  "actions": [
+    {
+      "text": "Generate Docs",
+      "command": "cd docs; make html; exit",
+      "tooltip": "Generate HTML docs",
+      "color": "#9ec1de"
+    },
+    {
+      "text": "Open Docs",
+      "command": "code docs/build/html/index.html&&exit",
+    }
+  ]
+}

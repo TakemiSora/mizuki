@@ -273,9 +273,8 @@ class GatewayClient:
         
     async def _handle_dispatch(self, data: dict[str, Any], event: str):
         if event == "READY": await self._handle_ready(data)
+        h = self._dispatcher._dispatch_handlers.get(event)
+        if h is not None:
+            await h(data)
         else:
-            h = self._dispatcher._dispatch_handlers.get(event)
-            if h is not None:
-                await h(data)
-            else:
-                _log.debug("No handler registered for event %s", event)
+            _log.debug("No handler registered for event %s", event)

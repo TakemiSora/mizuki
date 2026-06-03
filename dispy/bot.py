@@ -1,4 +1,5 @@
 import asyncio
+from bisect import insort_left
 import logging
 import inspect
 from collections.abc import Callable, Coroutine
@@ -11,11 +12,17 @@ from .enums.event_dispatch import Event
 from .errors import ImproperToken, Unauthorized
 from .flags import IntentFlags
 from .gateway import GatewayClient
-from .http import HTTPClient, Path
+from .http import HTTPClient
+from ._utils import _MISSING
+
+from .objects.command import PartialApplicationCommand
+from .objects.user import User
+
 from .managers.channel import ChannelManager
 from .managers.guild import GuildManager
 from .managers.message import MessageManager
 from .managers.user import UserManager
+from .managers.command import CommandManager
 
 __all__ = (
     "Bot",
@@ -24,18 +31,6 @@ __all__ = (
 _log = logging.getLogger(__name__)
 
 type CoroFunc = Callable[..., Coroutine[Any, Any, Any]]
-
-class ApplicationCommandCallbackData:
-    ":meta private:"
-
-    __slots__ = (
-        "description",
-        "callback"
-    )
-    
-    def __init__(self, description: str, callback: CoroFunc):
-        self.description = description
-        self.callback = callback
 
 class Bot:
     """
@@ -59,28 +54,36 @@ class Bot:
     "The GatewayClient that manages the Gateway Connection."
     
     users: UserManager
-    "The UserManager used to fetch User objects."
+    "The UserManager used to managers User objects."
     
     messages: MessageManager
-    "The MessageManager used to fetch Message objects."
+    "The MessageManager used to manage Message objects."
     
     channels: ChannelManager
-    "The ChannelManager used to fetch Channel objects."
+    "The ChannelManager used to manage Channel objects."
     
     guilds: GuildManager
-    "The GuildManager used to fetch Guild objects."
+    "The GuildManager used to manage Guild objects."
+    
+    commands: CommandManager
+    "The CommandManager used to manage Commands."
+    
+    user: User
+    "The User object of the bot."
     
     __slots__ = (
         "intents",
         "http",
         "gateway",
         "_listeners",
-        "_command_callbacks",
+        "_commands_data",
         "_storage",
         "users",
         "messages",
         "channels",
         "guilds",
+        "commands",
+        "user",
         "_session"
     )
     
@@ -92,7 +95,7 @@ class Bot:
         self.intents = intents
         self.http = HTTPClient()
         self._listeners: dict[str, list[CoroFunc]] = {}
-        self._command_callbacks: dict[str, ApplicationCommandCallbackData] = {}
+        self._commands_data: dict[str, PartialApplicationCommand] = {}
 
         self._storage = CacheStorage(cache_settings)
         self.users = UserManager(self.http, self._storage)
@@ -118,9 +121,9 @@ class Bot:
         """
         asyncio.run(self.start(token))
         
-    async def _verify_token(self) -> None:
+    async def _verify_token(self) -> User:
         try:
-            await self.http.request(Path("GET", "users/@me"))
+            return await self.users.fetch_me()
         except Unauthorized:
             raise ImproperToken(401, "Improper token has been passed.")
 
@@ -148,8 +151,9 @@ class Bot:
             )
             self.http._session = self._session
             _log.debug("Attempting to verify token (length=%s)", len(token))
-            await self._verify_token()
+            self.user = await self._verify_token()
             _log.debug("Verified token successfully.")
+            self.commands = CommandManager(self.http, self._storage, self.user.id)
             self.gateway = GatewayClient(self, self._session, token, self.intents)
             await self.gateway.connect()
             await self.gateway.wait_until_closed()
@@ -209,7 +213,7 @@ class Bot:
             return func
         return decorator
         
-    def command(self, *, name: str, description: str):
+    def command(self, *, name: str, description: str = _MISSING) -> Callable[..., CoroFunc]:
         """
         This function is a decorator.
         
@@ -219,7 +223,7 @@ class Bot:
         ----------
         name : :class:`str`
             The name of the application command.
-        description : :class:`str`
+        description : :class:`str`, optional
             The description of the application command.
             
         Raises
@@ -229,6 +233,11 @@ class Bot:
         """
         def decorator(func: CoroFunc) -> CoroFunc:
             if not inspect.iscoroutinefunction(func): raise TypeError(f"Command callback for '{name}:{func.__name__}' has to be a coroutine function.")
-            self._command_callbacks[name] = ApplicationCommandCallbackData(description, func)
+            
+            self._commands_data[name] = PartialApplicationCommand.new(
+                name=name,
+                description=description,
+                callback=func,
+            )
             return func
         return decorator

@@ -1,12 +1,14 @@
 import asyncio
+from dispy.objects.command import ApplicationCommand
 from .objects.user import User
 from .objects.message import Message
 from .objects.channel import Channel
+from .objects.command import ApplicationCommand
 from .objects.guild import Guild
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
-Cachable = User | Message | Channel | Guild
+type Cachable = User | Message | Channel | Guild | ApplicationCommand
 
 __all__ = (
     "CacheSettings",
@@ -33,6 +35,8 @@ class CacheSettings:
         Toggle caching of :class:`PrivateChannel <dispy.objects.channel.PrivateChannel>`, :class:`ThreadChannel <dispy.objects.channel.ThreadChannel>` and :class:`GuildChannel <dispy.objects.channel.GuildChannel>` objects. Defaults to ``True``.
     guilds : :class:`bool`, optional
         Toggle caching of :class:`Guild <dispy.objects.guild.Guild>` objects. Defaults to ``True``.
+    commands: :class:`bool`, optional
+        Toggle caching of :class:`ApplicationCommand <dispy.objects.command.ApplicationCommand>` objects. Defaults to ``True``.
     cache_invalidation : :class:`bool`, optional
         Toggle if cache should be invalidated based on time. Defaults to ``False``.
     invalidation_time : :class:`timedelta <datetime.timedelta>`, optional
@@ -61,8 +65,11 @@ class CacheSettings:
     guilds: bool
     "Whether :class:`Guild <dispy.objects.guild.Guild>` caching is enabled."
     
+    commands: bool
+    "Whether :class:`ApplicationCommand <dispy.objects.command.ApplicationCommand>` caching is enabled."
+    
     cache_invalidation: bool
-    "Whether time-based cache invalidation is enabled."
+    "Whether time-based cache invalidation is enabled, commands remain unaffected by this invalidation."
     
     invalidation_time: timedelta
     "The amount of time a cach can live, before being invalidated."
@@ -87,6 +94,7 @@ class CacheSettings:
         "messages",
         "channels",
         "guilds",
+        "commands",
         "cache_invalidation",
         "invalidation_time",
         "cleanup_interval",
@@ -102,6 +110,7 @@ class CacheSettings:
         messages: bool = True,
         channels: bool = True,
         guilds: bool = True,
+        commands: bool = True,
         cache_invalidation: bool = False,
         invalidation_time: timedelta = timedelta(days=1),
         cleanup_interval: timedelta = timedelta(hours=6),
@@ -114,6 +123,7 @@ class CacheSettings:
         self.messages = messages
         self.channels = channels
         self.guilds = guilds
+        self.commands = commands
         self.cache_invalidation = cache_invalidation
         self.invalidation_time = invalidation_time
         self.cleanup_interval = cleanup_interval
@@ -131,6 +141,7 @@ class CacheStorage:
         "messages",
         "channels",
         "guilds",
+        "commands",
         "_users_cleanup_task",
         "_messages_cleanup_task",
         "_channels_cleanup_task",
@@ -143,6 +154,7 @@ class CacheStorage:
         self.messages: dict[int, CacheEntry[Message]] = {}
         self.channels: dict[int, CacheEntry[Channel]] = {}
         self.guilds: dict[int, CacheEntry[Guild]] = {}
+        self.commands: dict[int, ApplicationCommand] = {}
 
     def start_cleanup_tasks(self) -> None:
         self._users_cleanup_task = asyncio.create_task(self._cleanup_cache(self.users))
@@ -188,7 +200,6 @@ class CacheStorage:
             self.settings.max_guilds_store,
             self.guilds, guild
         )
-
 
     def _get_from_cache[T: Cachable](self, cache: dict[int, CacheEntry[T]], id: int) -> T | None:
         return item.data if (item := cache.get(id)) is not None else None
@@ -237,3 +248,25 @@ class CacheStorage:
                 cache.pop(i, None)
             
             await asyncio.sleep(self.settings.cleanup_interval.total_seconds())
+
+    def replace_all_commands(self, commands: list[ApplicationCommand]) -> list[ApplicationCommand]:
+        if self.settings.commands:
+            self.commands.clear()
+            for c in commands: self.commands[c.id] = c
+        return commands
+
+    def get_all_commands(self) -> list[ApplicationCommand]:
+        return list[ApplicationCommand](self.commands.values())
+
+    def add_command(self, command: ApplicationCommand) -> ApplicationCommand:
+        if self.settings.commands: self.commands[command.id] = command
+        return command
+
+    def add_commands_bulk(self, commands: list[ApplicationCommand]) -> list[ApplicationCommand]:
+        if self.settings.commands:
+            for c in commands:
+                self.commands[c.id] = c
+        return commands
+
+    def remove_command(self, command_id: int) -> ApplicationCommand | None:
+        return self.commands.pop(command_id, None)

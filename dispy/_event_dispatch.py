@@ -43,7 +43,8 @@ class EventDispatcher:
                 "THREAD_CREATE": self._handle_thread_create,
                 "THREAD_UPDATE": self._handle_thread_update,
                 "THREAD_DELETE": self._handle_thread_delete,
-            "INTERACTION_CREATE": self._handle_interaction_create
+            "INTERACTION_CREATE": self._handle_interaction_create,
+            "READY": self._handle_ready
         }
 
     def _on_task_done(self, task: asyncio.Task, data: str):
@@ -59,10 +60,12 @@ class EventDispatcher:
             _log.debug("Dispatched %s to function '%s'.", key, f.__name__)
             
     async def _dispatch_commands(self, name: str, interaction: Interaction, *args: Any):
-        command = self.bot._command_callbacks.get(name)
-        if command:
-            asyncio.create_task(command.callback(interaction, *args)).add_done_callback(lambda t: self._on_task_done(t, f"Handler Function {command.callback.__name__} for command '{name}'"))
-            _log.debug("Command %s (func=%s) dispatched.", name, command.callback.__name__)
+        command = self.bot._commands_data.get(name)
+        callback = command._callback if command else None
+        if callback:
+            task = asyncio.create_task(callback(interaction, *args))
+            task.add_done_callback(lambda t: self._on_task_done(t, f"Handler Function {callback.__name__} for command '{name}'"))
+            _log.debug("Command %s (func=%s) dispatched.", name, callback.__name__)
             
     async def _handle_guild_create(self, data: GuildPayload | UnavailableGuildPayload):
         guild = self.bot._storage.update_guilds(g) if isinstance((g := parse_guild_payload(data)), Guild) else g
@@ -115,3 +118,6 @@ class EventDispatcher:
                 if interaction.data: await self._dispatch_commands(interaction.data.name, interaction)
 
         await self._dispatch("on_interaction_create", interaction)
+
+    async def _handle_ready(self, _):
+        await self._dispatch("on_ready")

@@ -180,6 +180,7 @@ class BaseChannel:
     )
 
     def __init__(self, data: BaseChannelPayload):
+        print(data)
         self.id = Snowflake(data["id"])
         self.last_message_id = Snowflake._from_str(data.get("last_message_id"))
         self.flags = ChannelFlags(data["flags"])
@@ -549,4 +550,5 @@ def parse_channel_payload(
         case _:
             raise UnknownChannelType(f"Received unknown channel type '{data["type"]}'")
 
-Channel = ThreadChannel | PrivateChannel | GuildChannel
+type Channel = ThreadChannel | PrivateChannel | GuildChannel
+"This is only a type hint for all channel types, not an object."

@@ -12,6 +12,14 @@ dispy.managers.channel module
    :show-inheritance:
    :undoc-members:
 
+dispy.managers.command module
+-----------------------------
+
+.. automodule:: dispy.managers.command
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 dispy.managers.guild module
 ---------------------------
 
