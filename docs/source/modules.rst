@@ -1,5 +1,5 @@
-dispy
-=====
+Resources
+=========
 
 .. toctree::
    :maxdepth: 4

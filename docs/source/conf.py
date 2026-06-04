@@ -18,9 +18,11 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
     'sphinx.ext.intersphinx',
+    'sphinx_copybutton',
 ]
 
 autodoc_default_options = {
+    'undoc-members': False,
     'inherited-members': True,
 }
 
@@ -35,8 +37,17 @@ intersphinx_mapping = {
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-#html_theme = 'sphinx_nefertiti'
 html_theme = 'shibuya'
+
+html_theme_options = {
+  "accent_color": "mint",
+  "github_url": "https://github.com/TakemiSora/dispy"
+}
+html_context = {
+    "source_type": "github",
+    "source_user": "TakemiSora",
+    "source_repo": "dispy",
+}
 
 html_static_path = ['_static']
 

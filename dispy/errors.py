@@ -42,16 +42,16 @@ class GatewayError(Exception):
     Parameters
     ----------
     status : :class:`int`
-        The error code of the HTTP error.
+        The error code of the Gateway error.
     message : :class:`int`
-        The message of the HTTP error
+        The message of the Gateway error
     """
 
     status: int
-    "The error code of the HTTP error."
+    "The error code of the Gateway error."
 
     message: str
-    "The message of the HTTP error."
+    "The message of the Gateway error."
 
     def __init__(self, status: int, message: str):
         self.status = status
