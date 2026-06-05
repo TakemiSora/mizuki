@@ -5,14 +5,9 @@ I aim for this library to closely mirror the discord API.
 
 ## Installation
 
-Currently the package is not published, but you can install it locally via following steps:
-
-- Clone this repository.
-- Open Terminal in the root folder (The folder that contains the `pyproject.toml`).
-- Do `pip install -e .`.
-
-> [!NOTE]
-> The -e flag is used so you can do `git pull` to update the library.
+```
+pip install git+https://github.com/TakemiSora/dispy
+```
 
 ## Quick Example
 
@@ -34,7 +29,26 @@ bot.run("TOKEN-HERE")
 
 There is no current hosted documentation (yet), but a local version of the documentation can be viewed by doing the following steps:
 
-- Clone the repository.
-- Open Terminal in `docs/` folder.
-- For linux/mac, do `make html`. For windows, do `make.bat` and select HTML.
-- Open `docs/build/html/index.html`.
+```
+# 1. Clone the repository
+git clone https://github.com/TakemiSora/dispy
+
+# 2. Navigate into the docs directory
+cd dispy/docs/
+
+# 3. Build the HTML documentation
+## Linux/Mac
+make html
+
+## Windows
+make.bat html
+
+# 4. Start a local server to view them
+cd build/html
+python -m http.server 8000
+```
+
+Then open `https://localhost:8000/` to open the documentation.
+
+> [!NOTE]
+> Replace '/' with '\\' for windows in cd commands.
