@@ -3,7 +3,18 @@
 A modern async-based discord API wrapper written for Python. Currently in early development, not meant to be used in production as of now.  
 I aim for this library to closely mirror the discord API.
 
-### Quick Example
+## Installation
+
+Currently the package is not published, but you can install it locally via following steps:
+
+- Clone this repository.
+- Open Terminal in the root folder (The folder that contains the `pyproject.toml`).
+- Do `pip install -e .`.
+
+> [!NOTE]
+> The -e flag is used so you can do `git pull` to update the library.
+
+## Quick Example
 
 ```python
 import dispy
@@ -19,9 +30,9 @@ async def ping(interaction: dispy.Interaction):
 bot.run("TOKEN-HERE")
 ```
 
-### Documentation
+## Documentation
 
-There is no current hosted documentation (yet), but a local version of the documentation can be viewed by doing the following commands:
+There is no current hosted documentation (yet), but a local version of the documentation can be viewed by doing the following steps:
 
 - Clone the repository.
 - Open Terminal in `docs/` folder.
