@@ -76,6 +76,7 @@ class Bot:
         "http",
         "gateway",
         "_listeners",
+        "_setup_hook",
         "_commands_data",
         "_storage",
         "users",
@@ -95,6 +96,7 @@ class Bot:
         self.intents = intents
         self.http = HTTPClient()
         self._listeners: dict[str, list[CoroFunc]] = {}
+        self._setup_hook: CoroFunc | None = None
         self._commands_data: dict[str, PartialApplicationCommand] = {}
 
         self._storage = CacheStorage(cache_settings)
@@ -156,6 +158,8 @@ class Bot:
             self.commands = CommandManager(self.http, self._storage, self.user.id)
             self.gateway = GatewayClient(self, self._session, token, self.intents)
             await self.gateway.connect()
+            if self._setup_hook is not None:
+                await self._setup_hook()
             await self.gateway.wait_until_closed()
         except asyncio.CancelledError:
             raise
@@ -210,6 +214,23 @@ class Bot:
         def decorator(func: CoroFunc) -> CoroFunc:
             if not inspect.iscoroutinefunction(func): raise TypeError(f"Event listener '{func.__name__}' has to be a coroutine function.")
             self._listeners.setdefault(event.value if event is not None else func.__name__, []).append(func)
+            return func
+        return decorator
+        
+    def setup(self) -> Callable[..., CoroFunc]:
+        """
+        This function is a decorator.
+        
+        Registers a setup hook which runs once after connecting to the gateway.
+        
+        Raises
+        ------
+        :class:`TypeError`
+            The decorator was applied to a synchronous function.
+        """
+        def decorator(func: CoroFunc) -> CoroFunc:
+            if not inspect.iscoroutinefunction(func): raise TypeError(f"Setup hook '{func.__name__}' has to be a coroutine function.")
+            self._setup_hook = func
             return func
         return decorator
         

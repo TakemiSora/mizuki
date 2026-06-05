@@ -1,11 +1,22 @@
+from typing import Any, overload
+
 from ._types import BaseManager
 from ..http import HTTPClient, Path
 from ..cache import CacheStorage
-from ..objects.command import ApplicationCommand, PartialApplicationCommand
+from ..objects.command import (
+    ApplicationCommandOption,
+    Localization,
+    ApplicationCommand,
+    PartialApplicationCommand
+)
+from ..enums.interaction import InteractionContextType, ApplicationIntegrationType
+from ..objects.permissions import Permissions
+
+from .._utils import _MISSING, assign_val_dict, mtd
 
 class CommandManager(BaseManager):
     """
-    Manager used to manage :class:`ApplicationCommands <dispy.objects.command.ApplicationCommand>`.
+    Manager used to manage :class:`~dispy.objects.command.ApplicationCommand`.
     """
 
     __slots__ = (
@@ -15,53 +26,41 @@ class CommandManager(BaseManager):
     def __init__(self, client: HTTPClient, storage: CacheStorage, application_id: int):
         super().__init__(client, storage)
         self._application_id = application_id
-        
-    async def fetch_all(self, *, with_localizations: bool = True) -> list[ApplicationCommand]:
-        """
-        Fetches a list of all global application commands from the Discord API.
-        
-        .. note::
 
-            This method should generally not be called as the library will cache the commands on startup. Prefer to use :meth:`get_all() <dispy.managers.command.CommandManager.get_all>` for fetching a list of your application commands.
-        
-        Returns
-        -------
-        list[:class:`ApplicationCommand <dispy.objects.command.ApplicationCommand>`]
-
-        Raises
-        ------
-        :class:`Unauthorized`
-            You are not authorized. Your token may be invalid.
-
-        :class:`HTTPException`
-            A HTTP error occured.
-        """
-        return self._cache_storage.replace_all_commands(
-            [
-                ApplicationCommand(c)
-                for c in await self._http.request(
-                    Path(
-                        "GET",
-                        "applications/{application_id}/commands?with_localizations={with_localizations}",
-                        application_id=self._application_id,
-                        with_localizations=with_localizations
-            ))]
+    async def _command_request(
+        self, *,
+        method: str,
+        command_id: int | None = None,
+        guild_id: int | None = None,
+        **kwargs: Any
+    ) -> Any:
+        return await self._http.request(
+            Path(
+                method,
+                "applications/{application_id}{guild_or_not}/commands{command_suffix}",
+                application_id=self._application_id,
+                guild_or_not=f"/guilds/{guild_id}" if guild_id is not None else "",
+                command_suffix=f"/{command_id}" if command_id is not None else ""
+            ),
+            **kwargs
         )
-
-    def get_all(self) -> list[ApplicationCommand]:
+        
+    async def fetch_all(
+        self, *,
+        guild_id: int | None = None,
+        with_localizations: bool = True
+    ) -> list[ApplicationCommand]:
         """
-        Returns a list of Application commands from internal cache.
-
-        Returns
-        -------
-        list[:class:`ApplicationCommand <dispy.objects.command.ApplicationCommand>`]
-        """
-        return self._cache_storage.get_all_commands()
-
-    async def sync(self, command: PartialApplicationCommand) -> ApplicationCommand:
-        """
-        Syncs a specific command object to the Discord API.
-
+        Fetches a list of all application commands from the Discord API.
+        
+        Parameters
+        ----------
+        guild_id : :class:`int`, optional
+            The guild ID for fetching commands scoped by guild.
+            
+        with_localizations : :class:`bool`, optional
+            Whether :attr:`~dispy.objects.command.ApplicationCommand.name_localizations` and :attr:`~dispy.objects.command.ApplicationCommand.description_localizations` should be fetched. Defaults to ``True``.
+        
         Raises
         ------
         :class:`Unauthorized`
@@ -70,22 +69,31 @@ class CommandManager(BaseManager):
         :class:`HTTPException`
             A HTTP error occured.
         """
-        return self._cache_storage.add_command(
-            ApplicationCommand(
-                await self._http.request(
-                    Path(
-                        "POST",
-                        "applications/{application_id}/commands",
-                        application_id=self._application_id
-                    ),
-                    json=command._to_dict()
-                )
+        return [
+            ApplicationCommand(c)
+            for c in await self._command_request(
+                method="GET",
+                guild_id=guild_id,
+                params={
+                    "with_localizations": with_localizations
+                }
             )
-        )
+        ]
 
-    async def sync_bulk(self, commands: list[PartialApplicationCommand]) -> list[ApplicationCommand]:
+    async def add(
+        self, command: PartialApplicationCommand,
+        *, guild_id: int | None = None
+    ) -> ApplicationCommand:
         """
-        Syncs given commands to the Discord API. This will override all commands currently synced.
+        Adds a specific command object to the Application.
+
+        Parameters
+        ----------
+        command : :class:`~dispy.objects.command.PartialApplicationCommand`
+            The command to sync.
+            
+        guild_id : :class:`int`, optional
+            The Guild ID to add to if scoped by guild.
 
         Raises
         ------
@@ -95,15 +103,225 @@ class CommandManager(BaseManager):
         :class:`HTTPException`
             A HTTP error occured.
         """
-        return self._cache_storage.add_commands_bulk([
+        return ApplicationCommand(await self._command_request(
+            method="POST", json=command._to_dict(),
+            guild_id=guild_id
+        ))
+
+    async def fetch(
+        self, command_id: int,
+        *, guild_id: int | None = None
+    ) -> ApplicationCommand:
+        """
+        Fetches an application command from the Discord API.
+
+        Parameters
+        ----------
+        command_id : :class:`int`
+            The ID of the command to fetch.
+            
+        guild_id : :class:`int`, optional
+            The Guild ID for fetching commands if scoped by guild.
+
+        Raises
+        ------
+        :class:`NotFound`
+            The command you tried to fetch does not exist.
+
+        :class:`Unauthorized`
+            You are not authorized. Your token may be invalid.
+
+        :class:`HTTPException`
+            A HTTP error occured.
+        """
+        return ApplicationCommand(await self._command_request(
+            method="GET", guild_id=guild_id,
+            command_id=command_id
+        ))
+
+    async def sync_bulk(
+        self, commands: list[PartialApplicationCommand],
+        *, guild_id: int | None = None
+    ) -> list[ApplicationCommand]:
+        """
+        Syncs given commands to the Application. This will **override** all commands currently synced.
+
+        Parameters
+        ----------
+        commands : list[:class:`~dispy.objects.command.PartialApplicationCommand`]
+            The new list of commands.
+            
+        guild_id : :class:`int`, optional
+            The Guild ID of the Guild to PUT to if scoped by guild.
+
+        Raises
+        ------
+        :class:`Unauthorized`
+            You are not authorized. Your token may be invalid.
+
+        :class:`HTTPException`
+            A HTTP error occured.
+        """
+        return [
             ApplicationCommand(c)
             for c in
-            await self._http.request(
-                Path(
-                    "PUT",
-                    "applications/{application_id}/commands",
-                    application_id=self._application_id
-                ),
+            await self._command_request(
+                method="PUT", guild_id=guild_id,
                 json=[c._to_dict() for c in commands]
             )
-        ])
+        ]
+        
+    @overload
+    async def edit(
+        self, *,
+        command_id: int,
+        guild_id: int,
+        name: str = _MISSING,
+        name_localizations: Localization | None = _MISSING,
+        description: str = _MISSING,
+        description_localizations: Localization | None = _MISSING,
+        options: list[ApplicationCommandOption] = _MISSING,
+        default_member_permissions: Permissions | None = _MISSING,
+        nsfw: bool = _MISSING
+    ) -> ApplicationCommand: ...
+    
+    @overload
+    async def edit(
+        self, *,
+        command_id: int,
+        name: str = _MISSING,
+        name_localizations: Localization | None = _MISSING,
+        description: str = _MISSING,
+        description_localizations: Localization | None = _MISSING,
+        options: list[ApplicationCommandOption] = _MISSING,
+        default_member_permissions: Permissions | None = _MISSING,
+        integration_types: list[ApplicationIntegrationType] = _MISSING,
+        contexts: list[InteractionContextType] = _MISSING,
+        nsfw: bool = _MISSING
+    ) -> ApplicationCommand: ...
+
+    async def edit(
+        self, *,
+        command_id: int,
+        guild_id: int | None = None,
+        name: str = _MISSING,
+        name_localizations: Localization | None = _MISSING,
+        description: str = _MISSING,
+        description_localizations: Localization | None = _MISSING,
+        options: list[ApplicationCommandOption] = _MISSING,
+        default_member_permissions: Permissions | None = _MISSING,
+        integration_types: list[ApplicationIntegrationType] = _MISSING,
+        contexts: list[InteractionContextType] = _MISSING,
+        nsfw: bool = _MISSING
+    ) -> ApplicationCommand:
+        """
+        Edits an application command. All parameters to this method besides ``command_id`` are optional.
+
+        Parameters
+        ----------
+        command_id : :class:`int`
+            The ID of the command to edit.
+        
+        guild_id : :class:`int`
+            The Guild ID of the Guild, if editing command scoped by guild.
+            
+        name : :class:`str`
+            The name of the command.
+            
+        name_localizations : :class:`~dispy.objects.command.Localization`
+            The localizations for the name of the command.
+            
+        description : :class:`str`
+            The description of the command.
+            
+        description_localizations : :class:`~dispy.objects.command.Localization`
+            The localizations for the description of the command.
+            
+        options : list[:class:`~dispy.objects.command.ApplicationCommandOption`]
+            The options (parameters or sub-commands) of the command.
+        
+        default_member_permissions : :class:`~dispy.objects.permissions.Permissions`
+            The default member permissions of the command.
+            
+        integration_types : list[:class:`~dispy.enums.interaction.ApplicationIntegrationType`]
+            The installation contexts where the command is available.
+            
+        contexts : list[:class:`~dispy.enums.interaction.InteractionContextType`]
+            The installation contexts where the command can be used.
+        
+        nsfw : :class:`bool`
+            Whether the command is NSFW.
+            
+        Raises
+        ------
+        :class:`NotFound`
+            The command you tried to edit does not exist.
+            
+        :class:`Unauthorized`
+            You are not authorized. Your token may be invalid.
+
+        :class:`HTTPException`
+            A HTTP error occured.
+        """
+
+        payload = assign_val_dict(
+            {}, _MISSING,
+            name=name,
+            name_localizations=mtd(name_localizations),
+            description=description,
+            description_localizations=mtd(description_localizations),
+            options=[o._to_dict() for o in options] if options is not _MISSING else _MISSING,
+            default_member_permissions=(
+                default_member_permissions.value
+                if isinstance(default_member_permissions, Permissions)
+                else default_member_permissions
+            ),
+            integration_types=(
+                [i.value for i in integration_types]
+                if integration_types is not _MISSING
+                else _MISSING
+            ),
+            contexts=(
+                [c.value for c in contexts]
+                if contexts is not _MISSING
+                else _MISSING
+            ),
+            nsfw=nsfw
+        )
+
+        return ApplicationCommand(
+            await self._command_request(
+                method="PATCH",
+                command_id=command_id,
+                guild_id=guild_id,
+                json=payload
+            )
+        )
+
+    async def delete(
+        self, command_id: int,
+        *, guild_id: int | None = None
+    ) -> None:
+        """
+        Deletes an application command.
+        
+        Parameters
+        ----------
+        command_id : :class:`int`
+            The ID of the command to delete.
+            
+        guild_id : :class:`int`, optional
+            The Guild ID of the Guild, if deleting a command scoped by guild.
+            
+        Raises
+        ------
+        :class:`NotFound`
+            The command you tried to edit does not exist.
+            
+        :class:`Unauthorized`
+            You are not authorized. Your token may be invalid.
+
+        :class:`HTTPException`
+            A HTTP error occured.
+        """
+        await self._command_request(method="DELETE", command_id=command_id, guild_id=guild_id)
