@@ -154,7 +154,7 @@ class Bot:
             self.http._session = self._session
             _log.debug("Attempting to verify token (length=%s)", len(token))
             self.user = await self._verify_token()
-            _log.debug("Verified token successfully.")
+            _log.info("Verified token successfully.")
             self.commands = CommandManager(self.http, self._storage, self.user.id)
             self.gateway = GatewayClient(self, self._session, token, self.intents)
             await self.gateway.connect()

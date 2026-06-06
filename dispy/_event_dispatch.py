@@ -66,6 +66,8 @@ class EventDispatcher:
             task = asyncio.create_task(callback(interaction, *args))
             task.add_done_callback(lambda t: self._on_task_done(t, f"Handler Function {callback.__name__} for command '{name}'"))
             _log.debug("Command %s (func=%s) dispatched.", name, callback.__name__)
+        else:
+            _log.warning("Recieved command %s, but no handler was found for it.", name)
             
     async def _handle_guild_create(self, data: GuildPayload | UnavailableGuildPayload):
         guild = self.bot._storage.update_guilds(g) if isinstance((g := parse_guild_payload(data)), Guild) else g
