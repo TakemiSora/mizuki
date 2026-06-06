@@ -69,16 +69,30 @@ class CommandManager(BaseManager):
         :class:`HTTPException`
             A HTTP error occured.
         """
-        return [
+        return self._cache_storage.update_commands_bulk([
             ApplicationCommand(c)
             for c in await self._command_request(
                 method="GET",
                 guild_id=guild_id,
                 params={
-                    "with_localizations": with_localizations
+                    "with_localizations": str(with_localizations).lower()
                 }
             )
-        ]
+        ], guild_id=guild_id or 0)
+        
+    def get_all(
+        self, *,
+        guild_id: int | None = None
+    ) -> list[ApplicationCommand]:
+        """
+        Gets a list of ApplicationCommand frok the internal cache. Can be empty if the commands are not fetched atleast once.
+        
+        Parameters
+        ----------
+        guild_id : :class:`int`
+            The Guild ID of the Guild for getting commands scoped by guild.
+        """
+        return self._cache_storage.get_all_commands(guild_id=guild_id or 0)
 
     async def add(
         self, command: PartialApplicationCommand,
@@ -103,10 +117,12 @@ class CommandManager(BaseManager):
         :class:`HTTPException`
             A HTTP error occured.
         """
-        return ApplicationCommand(await self._command_request(
-            method="POST", json=command._to_dict(),
-            guild_id=guild_id
-        ))
+        return self._cache_storage.update_command(
+            ApplicationCommand(await self._command_request(
+                method="POST", json=command._to_dict(),
+                guild_id=guild_id
+            )), guild_id=guild_id or 0
+        )
 
     async def fetch(
         self, command_id: int,
@@ -134,10 +150,12 @@ class CommandManager(BaseManager):
         :class:`HTTPException`
             A HTTP error occured.
         """
-        return ApplicationCommand(await self._command_request(
-            method="GET", guild_id=guild_id,
-            command_id=command_id
-        ))
+        return self._cache_storage.update_command(
+            ApplicationCommand(await self._command_request(
+                method="GET", guild_id=guild_id,
+                command_id=command_id
+            )), guild_id=guild_id or 0
+        )
 
     async def sync_bulk(
         self, commands: list[PartialApplicationCommand],
@@ -162,14 +180,14 @@ class CommandManager(BaseManager):
         :class:`HTTPException`
             A HTTP error occured.
         """
-        return [
+        return self._cache_storage.update_commands_bulk([
             ApplicationCommand(c)
             for c in
             await self._command_request(
                 method="PUT", guild_id=guild_id,
                 json=[c._to_dict() for c in commands]
             )
-        ]
+        ], guild_id=guild_id or 0)
         
     @overload
     async def edit(
@@ -289,12 +307,14 @@ class CommandManager(BaseManager):
             nsfw=nsfw
         )
 
-        return ApplicationCommand(
-            await self._command_request(
-                method="PATCH",
-                command_id=command_id,
-                guild_id=guild_id,
-                json=payload
+        return self._cache_storage.update_command(
+            ApplicationCommand(
+                await self._command_request(
+                    method="PATCH",
+                    command_id=command_id,
+                    guild_id=guild_id,
+                    json=payload
+                )
             )
         )
 
@@ -325,3 +345,4 @@ class CommandManager(BaseManager):
             A HTTP error occured.
         """
         await self._command_request(method="DELETE", command_id=command_id, guild_id=guild_id)
+        self._cache_storage.remove_command(command_id=command_id, guild_id=guild_id or 0)

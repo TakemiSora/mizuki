@@ -154,7 +154,9 @@ class CacheStorage:
         self.messages: dict[int, CacheEntry[Message]] = {}
         self.channels: dict[int, CacheEntry[Channel]] = {}
         self.guilds: dict[int, CacheEntry[Guild]] = {}
-        self.commands: dict[int, ApplicationCommand] = {}
+        
+        self.commands: dict[int, dict[int, ApplicationCommand]] = {}
+        #Guild ID (Global 0) ^         ^ Command ID
 
     def start_cleanup_tasks(self) -> None:
         self._users_cleanup_task = asyncio.create_task(self._cleanup_cache(self.users))
@@ -248,25 +250,43 @@ class CacheStorage:
                 cache.pop(i, None)
             
             await asyncio.sleep(self.settings.cleanup_interval.total_seconds())
-
-    def replace_all_commands(self, commands: list[ApplicationCommand]) -> list[ApplicationCommand]:
+            
+    def update_command(
+        self, command: ApplicationCommand,
+        *, guild_id: int = 0
+    ) -> ApplicationCommand:
         if self.settings.commands:
-            self.commands.clear()
-            for c in commands: self.commands[c.id] = c
-        return commands
-
-    def get_all_commands(self) -> list[ApplicationCommand]:
-        return list[ApplicationCommand](self.commands.values())
-
-    def add_command(self, command: ApplicationCommand) -> ApplicationCommand:
-        if self.settings.commands: self.commands[command.id] = command
+            self.commands.setdefault(guild_id, {})[command.id] = command
         return command
-
-    def add_commands_bulk(self, commands: list[ApplicationCommand]) -> list[ApplicationCommand]:
+        
+    def update_commands_bulk(
+        self, commands: list[ApplicationCommand],
+        *, guild_id: int = 0
+    ) -> list[ApplicationCommand]:
+        "Cleans all command in cache for that guild_id as well."
         if self.settings.commands:
-            for c in commands:
-                self.commands[c.id] = c
+            gcache = self.commands[guild_id] = {}
+            # We clear the entire cache here because PUT replaces all commands
+            for command in commands:
+                gcache[command.id] = command
         return commands
-
-    def remove_command(self, command_id: int) -> ApplicationCommand | None:
-        return self.commands.pop(command_id, None)
+        
+    def remove_command(
+        self, command_id: int,
+        *, guild_id: int = 0
+    ) -> ApplicationCommand | None:
+        if self.settings.commands and guild_id in self.commands:
+            return self.commands[guild_id].pop(command_id, None)
+            
+    def get_command(
+        self, command_id: int,
+        *, guild_id: int = 0
+    ) -> ApplicationCommand | None:
+        if self.settings.commands and guild_id in self.commands:
+            return self.commands[guild_id].get(command_id)
+            
+    def get_all_commands(
+        self, *,
+        guild_id: int = 0
+    ) -> list[ApplicationCommand]:
+        return list(self.commands.get(guild_id, {}).values())
