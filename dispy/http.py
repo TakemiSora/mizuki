@@ -7,11 +7,6 @@ from .errors import NotFound, HTTPException, Forbidden, Unauthorized, _RateLimit
 
 _log  = logging.getLogger(__name__)
 
-__all__ = (
-    "Path",
-    "HTTPClient"
-)
-
 class Path:
     """
     The Path/URL metadata for a HTTP Request. Parameters should be initalized with keyword arguments rather than f-strings.
@@ -193,11 +188,11 @@ class HTTPClient:
         except _RateLimitedRetry as e:
             if e.limit_scope == "global":
                 self._global_ratelimit.clear()
-                _log.info("Hit the global ratelimit for the REST API. Continuing in %.2f seconds", e.retry_after)
+                _log.warning("Hit the global ratelimit for the REST API. Continuing in %.2f seconds", e.retry_after)
                 await asyncio.sleep(e.retry_after)
                 self._global_ratelimit.set()
             else:
-                _log.info("Hit the ratelimit when accessing BucketID = %s on URL = %s. Continuing in %.2f", e.bucket_id, path.url, e.retry_after)
+                _log.warning("Hit the ratelimit when accessing BucketID = %s on URL = %s. Continuing in %.2f", e.bucket_id, path.url, e.retry_after)
                 await asyncio.sleep(e.retry_after)
 
             return await self.request(path, **kwargs)
