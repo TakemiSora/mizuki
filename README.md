@@ -49,6 +49,3 @@ python -m http.server 8000
 ```
 
 Then open `https://localhost:8000/` to open the documentation.
-
-> [!NOTE]
-> Replace '/' with '\\' for windows in cd commands.
