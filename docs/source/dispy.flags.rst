@@ -1,7 +1,7 @@
 Flags
 =====
 
-.. automodule:: dispy.flags
+.. automodule:: mizuki.flags
    :members:
    :show-inheritance:
    :undoc-members:

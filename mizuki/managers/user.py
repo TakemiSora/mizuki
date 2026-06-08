@@ -8,14 +8,14 @@ __all__ = (
 
 class UserManager(BaseManager):
     """
-    Manager used to fetch :class:`User <dispy.objects.user.User>` objects.
+    Manager used to fetch :class:`User <mizuki.objects.user.User>` objects.
     """
 
     __slots__ = ()
     
     async def fetch_me(self) -> User:
         """
-        Fetches the user object of the bot. This should generally not be called as it is accessible on startup via :attr:`Bot.user <dispy.bot.Bot.user>`.
+        Fetches the user object of the bot. This should generally not be called as it is accessible on startup via :attr:`Bot.user <mizuki.bot.Bot.user>`.
         
         Raises
         ------
@@ -33,7 +33,7 @@ class UserManager(BaseManager):
 
     def get(self, user_id: int) -> User | None:
         """
-        Attempts to fetch a :class:`User <dispy.objects.user.User>` from the internal cache of the bot.
+        Attempts to fetch a :class:`User <mizuki.objects.user.User>` from the internal cache of the bot.
         
         Parameters
         ----------
@@ -42,7 +42,7 @@ class UserManager(BaseManager):
             
         Returns
         -------
-        :class:`User <dispy.objects.user.User>`
+        :class:`User <mizuki.objects.user.User>`
             The User received from the cache.
         :class:`None`
             Could not find the User object in the internal cache.
@@ -51,7 +51,7 @@ class UserManager(BaseManager):
 
     async def fetch(self, user_id: int) -> User:
         """
-        Attempts to fetch a :class:`User <dispy.objects.user.User>` from the Discord API.
+        Attempts to fetch a :class:`User <mizuki.objects.user.User>` from the Discord API.
         
         Parameters
         ----------
@@ -60,7 +60,7 @@ class UserManager(BaseManager):
             
         Returns
         -------
-        :class:`User <dispy.objects.user.User>`
+        :class:`User <mizuki.objects.user.User>`
             The User object recieved from Discord API.
             
         Raises
@@ -81,7 +81,7 @@ class UserManager(BaseManager):
 
     async def get_or_fetch(self, user_id: int) -> User:
         """
-        A couroutine function that attempts to fetch a :class:`User <dispy.objects.user.User>` from internal cache and if not present, makes an API call to discord.
+        A couroutine function that attempts to fetch a :class:`User <mizuki.objects.user.User>` from internal cache and if not present, makes an API call to discord.
         
         Parameters
         ----------
@@ -90,7 +90,7 @@ class UserManager(BaseManager):
             
         Returns
         -------
-        :class:`User <dispy.objects.user.User>`
+        :class:`User <mizuki.objects.user.User>`
             The User object recieved from Discord API or cache.
             
         Raises

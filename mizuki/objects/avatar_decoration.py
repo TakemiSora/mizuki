@@ -9,7 +9,7 @@ __all__ = (
 
 class AvatarDecoration:
     """
-    Represents a :class:`User <dispy.objects.user.User>`'s Avatar Decoration.
+    Represents a :class:`User <mizuki.objects.user.User>`'s Avatar Decoration.
     """
     
     sku_id: Snowflake

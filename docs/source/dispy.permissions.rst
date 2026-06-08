@@ -1,7 +1,7 @@
 Permissions
 ===========
 
-.. automodule:: dispy.objects.permissions
+.. automodule:: mizuki.objects.permissions
    :members:
    :show-inheritance:
    :undoc-members:

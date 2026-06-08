@@ -6,7 +6,7 @@ __all__ = (
 
 class Event(StrEnum):
     """
-    The Event enum to be provided in :meth:`Bot.listen() <dispy.bot.Bot.listen>`.
+    The Event enum to be provided in :meth:`Bot.listen() <mizuki.bot.Bot.listen>`.
     """
 
     GUILD_CREATE = "on_guild_create"

@@ -4,7 +4,7 @@ Channels
 Manager
 -------
 
-.. automodule:: dispy.managers.channel
+.. automodule:: mizuki.managers.channel
    :members:
    :show-inheritance:
    :undoc-members:
@@ -12,7 +12,7 @@ Manager
 Objects
 -------
 
-.. automodule:: dispy.objects.channel
+.. automodule:: mizuki.objects.channel
    :members:
    :show-inheritance:
    :undoc-members:
@@ -20,7 +20,7 @@ Objects
 Enums
 -----
 
-.. automodule:: dispy.enums.channel
+.. automodule:: mizuki.enums.channel
    :members:
    :undoc-members:
    :no-inherited-members:
@@ -28,4 +28,4 @@ Enums
 Errors
 ------
 
-.. autoclass:: dispy.errors.UnknownChannelType
+.. autoclass:: mizuki.errors.UnknownChannelType

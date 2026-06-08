@@ -1,5 +1,4 @@
 import asyncio
-from dispy.objects.command import ApplicationCommand
 from .objects.user import User
 from .objects.message import Message
 from .objects.channel import Channel
@@ -28,15 +27,15 @@ class CacheSettings:
     Parameters
     ----------
     users : :class:`bool`, optional
-        Toggle caching of :class:`User <dispy.objects.user.User>` objects. Defaults to ``True``.
+        Toggle caching of :class:`User <mizuki.objects.user.User>` objects. Defaults to ``True``.
     messages : :class:`bool`, optional
-        Toggle caching of :class:`Message <dispy.objects.message.Message>` objects. Defaults to ``True``.
+        Toggle caching of :class:`Message <mizuki.objects.message.Message>` objects. Defaults to ``True``.
     channels : :class:`bool`, optional
-        Toggle caching of :class:`PrivateChannel <dispy.objects.channel.PrivateChannel>`, :class:`ThreadChannel <dispy.objects.channel.ThreadChannel>` and :class:`GuildChannel <dispy.objects.channel.GuildChannel>` objects. Defaults to ``True``.
+        Toggle caching of :class:`PrivateChannel <mizuki.objects.channel.PrivateChannel>`, :class:`ThreadChannel <mizuki.objects.channel.ThreadChannel>` and :class:`GuildChannel <mizuki.objects.channel.GuildChannel>` objects. Defaults to ``True``.
     guilds : :class:`bool`, optional
-        Toggle caching of :class:`Guild <dispy.objects.guild.Guild>` objects. Defaults to ``True``.
+        Toggle caching of :class:`Guild <mizuki.objects.guild.Guild>` objects. Defaults to ``True``.
     commands: :class:`bool`, optional
-        Toggle caching of :class:`ApplicationCommand <dispy.objects.command.ApplicationCommand>` objects. Defaults to ``True``.
+        Toggle caching of :class:`ApplicationCommand <mizuki.objects.command.ApplicationCommand>` objects. Defaults to ``True``.
     cache_invalidation : :class:`bool`, optional
         Toggle if cache should be invalidated based on time. Defaults to ``False``.
     invalidation_time : :class:`timedelta <datetime.timedelta>`, optional
@@ -44,29 +43,29 @@ class CacheSettings:
     cleanup_interval : :class:`timedelta <datetime.timedelta>`, optional
         Determines how often the Cache will be cleaned up. Defaults to ``timedelta(hours=6)``.
     max_users_store : :class:`int` | :class:`None`, optional
-        Determines the max amount of :class:`User <dispy.objects.user.User>` objects the cache will store. Defaults to ``None``.
+        Determines the max amount of :class:`User <mizuki.objects.user.User>` objects the cache will store. Defaults to ``None``.
     max_messages_store : :class:`int` | :class:`None`, optional
-        Determines the max amount of :class:`Message <dispy.objects.message.Message>` objects the cache will store. Defaults to ``2000``.
+        Determines the max amount of :class:`Message <mizuki.objects.message.Message>` objects the cache will store. Defaults to ``2000``.
     max_channels_store : :class:`int` | :class:`None`, optional
-        Determines the max amount of :class:`PrivateChannel <dispy.objects.channel.PrivateChannel>`, :class:`ThreadChannel <dispy.objects.channel.ThreadChannel>` and :class:`GuildChannel <dispy.objects.channel.GuildChannel>` objects the cache will store. Defaults to ``None``.
+        Determines the max amount of :class:`PrivateChannel <mizuki.objects.channel.PrivateChannel>`, :class:`ThreadChannel <mizuki.objects.channel.ThreadChannel>` and :class:`GuildChannel <mizuki.objects.channel.GuildChannel>` objects the cache will store. Defaults to ``None``.
     max_guilds_store : :class:`int` | :class:`None`, optional
-        Determines the max amount of :class:`Guild <dispy.objects.guild.Guild>` objects the cache will store. Defaults to ``None``.
+        Determines the max amount of :class:`Guild <mizuki.objects.guild.Guild>` objects the cache will store. Defaults to ``None``.
     """
     
     users: bool
-    "Whether :class:`User <dispy.objects.user.User>` caching is enabled."
+    "Whether :class:`User <mizuki.objects.user.User>` caching is enabled."
     
     messages: bool
-    "Whether :class:`Message <dispy.objects.message.Message>` caching is enabled."
+    "Whether :class:`Message <mizuki.objects.message.Message>` caching is enabled."
     
     channels: bool
-    "Whether :class:`PrivateChannel <dispy.objects.channel.PrivateChannel>`, :class:`ThreadChannel <dispy.objects.channel.ThreadChannel>` and :class:`GuildChannel <dispy.objects.channel.GuildChannel>` caching is enabled."
+    "Whether :class:`PrivateChannel <mizuki.objects.channel.PrivateChannel>`, :class:`ThreadChannel <mizuki.objects.channel.ThreadChannel>` and :class:`GuildChannel <mizuki.objects.channel.GuildChannel>` caching is enabled."
     
     guilds: bool
-    "Whether :class:`Guild <dispy.objects.guild.Guild>` caching is enabled."
+    "Whether :class:`Guild <mizuki.objects.guild.Guild>` caching is enabled."
     
     commands: bool
-    "Whether :class:`ApplicationCommand <dispy.objects.command.ApplicationCommand>` caching is enabled."
+    "Whether :class:`ApplicationCommand <mizuki.objects.command.ApplicationCommand>` caching is enabled."
     
     cache_invalidation: bool
     "Whether time-based cache invalidation is enabled, commands remain unaffected by this invalidation."
@@ -78,16 +77,16 @@ class CacheSettings:
     "The interval at which the cleanup tasks will happen."
     
     max_users_store: int | None
-    "The max amount of :class:`User <dispy.objects.user.User>` objects the cache will store."
+    "The max amount of :class:`User <mizuki.objects.user.User>` objects the cache will store."
     
     max_messages_store: int | None
-    "The max amount of :class:`Message <dispy.objects.message.Message>` objects the cache will store."
+    "The max amount of :class:`Message <mizuki.objects.message.Message>` objects the cache will store."
     
     max_channels_store: int | None
-    "The max amount of :class:`PrivateChannel <dispy.objects.channel.PrivateChannel>`, :class:`ThreadChannel <dispy.objects.channel.ThreadChannel>` and :class:`GuildChannel <dispy.objects.channel.GuildChannel>` objects the cache will store."
+    "The max amount of :class:`PrivateChannel <mizuki.objects.channel.PrivateChannel>`, :class:`ThreadChannel <mizuki.objects.channel.ThreadChannel>` and :class:`GuildChannel <mizuki.objects.channel.GuildChannel>` objects the cache will store."
     
     max_guilds_store: int | None
-    "The max amount of :class:`Guild <dispy.objects.guild.Guild>` objects the cache will store."
+    "The max amount of :class:`Guild <mizuki.objects.guild.Guild>` objects the cache will store."
     
     __slots__ = (
         "users",

@@ -39,14 +39,14 @@ class Bot:
     
     Parameters
     ----------
-    intents : :class:`IntentFlags <dispy.flags.IntentFlags>`
+    intents : :class:`IntentFlags <mizuki.flags.IntentFlags>`
         The IntentFlags to be passed to the GatewayClient.
-    cache_settings : :class:`CacheSettings <dispy.cache.CacheSettings>`, optional
+    cache_settings : :class:`CacheSettings <mizuki.cache.CacheSettings>`, optional
         The CacheSettings for managing the Cache System of the Bot instance. Defaults to ``CacheSettings()``
     """
     
     intents: IntentFlags
-    "The IntentFlags to be passed to the :class:`GatewayClient <dispy.gateway.GatewayClient>`."
+    "The IntentFlags to be passed to the :class:`GatewayClient <mizuki.gateway.GatewayClient>`."
     
     http: HTTPClient
     "The HTTPClient used for the REST API."
@@ -186,7 +186,7 @@ class Bot:
         
         Parameters
         ----------
-        event : :class:`Event <dispy.enums.event_dispatch.Event>` | :class:`None`, optional
+        event : :class:`Event <mizuki.enums.event_dispatch.Event>` | :class:`None`, optional
             The Gateway Event to listen to. Defaults to name of function in format such as ``on_interaction_create``. Defaults to ``None``
             
         Raises
@@ -201,15 +201,15 @@ class Bot:
         .. code-block:: python
         
             @bot.listen()
-            async def on_message_create(message: dispy.Message) -> None:
+            async def on_message_create(message: mizuki.Message) -> None:
                 ...
         
         Explicitly passing event name:
         
         .. code-block:: python
         
-            @bot.listen(dispy.Event.MESSAGE_CREATE)
-            async def can_be_named_anything(message: dispy.Message) -> None:
+            @bot.listen(mizuki.Event.MESSAGE_CREATE)
+            async def can_be_named_anything(message: mizuki.Message) -> None:
                 ...
         """
         def decorator(func: CoroFunc) -> CoroFunc:

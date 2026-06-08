@@ -1,7 +1,7 @@
 Asset
 =====
 
-.. automodule:: dispy.objects.asset
+.. automodule:: mizuki.objects.asset
    :members:
    :show-inheritance:
    :undoc-members:

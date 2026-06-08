@@ -16,7 +16,7 @@ from .._utils import _MISSING, assign_val_dict, mtd
 
 class CommandManager(BaseManager):
     """
-    Manager used to manage :class:`~dispy.objects.command.ApplicationCommand`.
+    Manager used to manage :class:`~mizuki.objects.command.ApplicationCommand`.
     """
 
     __slots__ = (
@@ -61,7 +61,7 @@ class CommandManager(BaseManager):
             The guild ID for fetching commands scoped by guild.
             
         with_localizations : :class:`bool`, optional
-            Whether :attr:`~dispy.objects.command.ApplicationCommand.name_localizations` and :attr:`~dispy.objects.command.ApplicationCommand.description_localizations` should be fetched. Defaults to ``True``.
+            Whether :attr:`~mizuki.objects.command.ApplicationCommand.name_localizations` and :attr:`~mizuki.objects.command.ApplicationCommand.description_localizations` should be fetched. Defaults to ``True``.
         
         Raises
         ------
@@ -105,7 +105,7 @@ class CommandManager(BaseManager):
 
         Parameters
         ----------
-        command : :class:`~dispy.objects.command.PartialApplicationCommand`
+        command : :class:`~mizuki.objects.command.PartialApplicationCommand`
             The command to sync.
             
         guild_id : :class:`int`, optional
@@ -161,7 +161,7 @@ class CommandManager(BaseManager):
 
     async def sync_all(self) -> list[ApplicationCommand]:
         """
-        Syncs registered commands via :meth:`@Bot.command() <dispy.objects.bot.Bot.command>` to the Application. This will **override** all commands currently synced.
+        Syncs registered commands via :meth:`@Bot.command() <mizuki.objects.bot.Bot.command>` to the Application. This will **override** all commands currently synced.
 
         Raises
         ------
@@ -200,7 +200,7 @@ class CommandManager(BaseManager):
 
         Parameters
         ----------
-        commands : list[:class:`~dispy.objects.command.PartialApplicationCommand`]
+        commands : list[:class:`~mizuki.objects.command.PartialApplicationCommand`]
             The new list of commands.
             
         guild_id : :class:`int`, optional
@@ -280,25 +280,25 @@ class CommandManager(BaseManager):
         name : :class:`str`
             The name of the command.
             
-        name_localizations : :class:`~dispy.objects.command.Localization`
+        name_localizations : :class:`~mizuki.objects.command.Localization`
             The localizations for the name of the command.
             
         description : :class:`str`
             The description of the command.
             
-        description_localizations : :class:`~dispy.objects.command.Localization`
+        description_localizations : :class:`~mizuki.objects.command.Localization`
             The localizations for the description of the command.
             
-        options : list[:class:`~dispy.objects.command.ApplicationCommandOption`]
+        options : list[:class:`~mizuki.objects.command.ApplicationCommandOption`]
             The options (parameters or sub-commands) of the command.
         
-        default_member_permissions : :class:`~dispy.objects.permissions.Permissions`
+        default_member_permissions : :class:`~mizuki.objects.permissions.Permissions`
             The default member permissions of the command.
             
-        integration_types : list[:class:`~dispy.enums.interaction.ApplicationIntegrationType`]
+        integration_types : list[:class:`~mizuki.enums.interaction.ApplicationIntegrationType`]
             The installation contexts where the command is available.
             
-        contexts : list[:class:`~dispy.enums.interaction.InteractionContextType`]
+        contexts : list[:class:`~mizuki.enums.interaction.InteractionContextType`]
             The installation contexts where the command can be used.
         
         nsfw : :class:`bool`

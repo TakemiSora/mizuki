@@ -1,4 +1,4 @@
-# Dispy
+# Mizuki
 
 A modern async-based discord API wrapper written for Python. Currently in early development, not meant to be used in production as of now.  
 I aim for this library to closely mirror the discord API.
@@ -6,20 +6,20 @@ I aim for this library to closely mirror the discord API.
 ## Installation
 
 ```
-pip install git+https://github.com/TakemiSora/dispy
+pip install git+https://github.com/TakemiSora/mizuki
 ```
 
 ## Quick Example
 
 ```python
-import dispy
+import mizuki
 
-bot = dispy.Bot(
-     intents=dispy.IntentFlags.standard()
+bot = mizuki.Bot(
+     intents=mizuki.IntentFlags.standard()
 )
 
 @bot.command(name="ping", description="Send a ping to the bot")
-async def ping(interaction: dispy.Interaction):
+async def ping(interaction: mizuki.Interaction):
     await interaction.response.send_response("Pong!")
 
 bot.run("TOKEN-HERE")
@@ -31,10 +31,10 @@ There is no current hosted documentation (yet), but a local version of the docum
 
 ```
 # 1. Clone the repository
-git clone https://github.com/TakemiSora/dispy
+git clone https://github.com/TakemiSora/mizuki
 
 # 2. Navigate into the docs directory
-cd dispy/docs/
+cd mizuki/docs/
 
 # 3. Build the HTML documentation
 ## Linux/Mac

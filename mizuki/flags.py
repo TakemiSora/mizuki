@@ -60,7 +60,7 @@ class IntentFlags(IntFlag):
     @classmethod
     def all(cls) -> Self:
         """
-        Returns a :class:`IntentFlags <dispy.flags.IntentFlags>` instance with all intents enabled.
+        Returns a :class:`IntentFlags <mizuki.flags.IntentFlags>` instance with all intents enabled.
         """
         val = 0
         for f in cls:
@@ -71,7 +71,7 @@ class IntentFlags(IntFlag):
     @classmethod
     def standard(cls) -> Self:
         """
-        Returns a :class:`IntentFlags <dispy.flags.IntentFlags>` instance with only non-privileged intents enabled.
+        Returns a :class:`IntentFlags <mizuki.flags.IntentFlags>` instance with only non-privileged intents enabled.
         """
         privileged = cls.GUILD_PRESENCES | cls.MESSAGE_CONTENT | cls.GUILD_MEMBERS
         return cls.all() & ~privileged

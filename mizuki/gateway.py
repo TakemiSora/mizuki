@@ -229,8 +229,8 @@ class GatewayClient:
                     "intents": int(self.intents),
                     "properties": {
                         "os": sys.platform,
-                        "browser": "dispy",
-                        "device": "dispy"
+                        "browser": "mizuki",
+                        "device": "mizuki"
                     },
                 }
             })

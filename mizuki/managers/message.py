@@ -8,14 +8,14 @@ __all__ = (
 
 class MessageManager(BaseManager):
     """"
-    Manager used to fetch :class:`Message <dispy.objects.message.Message>` objects.
+    Manager used to fetch :class:`Message <mizuki.objects.message.Message>` objects.
     """
 
     __slots__ = ()
 
     def get(self, message_id: int) -> Message | None:
         """
-        Attempts to fetch a :class:`Message <dispy.objects.message.Message>` from the internal cache of the bot.
+        Attempts to fetch a :class:`Message <mizuki.objects.message.Message>` from the internal cache of the bot.
         
         Parameters
         ----------
@@ -24,7 +24,7 @@ class MessageManager(BaseManager):
             
         Returns
         -------
-        :class:`Message <dispy.objects.message.Message>`
+        :class:`Message <mizuki.objects.message.Message>`
             The Messsge received from the cache.
         :class:`None`
             Could not find the User object in the internal cache.
@@ -33,7 +33,7 @@ class MessageManager(BaseManager):
 
     async def fetch(self, channel_id: int, message_id: int) -> Message:
         """
-        Attempts to fetch a :class:`Message <dispy.objects.message.Message>` from the Discord API.
+        Attempts to fetch a :class:`Message <mizuki.objects.message.Message>` from the Discord API.
         
         Parameters
         ----------
@@ -42,7 +42,7 @@ class MessageManager(BaseManager):
             
         Returns
         -------
-        :class:`Message <dispy.objects.message.Message>`
+        :class:`Message <mizuki.objects.message.Message>`
             The Message object recieved from Discord API.
             
         Raises
@@ -66,7 +66,7 @@ class MessageManager(BaseManager):
 
     async def get_or_fetch(self, channel_id: int, message_id: int) -> Message:
         """
-        A couroutine function that attempts to fetch a :class:`Message <dispy.objects.message.Message>` from internal cache and if not present, makes an API call to discord.
+        A couroutine function that attempts to fetch a :class:`Message <mizuki.objects.message.Message>` from internal cache and if not present, makes an API call to discord.
         
         Parameters
         ----------
@@ -75,7 +75,7 @@ class MessageManager(BaseManager):
             
         Returns
         -------
-        :class:`Message <dispy.objects.message.Message>`
+        :class:`Message <mizuki.objects.message.Message>`
             The Message object recieved from Discord API or cache.
             
         Raises

@@ -4,7 +4,7 @@ Embeds
 Objects
 -------
 
-.. automodule:: dispy.objects.embed
+.. automodule:: mizuki.objects.embed
    :members:
    :show-inheritance:
    :undoc-members:
@@ -12,7 +12,7 @@ Objects
 Enums
 -----
 
-.. automodule:: dispy.enums.embed
+.. automodule:: mizuki.enums.embed
    :members:
    :undoc-members:
    :no-inherited-members:

@@ -87,19 +87,19 @@ class ThreadMember:
     """
     
     id: Snowflake | None
-    "The ID of the :class:`Thread <dispy.objects.channel.ThreadChannel>`. Omitted in :attr:`GUILD_CREATE <dispy.enums.event_dispatch.Event.GUILD_CREATE>`."
+    "The ID of the :class:`Thread <mizuki.objects.channel.ThreadChannel>`. Omitted in :attr:`GUILD_CREATE <mizuki.enums.event_dispatch.Event.GUILD_CREATE>`."
     
     user_id: Snowflake | None
-    "The ID of the :class:`User <dispy.objects.user.User>`. Omitted in :attr:`GUILD_CREATE <dispy.enums.event_dispatch.Event.GUILD_CREATE>`."
+    "The ID of the :class:`User <mizuki.objects.user.User>`. Omitted in :attr:`GUILD_CREATE <mizuki.enums.event_dispatch.Event.GUILD_CREATE>`."
 
     join_timestamp: datetime
     "Time the user last joined the thread."
     
     notifications: bool
-    "Represents if the :class:`User <dispy.objects.user.User>` has notifications enabled."
+    "Represents if the :class:`User <mizuki.objects.user.User>` has notifications enabled."
     
     member: Member | None
-    "The Member Object for the user in the :class:`Guild <dispy.objects.guild.Guild>`. Omitted in :attr:`GUILD_CREATE <dispy.enums.event_dispatch.Event.GUILD_CREATE>`."
+    "The Member Object for the user in the :class:`Guild <mizuki.objects.guild.Guild>`. Omitted in :attr:`GUILD_CREATE <mizuki.enums.event_dispatch.Event.GUILD_CREATE>`."
     
     __slots__ = (
         "id",
@@ -121,11 +121,11 @@ class ThreadMember:
 
 class ForumTag:
     """
-    Represents a Forum Tag which can be applied to Channels of types :attr:`GUILD_FORUM <dispy.enums.channel.ChannelType.GUILD_FORUM>` and :attr:`GUILD_MEDIA <dispy.enums.channel.ChannelType.GUILD_MEDIA>`.
+    Represents a Forum Tag which can be applied to Channels of types :attr:`GUILD_FORUM <mizuki.enums.channel.ChannelType.GUILD_FORUM>` and :attr:`GUILD_MEDIA <mizuki.enums.channel.ChannelType.GUILD_MEDIA>`.
     
     .. note::
     
-        Atleast one of :attr:`emoji_id <dispy.objects.channel.ForumTag.emoji_id>` and :attr:`emoji_name <dispy.objects.channel.ForumTag.emoji_name>` will always be present.
+        Atleast one of :attr:`emoji_id <mizuki.objects.channel.ForumTag.emoji_id>` and :attr:`emoji_name <mizuki.objects.channel.ForumTag.emoji_name>` will always be present.
     """
     
     id: Snowflake
@@ -135,10 +135,10 @@ class ForumTag:
     "The name of the tag. (0-20 characters long)"
     
     moderated: bool
-    "Whether this Tag can only be added to or removed from valid ChannelType by a member with the :attr:`MANAGE_THREADS <dispy.objects.permissions.Permissions.MANAGE_THREADS>` permission."
+    "Whether this Tag can only be added to or removed from valid ChannelType by a member with the :attr:`MANAGE_THREADS <mizuki.objects.permissions.Permissions.MANAGE_THREADS>` permission."
     
     emoji_id: Snowflake | None
-    "The ID of a :class:`Guild <dispy.objects.guild.Guild>`’s custom emoji."
+    "The ID of a :class:`Guild <mizuki.objects.guild.Guild>`’s custom emoji."
     
     emoji_name: str | None
     "The unicode character of the emoji."
@@ -164,7 +164,7 @@ class BaseChannel:
     "The ID of the Channel."
     
     last_message_id: Snowflake | None
-    "The ID of the last message (or :class:`Thread <dispy.objects.channel.ThreadChannel>` for :attr:`GUILD_FORUM <dispy.enums.channel.ChannelType.GUILD_FORUM>` and :attr:`GUILD_MEDIA <dispy.enums.channel.ChannelType.GUILD_MEDIA>`) that was sent in that channel. May or may not point to a valid message."
+    "The ID of the last message (or :class:`Thread <mizuki.objects.channel.ThreadChannel>` for :attr:`GUILD_FORUM <mizuki.enums.channel.ChannelType.GUILD_FORUM>` and :attr:`GUILD_MEDIA <mizuki.enums.channel.ChannelType.GUILD_MEDIA>`) that was sent in that channel. May or may not point to a valid message."
     
     flags: ChannelFlags
     "The flags of the Channel."
@@ -206,7 +206,7 @@ class BaseChannel:
 
 class BasePublicChannel(BaseChannel):
     guild_id: Snowflake
-    "The :class:`Guild <dispy.objects.guild.Guild>` ID of the Channel."
+    "The :class:`Guild <mizuki.objects.guild.Guild>` ID of the Channel."
     
     name: str
     "The name of the channel"
@@ -215,7 +215,7 @@ class BasePublicChannel(BaseChannel):
     "The amount of time an user has to wait before sending a message (Slowmode). Bots remain unaffected."
     
     permissions: Permissions | None
-    "Computed permissions for the invoking user in the channel, including overwrites, only included when part of the :class:`Resolved Data <dispy.objects.interaction.ResolvedData>` received on an :class:`Interaction <dispy.objects.interaction.Interaction>`. This does not include implicit permissions, which may need to be checked separately"
+    "Computed permissions for the invoking user in the channel, including overwrites, only included when part of the :class:`Resolved Data <mizuki.objects.interaction.ResolvedData>` received on an :class:`Interaction <mizuki.objects.interaction.Interaction>`. This does not include implicit permissions, which may need to be checked separately"
     
     __slots__ = (
         "guild_id",
@@ -241,30 +241,30 @@ class GuildChannel(BasePublicChannel):
     
     Channel Types
     -------------
-    - :attr:`GUILD_TEXT <dispy.enums.channel.ChannelType.GUILD_TEXT>`  
-    - :attr:`GUILD_VOICE <dispy.enums.channel.ChannelType.GUILD_VOICE>`  
-    - :attr:`GUILD_CATEGORY <dispy.enums.channel.ChannelType.GUILD_CATEGORY>`  
-    - :attr:`GUILD_ANNOUNCEMENT <dispy.enums.channel.ChannelType.GUILD_ANNOUNCEMENT>`  
-    - :attr:`GUILD_STAGE_VOICE <dispy.enums.channel.ChannelType.GUILD_STAGE_VOICE>`  
-    - :attr:`GUILD_DIRECTORY <dispy.enums.channel.ChannelType.GUILD_DIRECTORY>`  
-    - :attr:`GUILD_FORUM <dispy.enums.channel.ChannelType.GUILD_FORUM>`  
-    - :attr:`GUILD_MEDIA <dispy.enums.channel.ChannelType.GUILD_MEDIA>`
+    - :attr:`GUILD_TEXT <mizuki.enums.channel.ChannelType.GUILD_TEXT>`  
+    - :attr:`GUILD_VOICE <mizuki.enums.channel.ChannelType.GUILD_VOICE>`  
+    - :attr:`GUILD_CATEGORY <mizuki.enums.channel.ChannelType.GUILD_CATEGORY>`  
+    - :attr:`GUILD_ANNOUNCEMENT <mizuki.enums.channel.ChannelType.GUILD_ANNOUNCEMENT>`  
+    - :attr:`GUILD_STAGE_VOICE <mizuki.enums.channel.ChannelType.GUILD_STAGE_VOICE>`  
+    - :attr:`GUILD_DIRECTORY <mizuki.enums.channel.ChannelType.GUILD_DIRECTORY>`  
+    - :attr:`GUILD_FORUM <mizuki.enums.channel.ChannelType.GUILD_FORUM>`  
+    - :attr:`GUILD_MEDIA <mizuki.enums.channel.ChannelType.GUILD_MEDIA>`
     """
     
     type: ChannelType
     "The type of this Channel."
     
     parent_id: Snowflake | None
-    "The ID of the category (channel of :attr:`GUILD_CATEGORY <dispy.enums.channel.ChannelType.GUILD_CATEGORY>`), if any."
+    "The ID of the category (channel of :attr:`GUILD_CATEGORY <mizuki.enums.channel.ChannelType.GUILD_CATEGORY>`), if any."
     
     topic: str | None
-    "The topic of the channel. 0-4096 character limit for :attr:`GUILD_FORUM <dispy.enums.channel.ChannelType.GUILD_FORUM>` and :attr:`GUILD_MEDIA <dispy.enums.channel.ChannelType.GUILD_MEDIA>`, 0-1024 for all others."
+    "The topic of the channel. 0-4096 character limit for :attr:`GUILD_FORUM <mizuki.enums.channel.ChannelType.GUILD_FORUM>` and :attr:`GUILD_MEDIA <mizuki.enums.channel.ChannelType.GUILD_MEDIA>`, 0-1024 for all others."
     
     default_auto_archive_duration: timedelta | None
-    "The default amount of time before a newly created :class:`thread <dispy.objects.channel.ThreadChannel>` is auto-archived. Can only be 60, 1440, 4320, 10080 in terms of minutes."
+    "The default amount of time before a newly created :class:`thread <mizuki.objects.channel.ThreadChannel>` is auto-archived. Can only be 60, 1440, 4320, 10080 in terms of minutes."
     
     default_thread_rate_limit_per_user: int | None
-    "The default rate limit for new :class:`threads <dispy.objects.channel.ThreadChannel>`. Does not live-update with the channel's rate limit. Bots remain unaffected."
+    "The default rate limit for new :class:`threads <mizuki.objects.channel.ThreadChannel>`. Does not live-update with the channel's rate limit. Bots remain unaffected."
     
     position: int | None
     "Sorting position of the channel (Channels with the same position are sorted by id)"
@@ -276,25 +276,25 @@ class GuildChannel(BasePublicChannel):
     "Whether the channel is NSFW."
     
     available_tags: list[ForumTag]
-    "The list of tags that can be used in :attr:`GUILD_FORUM <dispy.enums.channel.ChannelType.GUILD_FORUM>` and :attr:`GUILD_MEDIA <dispy.enums.channel.ChannelType.GUILD_MEDIA>` channels."
+    "The list of tags that can be used in :attr:`GUILD_FORUM <mizuki.enums.channel.ChannelType.GUILD_FORUM>` and :attr:`GUILD_MEDIA <mizuki.enums.channel.ChannelType.GUILD_MEDIA>` channels."
     
     default_sort_order: SortOrderType | None
-    "Default sortorder used when posting in a :attr:`GUILD_FORUM <dispy.enums.channel.ChannelType.GUILD_FORUM>` and :attr:`GUILD_MEDIA <dispy.enums.channel.ChannelType.GUILD_MEDIA>` channel. ``None`` indicates that the setting hasn't been set by an admin."
+    "Default sortorder used when posting in a :attr:`GUILD_FORUM <mizuki.enums.channel.ChannelType.GUILD_FORUM>` and :attr:`GUILD_MEDIA <mizuki.enums.channel.ChannelType.GUILD_MEDIA>` channel. ``None`` indicates that the setting hasn't been set by an admin."
     
     default_forum_layout: ForumLayoutType | None
-    "The default ForumLayout used to display posts in :attr:`GUILD_FORUM <dispy.enums.channel.ChannelType.GUILD_FORUM>` channels."
+    "The default ForumLayout used to display posts in :attr:`GUILD_FORUM <mizuki.enums.channel.ChannelType.GUILD_FORUM>` channels."
     
     bitrate: int | None
-    "The bitrate in bits/second for a voice channel. (:attr:`GUILD_VOICE <dispy.enums.channel.ChannelType.GUILD_VOICE>` and :attr:`GUILD_STAGE_VOICE <dispy.enums.channel.ChannelType.GUILD_STAGE_VOICE>`)."
+    "The bitrate in bits/second for a voice channel. (:attr:`GUILD_VOICE <mizuki.enums.channel.ChannelType.GUILD_VOICE>` and :attr:`GUILD_STAGE_VOICE <mizuki.enums.channel.ChannelType.GUILD_STAGE_VOICE>`)."
     
     user_limit: int | None
-    "The User Limit for a voice channel. (:attr:`GUILD_VOICE <dispy.enums.channel.ChannelType.GUILD_VOICE>` and :attr:`GUILD_STAGE_VOICE <dispy.enums.channel.ChannelType.GUILD_STAGE_VOICE>`)."
+    "The User Limit for a voice channel. (:attr:`GUILD_VOICE <mizuki.enums.channel.ChannelType.GUILD_VOICE>` and :attr:`GUILD_STAGE_VOICE <mizuki.enums.channel.ChannelType.GUILD_STAGE_VOICE>`)."
     
     rtc_region: str | None
-    "The RTC Region ID for a voice channel. (:attr:`GUILD_VOICE <dispy.enums.channel.ChannelType.GUILD_VOICE>` and :attr:`GUILD_STAGE_VOICE <dispy.enums.channel.ChannelType.GUILD_STAGE_VOICE>`)."
+    "The RTC Region ID for a voice channel. (:attr:`GUILD_VOICE <mizuki.enums.channel.ChannelType.GUILD_VOICE>` and :attr:`GUILD_STAGE_VOICE <mizuki.enums.channel.ChannelType.GUILD_STAGE_VOICE>`)."
     
     video_quality_mode: VideoQualityMode
-    "The VideoQualityMode of the channel, default :attr:`AUTO <dispy.enums.channel.VideoQualityMode.AUTO>`."
+    "The VideoQualityMode of the channel, default :attr:`AUTO <mizuki.enums.channel.VideoQualityMode.AUTO>`."
     
     __slots__ = (
         "type",
@@ -336,9 +336,9 @@ class ThreadChannel(BasePublicChannel):
     
     Channel Types
     -------------
-    - :attr:`ANNOUNCEMENT_THREAD <dispy.enums.channel.ChannelType.ANNOUNCEMENT_THREAD>`
-    - :attr:`PUBLIC_THREAD <dispy.enums.channel.ChannelType.PUBLIC_THREAD>`
-    - :attr:`PRIVATE_THREAD <dispy.enums.channel.ChannelType.PRIVATE_THREAD>`
+    - :attr:`ANNOUNCEMENT_THREAD <mizuki.enums.channel.ChannelType.ANNOUNCEMENT_THREAD>`
+    - :attr:`PUBLIC_THREAD <mizuki.enums.channel.ChannelType.PUBLIC_THREAD>`
+    - :attr:`PRIVATE_THREAD <mizuki.enums.channel.ChannelType.PRIVATE_THREAD>`
     """
 
     type: ChannelType
@@ -360,7 +360,7 @@ class ThreadChannel(BasePublicChannel):
     "The total amount of messages ever sent in this thread."
     
     applied_tags: list[Snowflake]
-    "The tags applied to a thead in a :attr:`GUILD_FORUM <dispy.enums.channel.ChannelType.GUILD_FORUM>` and :attr:`GUILD_MEDIA <dispy.enums.channel.ChannelType.GUILD_MEDIA>` channel."
+    "The tags applied to a thead in a :attr:`GUILD_FORUM <mizuki.enums.channel.ChannelType.GUILD_FORUM>` and :attr:`GUILD_MEDIA <mizuki.enums.channel.ChannelType.GUILD_MEDIA>` channel."
     
     __slots__ = (
         "type",
@@ -391,7 +391,7 @@ class PrivateChannel(BaseChannel):
     "The recipients or the members of the channel."
     
     type: ChannelType
-    "The ChannelType of this Channel. Always :attr:`DM <dispy.enums.channel.ChannelType.DM>`."
+    "The ChannelType of this Channel. Always :attr:`DM <mizuki.enums.channel.ChannelType.DM>`."
     
     __slots__ = (
         "recipients",
@@ -409,24 +409,24 @@ class PartialGuildChannel(BasePublicChannel):
     
     Channel Types
     -------------
-    - :attr:`GUILD_TEXT <dispy.enums.channel.ChannelType.GUILD_TEXT>`  
-    - :attr:`GUILD_VOICE <dispy.enums.channel.ChannelType.GUILD_VOICE>`  
-    - :attr:`GUILD_CATEGORY <dispy.enums.channel.ChannelType.GUILD_CATEGORY>`  
-    - :attr:`GUILD_ANNOUNCEMENT <dispy.enums.channel.ChannelType.GUILD_ANNOUNCEMENT>`  
-    - :attr:`GUILD_STAGE_VOICE <dispy.enums.channel.ChannelType.GUILD_STAGE_VOICE>`  
-    - :attr:`GUILD_DIRECTORY <dispy.enums.channel.ChannelType.GUILD_DIRECTORY>`  
-    - :attr:`GUILD_FORUM <dispy.enums.channel.ChannelType.GUILD_FORUM>`  
-    - :attr:`GUILD_MEDIA <dispy.enums.channel.ChannelType.GUILD_MEDIA>`
+    - :attr:`GUILD_TEXT <mizuki.enums.channel.ChannelType.GUILD_TEXT>`  
+    - :attr:`GUILD_VOICE <mizuki.enums.channel.ChannelType.GUILD_VOICE>`  
+    - :attr:`GUILD_CATEGORY <mizuki.enums.channel.ChannelType.GUILD_CATEGORY>`  
+    - :attr:`GUILD_ANNOUNCEMENT <mizuki.enums.channel.ChannelType.GUILD_ANNOUNCEMENT>`  
+    - :attr:`GUILD_STAGE_VOICE <mizuki.enums.channel.ChannelType.GUILD_STAGE_VOICE>`  
+    - :attr:`GUILD_DIRECTORY <mizuki.enums.channel.ChannelType.GUILD_DIRECTORY>`  
+    - :attr:`GUILD_FORUM <mizuki.enums.channel.ChannelType.GUILD_FORUM>`  
+    - :attr:`GUILD_MEDIA <mizuki.enums.channel.ChannelType.GUILD_MEDIA>`
     """
     
     type: ChannelType
     "The type of this Channel."
     
     parent_id: Snowflake | None
-    "The ID of the category (channel of :attr:`GUILD_CATEGORY <dispy.enums.channel.ChannelType.GUILD_CATEGORY>`), if any."
+    "The ID of the category (channel of :attr:`GUILD_CATEGORY <mizuki.enums.channel.ChannelType.GUILD_CATEGORY>`), if any."
     
     topic: str | None
-    "The topic of the channel. 0-4096 character limit for :attr:`GUILD_FORUM <dispy.enums.channel.ChannelType.GUILD_FORUM>` and :attr:`GUILD_MEDIA <dispy.enums.channel.ChannelType.GUILD_MEDIA>`, 0-1024 for all others."
+    "The topic of the channel. 0-4096 character limit for :attr:`GUILD_FORUM <mizuki.enums.channel.ChannelType.GUILD_FORUM>` and :attr:`GUILD_MEDIA <mizuki.enums.channel.ChannelType.GUILD_MEDIA>`, 0-1024 for all others."
     
     position: int | None
     "Sorting position of the channel (Channels with the same position are sorted by id)"
@@ -454,9 +454,9 @@ class PartialThreadChannel(BasePublicChannel):
     
     Channel Types
     -------------
-    - :attr:`ANNOUNCEMENT_THREAD <dispy.enums.channel.ChannelType.ANNOUNCEMENT_THREAD>`
-    - :attr:`PUBLIC_THREAD <dispy.enums.channel.ChannelType.PUBLIC_THREAD>`
-    - :attr:`PRIVATE_THREAD <dispy.enums.channel.ChannelType.PRIVATE_THREAD>`
+    - :attr:`ANNOUNCEMENT_THREAD <mizuki.enums.channel.ChannelType.ANNOUNCEMENT_THREAD>`
+    - :attr:`PUBLIC_THREAD <mizuki.enums.channel.ChannelType.PUBLIC_THREAD>`
+    - :attr:`PRIVATE_THREAD <mizuki.enums.channel.ChannelType.PRIVATE_THREAD>`
     """
 
     type: ChannelType
@@ -477,14 +477,14 @@ class PartialThreadChannel(BasePublicChannel):
         
 class ChannelMention:
     """
-    Represents a minimal channel object for :attr:`Message.mention_channels <dispy.objects.message.Message.mention_channels>`.
+    Represents a minimal channel object for :attr:`Message.mention_channels <mizuki.objects.message.Message.mention_channels>`.
     """
     
     id: Snowflake
     "The ID of the channel."
     
     guild_id: Snowflake
-    "The :class:`Guild <dispy.objects.guild.Guild>` ID of the channel."
+    "The :class:`Guild <mizuki.objects.guild.Guild>` ID of the channel."
     
     type: ChannelType
     "The type of the channel."

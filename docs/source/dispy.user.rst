@@ -4,7 +4,7 @@ Users
 Manager
 -------
 
-.. automodule:: dispy.managers.user
+.. automodule:: mizuki.managers.user
    :members:
    :show-inheritance:
    :undoc-members:
@@ -12,7 +12,7 @@ Manager
 Users
 -----
 
-.. automodule:: dispy.objects.user
+.. automodule:: mizuki.objects.user
    :members:
    :show-inheritance:
    :undoc-members:
@@ -20,7 +20,7 @@ Users
 Presences
 ---------
 
-.. automodule:: dispy.objects.presence
+.. automodule:: mizuki.objects.presence
    :members:
    :show-inheritance:
    :undoc-members:
@@ -28,7 +28,7 @@ Presences
 Primary Guild
 -------------
 
-.. automodule:: dispy.objects.primary_guild
+.. automodule:: mizuki.objects.primary_guild
    :members:
    :show-inheritance:
    :undoc-members:
@@ -36,12 +36,12 @@ Primary Guild
 Decorations
 -----------
 
-.. automodule:: dispy.objects.avatar_decoration
+.. automodule:: mizuki.objects.avatar_decoration
    :members:
    :show-inheritance:
    :undoc-members:
 
-.. automodule:: dispy.objects.collectibles
+.. automodule:: mizuki.objects.collectibles
    :members:
    :show-inheritance:
    :undoc-members:
@@ -49,7 +49,7 @@ Decorations
 Members
 -------
 
-.. automodule:: dispy.objects.member
+.. automodule:: mizuki.objects.member
    :members:
    :show-inheritance:
    :undoc-members:
@@ -57,7 +57,7 @@ Members
 User Enums
 ----------
 
-.. automodule:: dispy.enums.user
+.. automodule:: mizuki.enums.user
    :members:
    :undoc-members:
    :no-inherited-members:
@@ -65,7 +65,7 @@ User Enums
 Presence Enums
 --------------
 
-.. automodule:: dispy.enums.presence
+.. automodule:: mizuki.enums.presence
    :members:
    :undoc-members:
    :no-inherited-members:

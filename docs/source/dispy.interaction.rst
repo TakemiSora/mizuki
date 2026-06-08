@@ -1,7 +1,7 @@
 Interaction
 ===========
 
-.. automodule:: dispy.objects.interaction
+.. automodule:: mizuki.objects.interaction
    :members:
    :show-inheritance:
    :undoc-members:
@@ -9,7 +9,7 @@ Interaction
 Enums
 -----
 
-.. automodule:: dispy.enums.interaction
+.. automodule:: mizuki.enums.interaction
    :members:
    :undoc-members:
    :no-inherited-members:
@@ -17,8 +17,8 @@ Enums
 Errors
 ------
 
-.. autoclass:: dispy.errors.UnknownInteractionType
+.. autoclass:: mizuki.errors.UnknownInteractionType
 
-.. autoclass:: dispy.errors.InteractionResponded
+.. autoclass:: mizuki.errors.InteractionResponded
 
-.. autoclass:: dispy.errors.InteractionNotResponded
+.. autoclass:: mizuki.errors.InteractionNotResponded

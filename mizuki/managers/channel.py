@@ -13,14 +13,14 @@ __all__ = (
 
 class ChannelManager(BaseManager):
     """
-    Manager used to fetch :class:`PrivateChannel <dispy.objects.channel.PrivateChannel>`, :class:`GuildChannel <dispy.objects.channel.GuildChannel>` or :class:`ThreadChannel <dispy.objects.channel.ThreadChannel>` objects.
+    Manager used to fetch :class:`PrivateChannel <mizuki.objects.channel.PrivateChannel>`, :class:`GuildChannel <mizuki.objects.channel.GuildChannel>` or :class:`ThreadChannel <mizuki.objects.channel.ThreadChannel>` objects.
     """
     
     __slots__ = ()
 
     def get(self, channel_id: int) -> ThreadChannel | GuildChannel | PrivateChannel | None:
         """
-        Attempts to fetch a :class:`PrivateChannel <dispy.objects.channel.PrivateChannel>`, :class:`GuildChannel <dispy.objects.channel.GuildChannel>` or :class:`ThreadChannel <dispy.objects.channel.ThreadChannel>` from the internal cache of the bot.
+        Attempts to fetch a :class:`PrivateChannel <mizuki.objects.channel.PrivateChannel>`, :class:`GuildChannel <mizuki.objects.channel.GuildChannel>` or :class:`ThreadChannel <mizuki.objects.channel.ThreadChannel>` from the internal cache of the bot.
         
         Parameters
         ----------
@@ -29,11 +29,11 @@ class ChannelManager(BaseManager):
             
         Returns
         -------
-        :class:`PrivateChannel <dispy.objects.channel.PrivateChannel>`
+        :class:`PrivateChannel <mizuki.objects.channel.PrivateChannel>`
             The PrivateChannel object recieved from the cache.
-        :class:`GuildChannel <dispy.objects.channel.GuildChannel>`
+        :class:`GuildChannel <mizuki.objects.channel.GuildChannel>`
             The GuildChannel object recieved from the cache.
-        :class:`ThreadChannel <dispy.objects.channel.ThreadChannel>`
+        :class:`ThreadChannel <mizuki.objects.channel.ThreadChannel>`
             The ThreadChannel object received from the cache.
         :class:`None`
             The Channel could not be found in the cache.
@@ -42,7 +42,7 @@ class ChannelManager(BaseManager):
 
     async def fetch(self, channel_id: int) -> ThreadChannel | GuildChannel | PrivateChannel:
         """
-        Attempts to fetch a :class:`PrivateChannel <dispy.objects.channel.PrivateChannel>`, :class:`GuildChannel <dispy.objects.channel.GuildChannel>` or :class:`ThreadChannel <dispy.objects.channel.ThreadChannel>` from the Discord API.
+        Attempts to fetch a :class:`PrivateChannel <mizuki.objects.channel.PrivateChannel>`, :class:`GuildChannel <mizuki.objects.channel.GuildChannel>` or :class:`ThreadChannel <mizuki.objects.channel.ThreadChannel>` from the Discord API.
         
         Parameters
         ----------
@@ -51,11 +51,11 @@ class ChannelManager(BaseManager):
             
         Returns
         -------
-        :class:`PrivateChannel <dispy.objects.channel.PrivateChannel>`
+        :class:`PrivateChannel <mizuki.objects.channel.PrivateChannel>`
             The PrivateChannel object recieved from Discord API.
-        :class:`GuildChannel <dispy.objects.channel.GuildChannel>`
+        :class:`GuildChannel <mizuki.objects.channel.GuildChannel>`
             The GuildChannel object recieved from the Discord API.
-        :class:`ThreadChannel <dispy.objects.channel.ThreadChannel>`
+        :class:`ThreadChannel <mizuki.objects.channel.ThreadChannel>`
             The ThreadChannel object received from the Discord API.
             
         Raises
@@ -78,7 +78,7 @@ class ChannelManager(BaseManager):
 
     async def get_or_fetch(self, channel_id: int) -> ThreadChannel | GuildChannel | PrivateChannel:
         """
-        A couroutine function that attempts to fetch a :class:`PrivateChannel <dispy.objects.channel.PrivateChannel>`, :class:`GuildChannel <dispy.objects.channel.GuildChannel>` or :class:`ThreadChannel <dispy.objects.channel.ThreadChannel>` from internal cache and if not present, makes an API call to discord.
+        A couroutine function that attempts to fetch a :class:`PrivateChannel <mizuki.objects.channel.PrivateChannel>`, :class:`GuildChannel <mizuki.objects.channel.GuildChannel>` or :class:`ThreadChannel <mizuki.objects.channel.ThreadChannel>` from internal cache and if not present, makes an API call to discord.
         
         Parameters
         ----------
@@ -87,11 +87,11 @@ class ChannelManager(BaseManager):
             
         Returns
         -------
-        :class:`PrivateChannel <dispy.objects.channel.PrivateChannel>`
+        :class:`PrivateChannel <mizuki.objects.channel.PrivateChannel>`
             The PrivateChannel object recieved from Discord API.
-        :class:`GuildChannel <dispy.objects.channel.GuildChannel>`
+        :class:`GuildChannel <mizuki.objects.channel.GuildChannel>`
             The GuildChannel object recieved from the Discord API.
-        :class:`ThreadChannel <dispy.objects.channel.ThreadChannel>`
+        :class:`ThreadChannel <mizuki.objects.channel.ThreadChannel>`
             The ThreadChannel object received from the Discord API.
             
         Raises

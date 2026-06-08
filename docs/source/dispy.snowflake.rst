@@ -1,7 +1,7 @@
 Snowflake
 ---------
 
-.. automodule:: dispy.objects.snowflake
+.. automodule:: mizuki.objects.snowflake
    :members:
    :show-inheritance:
    :undoc-members:

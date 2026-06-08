@@ -4,7 +4,7 @@ Message
 Manager
 -------
 
-.. automodule:: dispy.managers.message
+.. automodule:: mizuki.managers.message
    :members:
    :show-inheritance:
    :undoc-members:
@@ -12,7 +12,7 @@ Manager
 Message
 -------
 
-.. automodule:: dispy.objects.message
+.. automodule:: mizuki.objects.message
    :members:
    :show-inheritance:
    :undoc-members:
@@ -20,7 +20,7 @@ Message
 Enums
 -----
 
-.. automodule:: dispy.enums.message
+.. automodule:: mizuki.enums.message
    :members:
    :undoc-members:
    :no-inherited-members:

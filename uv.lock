@@ -194,7 +194,7 @@ wheels = [
 ]
 
 [[package]]
-name = "dispy"
+name = "mizuki"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

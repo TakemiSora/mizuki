@@ -6,7 +6,7 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'dispy'
+project = 'mizuki'
 copyright = '2026, Takemi Sora'
 author = 'Takemi Sora'
 release = '0.1.0'
@@ -41,12 +41,12 @@ html_theme = 'shibuya'
 
 html_theme_options = {
   "accent_color": "mint",
-  "github_url": "https://github.com/TakemiSora/dispy"
+  "github_url": "https://github.com/TakemiSora/mizuki"
 }
 html_context = {
     "source_type": "github",
     "source_user": "TakemiSora",
-    "source_repo": "dispy",
+    "source_repo": "mizuki",
 }
 
 import os

@@ -8,14 +8,14 @@ __all__ = (
 
 class GuildManager(BaseManager):
     """
-    Manager used to fetch :class:`Guild <dispy.objects.guild.Guild>` objects.
+    Manager used to fetch :class:`Guild <mizuki.objects.guild.Guild>` objects.
     """
 
     __slots__ = ()
 
     def get(self, guild_id: int) -> Guild | None:
         """
-        Attempts to fetch a :class:`Guild <dispy.objects.guild.Guild>` from the internal cache of the bot.
+        Attempts to fetch a :class:`Guild <mizuki.objects.guild.Guild>` from the internal cache of the bot.
         
         Parameters
         ----------
@@ -24,7 +24,7 @@ class GuildManager(BaseManager):
             
         Returns
         -------
-        :class:`Guild <dispy.objects.guild.Guild>`
+        :class:`Guild <mizuki.objects.guild.Guild>`
             The Guild received from the cache.
         :class:`None`
             Could not find the Guild object in the internal cache.
@@ -33,7 +33,7 @@ class GuildManager(BaseManager):
 
     async def fetch(self, guild_id: int) -> Guild:
         """
-        Attempts to fetch a :class:`Guild <dispy.objects.guild.Guild>` from the Discord API.
+        Attempts to fetch a :class:`Guild <mizuki.objects.guild.Guild>` from the Discord API.
         
         Parameters
         ----------
@@ -42,7 +42,7 @@ class GuildManager(BaseManager):
             
         Returns
         -------
-        :class:`Guild <dispy.objects.guild.Guild>`
+        :class:`Guild <mizuki.objects.guild.Guild>`
             The Message object recieved from Discord API.
             
         Raises
@@ -65,7 +65,7 @@ class GuildManager(BaseManager):
     
     async def get_or_fetch(self, guild_id: int) -> Guild:
         """
-        A couroutine function that attempts to fetch a :class:`Guild <dispy.objects.guild.Guild>` from internal cache and if not present, makes an API call to discord.
+        A couroutine function that attempts to fetch a :class:`Guild <mizuki.objects.guild.Guild>` from internal cache and if not present, makes an API call to discord.
 
         Parameters
         ----------
@@ -74,7 +74,7 @@ class GuildManager(BaseManager):
             
         Returns
         -------
-        :class:`Guild <dispy.objects.guild.Guild>`
+        :class:`Guild <mizuki.objects.guild.Guild>`
             The Message object recieved from Discord API.
             
         Raises

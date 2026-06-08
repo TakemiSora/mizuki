@@ -4,7 +4,7 @@ Guilds
 Manager
 -------
 
-.. automodule:: dispy.managers.guild
+.. automodule:: mizuki.managers.guild
    :members:
    :show-inheritance:
    :undoc-members:
@@ -12,7 +12,7 @@ Manager
 Guilds
 ------
 
-.. automodule:: dispy.objects.guild
+.. automodule:: mizuki.objects.guild
    :members:
    :show-inheritance:
    :undoc-members:
@@ -20,7 +20,7 @@ Guilds
 Emojis
 ------
        
-.. automodule:: dispy.objects.emoji
+.. automodule:: mizuki.objects.emoji
    :members:
    :show-inheritance:
    :undoc-members:
@@ -28,7 +28,7 @@ Emojis
 Roles
 -----
        
-.. automodule:: dispy.objects.role
+.. automodule:: mizuki.objects.role
    :members:
    :show-inheritance:
    :undoc-members:
@@ -36,7 +36,7 @@ Roles
 Stickers
 --------
        
-.. automodule:: dispy.objects.sticker
+.. automodule:: mizuki.objects.sticker
    :members:
    :show-inheritance:
    :undoc-members:
@@ -44,7 +44,7 @@ Stickers
 Guild Enums
 -----------
 
-.. automodule:: dispy.enums.guild
+.. automodule:: mizuki.enums.guild
    :members:
    :undoc-members:
    :no-inherited-members:
@@ -52,7 +52,7 @@ Guild Enums
 Sticker Enums
 -------------
 
-.. automodule:: dispy.enums.sticker
+.. automodule:: mizuki.enums.sticker
    :members:
    :undoc-members:
    :no-inherited-members:

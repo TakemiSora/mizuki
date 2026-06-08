@@ -4,7 +4,7 @@ Commands
 Manager
 -------
 
-.. automodule:: dispy.managers.command
+.. automodule:: mizuki.managers.command
    :members:
    :show-inheritance:
    :undoc-members:
@@ -12,7 +12,7 @@ Manager
 Objects
 -------
 
-.. automodule:: dispy.objects.command
+.. automodule:: mizuki.objects.command
    :members:
    :show-inheritance:
    :undoc-members:
@@ -20,7 +20,7 @@ Objects
 Enums
 -----
        
-.. automodule:: dispy.enums.command
+.. automodule:: mizuki.enums.command
    :members:
    :undoc-members:
    :no-inherited-members:

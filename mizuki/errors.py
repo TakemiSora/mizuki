@@ -68,7 +68,7 @@ class Unauthorized(HTTPException):
     "Raised when the server could not authenticate your identity."
 
 class ImproperToken(HTTPException):
-    "Raised when an improper token was passed when calling :meth:`Bot.start() <dispy.bot.Bot.start>`."
+    "Raised when an improper token was passed when calling :meth:`Bot.start() <mizuki.bot.Bot.start>`."
     
 class UnknownChannelType(Exception):
     "Raised when the channel parser could not parse the channel you received."

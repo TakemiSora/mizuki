@@ -4,24 +4,24 @@ Client
 Bot
 ---
 
-.. automodule:: dispy.bot
+.. automodule:: mizuki.bot
    :members:
    :show-inheritance:
    :undoc-members:
 
-.. automodule:: dispy.cache
+.. automodule:: mizuki.cache
    :members:
    :show-inheritance:
    :undoc-members:
 
-.. autoclass:: dispy.flags.IntentFlags
+.. autoclass:: mizuki.flags.IntentFlags
    :members:
    :no-inherited-members:
        
 Events
 ------
 
-.. automodule:: dispy.enums.event_dispatch
+.. automodule:: mizuki.enums.event_dispatch
    :members:
    :undoc-members:
    :no-inherited-members:

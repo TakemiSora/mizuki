@@ -25,7 +25,7 @@ class Path:
     
     .. code-block:: python
     
-        dispy.Path(
+        mizuki.Path(
             "GET",
             "channels/{channel_id}/messages/{message_id}",
             channel_id=channel_id,
@@ -120,7 +120,7 @@ class HTTPClient:
 
         Parameters
         ----------
-        path : :class:`Path <dispy.http.Path>`
+        path : :class:`Path <mizuki.http.Path>`
             The Path metadata for the request.
         **kwargs : :class:`Any <typing.Any>`
             The keyword arguments for the request. These are passed directly to :meth:`aiohttp.ClientSession.request()` method.

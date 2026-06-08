@@ -4,25 +4,25 @@ Errors
 HTTP
 ----
 
-.. autoclass:: dispy.errors.HTTPException
+.. autoclass:: mizuki.errors.HTTPException
     :members:
     :show-inheritance:
 
-.. autoclass:: dispy.errors.NotFound
+.. autoclass:: mizuki.errors.NotFound
     :show-inheritance:
 
-.. autoclass:: dispy.errors.Forbidden
+.. autoclass:: mizuki.errors.Forbidden
     :show-inheritance:
 
-.. autoclass:: dispy.errors.Unauthorized
+.. autoclass:: mizuki.errors.Unauthorized
     :show-inheritance:
 
-.. autoclass:: dispy.errors.ImproperToken
+.. autoclass:: mizuki.errors.ImproperToken
     :show-inheritance:
 
 Gateway
 -------
 
-.. autoclass:: dispy.errors.GatewayError
+.. autoclass:: mizuki.errors.GatewayError
     :members:
     :show-inheritance:
