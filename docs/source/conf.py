@@ -40,7 +40,7 @@ intersphinx_mapping = {
 html_theme = 'shibuya'
 
 html_theme_options = {
-  "accent_color": "mint",
+  "accent_color": "pink",
   "github_url": "https://github.com/TakemiSora/mizuki"
 }
 html_context = {
