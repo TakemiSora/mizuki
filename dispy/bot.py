@@ -2,8 +2,7 @@ import asyncio
 
 import logging
 import inspect
-from collections.abc import Callable, Coroutine
-from typing import Any, overload
+from typing import overload
 
 import aiohttp
 
@@ -13,7 +12,7 @@ from .errors import ImproperToken, Unauthorized
 from .flags import IntentFlags
 from .gateway import GatewayClient
 from .http import HTTPClient
-from ._utils import _MISSING
+from ._utils import _MISSING, CoroFunc, CoroDecorator
 
 from .enums.command import ApplicationCommandType
 from .enums.interaction import InteractionContextType, ApplicationIntegrationType
@@ -33,8 +32,6 @@ __all__ = (
 )
 
 _log = logging.getLogger(__name__)
-
-type CoroFunc = Callable[..., Coroutine[Any, Any, Any]]
 
 class Bot:
     """
@@ -181,7 +178,7 @@ class Bot:
             if self._session:
                 await self._session.close()
 
-    def listen(self, event: Event | None = None):
+    def listen(self, event: Event | None = None) -> CoroDecorator:
         """
         This function is a decotstor.
         
@@ -221,7 +218,7 @@ class Bot:
             return func
         return decorator
         
-    def setup(self) -> Callable[..., CoroFunc]:
+    def setup(self) -> CoroDecorator:
         """
         This function is a decorator.
         
@@ -248,7 +245,7 @@ class Bot:
         description_localizations: Localization = _MISSING,
         default_member_permissions: Permissions = _MISSING,
         nsfw: bool = False
-    ) -> Callable[..., CoroFunc]: ...
+    ) -> CoroDecorator: ...
 
     @overload
     def command(
@@ -261,7 +258,7 @@ class Bot:
         integration_types: list[ApplicationIntegrationType] = _MISSING,
         contexts: list[InteractionContextType] = _MISSING,
         nsfw: bool = False
-    ) -> Callable[..., CoroFunc]: ...
+    ) -> CoroDecorator: ...
         
     def command(
         self, *,
@@ -274,7 +271,7 @@ class Bot:
         integration_types: list[ApplicationIntegrationType] = _MISSING,
         contexts: list[InteractionContextType] = _MISSING,
         nsfw: bool = False
-    ) -> Callable[..., CoroFunc]:
+    ) -> CoroDecorator:
         """
         This function is a decorator.
         

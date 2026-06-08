@@ -2,12 +2,11 @@ from __future__ import annotations
 
 import inspect
 import types
-from typing import get_origin, get_args
+from typing import get_origin, get_args, cast
 
-from collections.abc import Callable, Coroutine
 from typing import Any, Literal, Self, overload
 
-from .._utils import _MISSING, assign_val, assign_val_dict, mtd, scls, sint
+from .._utils import _MISSING, assign_val, assign_val_dict, mtd, scls, sint, CoroFunc
 from ..enums.channel import ChannelType
 from ..enums.command import ApplicationCommandType, CommandHandler, CommandOptionType
 from ..enums.interaction import ApplicationIntegrationType, InteractionContextType
@@ -23,7 +22,7 @@ from .permissions import Permissions
 from .snowflake import Snowflake
 
 from .user import User
-from .channel import Channel, PartialGuildChannel, PartialThreadChannel
+from .channel import PartialGuildChannel, PartialThreadChannel
 from .role import Role
 
 __all__ = (
@@ -121,6 +120,20 @@ class ApplicationCommandChoice:
         )
 
 class ApplicationCommandOption:
+    _SLASH_COMMAND_OPTION_TYPE_MAP: dict[Any, CommandOptionType] = {
+        str: CommandOptionType.STRING,
+        int: CommandOptionType.INTEGER,
+        bool: CommandOptionType.BOOLEAN,
+        float: CommandOptionType.NUMBER,
+        User: CommandOptionType.USER,
+        Role: CommandOptionType.ROLE,
+        PartialGuildChannel: CommandOptionType.CHANNEL,
+        PartialThreadChannel: CommandOptionType.CHANNEL,
+        Mentionable: CommandOptionType.MENTIONABLE
+    }
+
+    _VALID_TYPES = list(_SLASH_COMMAND_OPTION_TYPE_MAP)
+
     __slots__ = (
         "type",
         "name",
@@ -282,6 +295,35 @@ class ApplicationCommandOption:
             autocomplete=autocomplete
         )
 
+    @classmethod
+    def _from_function_param(cls, param: inspect.Parameter) -> Self:
+        annotation = param.annotation
+        origin = get_origin(annotation)
+        match origin:
+            case types.UnionType:
+                union = [t for t in get_args(annotation) if t is not types.NoneType]
+                # exclude NoneType as user may use it for default such as str | None = None
+
+                if len(union) > 1:
+                    raise TypeError(f"Parameter type must be a concrete type or an optional type (T | None). Provided: {annotation}")
+
+                param_type = union[0]
+            case None:
+                param_type = annotation
+            case _:
+                raise TypeError(f"Parameter type must be one of: {cls._VALID_TYPES}")
+        
+        option_type = cls._SLASH_COMMAND_OPTION_TYPE_MAP.get(param_type)
+        if option_type is None:
+            raise TypeError(f"Parameter type must be one of: {cls._VALID_TYPES}")
+        
+        return cls(CommandOptionPayload(
+            type=option_type.value,
+            name=param.name,
+            description="...",
+            required=param.default is inspect.Parameter.empty,
+        ))
+
     def _to_dict(self) -> CommandOptionPayload:
         return assign_val_dict(
             CommandOptionPayload(
@@ -301,8 +343,6 @@ class ApplicationCommandOption:
             max_length=self.max_length,
             autocomplete=self.autocomplete
         )
-
-type CoroFunc = Callable[..., Coroutine[Any, Any, Any]]
 
 class BaseApplicationCommand:
     __slots__ = (
@@ -327,18 +367,6 @@ class BaseApplicationCommand:
         self.contexts = [InteractionContextType(i) for i in d] if (d := data.get("contexts")) is not None else None
 
 class PartialApplicationCommand(BaseApplicationCommand):
-    _TYPE_MAP = {
-        str: CommandOptionType.STRING,
-        int: CommandOptionType.INTEGER,
-        bool: CommandOptionType.BOOLEAN,
-        float: CommandOptionType.NUMBER,
-        User: CommandOptionType.USER,
-        Role: CommandOptionType.ROLE,
-        PartialGuildChannel: CommandOptionType.CHANNEL,
-        PartialThreadChannel: CommandOptionType.CHANNEL,
-        Mentionable: CommandOptionType.MENTIONABLE
-    }
-
     __slots__ = (
         "description",
         "default_member_permissions",
@@ -397,38 +425,16 @@ class PartialApplicationCommand(BaseApplicationCommand):
     ) -> Self:
         parameters = list(inspect.signature(func).parameters.values())
         options: list[ApplicationCommandOption] = []
+        command_options: dict[str, ApplicationCommandOption] = getattr(func, "__command_options__", {})
+
         for param in parameters[1:]:
-            annotation = param.annotation
-
-            if annotation is inspect.Parameter.empty:
+            if param.annotation is inspect.Parameter.empty:
                 raise ValueError(f"No type hint for slash command '{name}', function={func.__name__}: '{param.name}'")
-
-            origin = get_origin(annotation)
-
-            match origin:
-                case types.UnionType:
-                    union = get_args(annotations)
-                    # for now only looking at the first possible val
-                    option_type = cls._TYPE_MAP.get(union[0])
-                    if option_type is None:
-                        raise ValueError(f"Unknown type hint for slash command 'command name={name}, function={func.__name__}': '{union[0]}'")
-                case None:
-                    if inspect.isclass(annotation) or annotation is Channel:
-                        option_type = cls._TYPE_MAP.get(annotation)
-                        if option_type is None:
-                            raise ValueError(f"Unknown type hint for slash command 'command name={name}, function={func.__name__}': '{annotation}'")
-                    else:
-                        raise ValueError(f"Unknown type hint for slash command 'command name={name}, function={func.__name__}': '{annotation}'")
-                case _:
-                    raise ValueError(f"Unsupported generic type hint for slash command '{name}', function={func.__name__}: '{annotation}'")
             
-            options.append(
-                ApplicationCommandOption.new(
-                    type=option_type,
-                    name=param.name,
-                    description="..."
-                )
-            )
+            if param.name in command_options:
+                options.append(command_options[param.name])
+            else:
+                options.append(ApplicationCommandOption._from_function_param(param))
         
         return cls.new(
             name=name,

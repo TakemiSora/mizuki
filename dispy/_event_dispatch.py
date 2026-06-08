@@ -3,6 +3,8 @@ import asyncio
 import logging
 from typing import Any, TYPE_CHECKING
 
+from .objects.command import ApplicationCommandOption
+
 from .enums.channel import ChannelType
 from .enums.command import CommandOptionType
 from .enums.interaction import InteractionType
@@ -60,8 +62,9 @@ class EventDispatcher:
             asyncio.create_task(f(*args)).add_done_callback(lambda t: self._on_task_done(t, f"Function {f.__name__} listening to '{key}'"))
             _log.debug("Dispatched %s to function '%s'.", key, f.__name__)
     
-    def _parse_options(self, resolved: ResolvedData, options: list[InvokedApplicationCommandOption]) -> dict[str, Any]:
+    def _parse_options(self, command_options: dict[str, ApplicationCommandOption], resolved: ResolvedData, options: list[InvokedApplicationCommandOption]) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
+        display_to_callback_keys: dict[str, str] = {o.name: p for p, o in command_options.items()}
         for option in options:
             match option.type:
                 case CommandOptionType.CHANNEL:
@@ -84,7 +87,9 @@ class EventDispatcher:
                         else: value = resolved.users[val]
                 case _:
                     value = None
-            kwargs[option.name] = value or option.value
+            kwargs[display_to_callback_keys.get(option.name, option.name)] = value or option.value
+            #                      ^^^^^^^^^^^^^^^^^^^
+            #   Attempts to fjnd correct CallbackParameterName, if not defaults to DisplayParameterName
         return kwargs
             
     async def _dispatch_commands(self, name: str, interaction: Interaction):
@@ -92,8 +97,11 @@ class EventDispatcher:
         callback = command_data[1]._callback if command_data else None
         if callback and command_data:
             assert interaction.type is InteractionType.APPLICATION_COMMAND and interaction.data is not None
-            # always checked before calling this
-            kwargs = self._parse_options(interaction.data.resolved, interaction.data.options) if interaction.data.resolved else {}
+            kwargs = self._parse_options(
+                getattr(callback, "__command_options__", {}),
+                interaction.data.resolved,
+                interaction.data.options
+            ) if interaction.data.resolved else {}
             task = asyncio.create_task(callback(interaction, **kwargs))
             task.add_done_callback(lambda t: self._on_task_done(t, f"Handler Function {callback.__name__} for command '{name}'"))
             _log.debug("Command %s (func=%s) dispatched.", name, callback.__name__)

@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Any, Protocol
-from collections.abc import Callable
+from collections.abc import Callable, Coroutine
 
 class Missing:
     __slots__ = ()
@@ -9,6 +9,9 @@ class Missing:
         return False
 
 _MISSING: Any = Missing()
+
+type CoroFunc = Callable[..., Coroutine[Any, Any, Any]]
+type CoroDecorator = Callable[[CoroFunc], CoroFunc]
 
 class SupportsToDict(Protocol):
     def _to_dict(self) -> Any: ...

@@ -263,7 +263,6 @@ class CacheStorage:
         self, commands: list[ApplicationCommand],
         *, guild_id: int = 0
     ) -> list[ApplicationCommand]:
-        "Cleans all command in cache for that guild_id as well."
         if self.settings.commands:
             gcache = self.commands[guild_id] = {}
             # We clear the entire cache here because PUT replaces all commands
