@@ -6,7 +6,7 @@ I aim for this library to closely mirror the discord API.
 ## Installation
 
 ```
-pip install git+https://github.com/TakemiSora/mizuki
+pip install mizuki
 ```
 
 ## Quick Example
@@ -17,6 +17,11 @@ import mizuki
 bot = mizuki.Bot(
      intents=mizuki.IntentFlags.standard()
 )
+
+@bot.setup()
+async def setup():
+    commands = await bot.commands.sync_all()
+    print(f"Synced {len(commands} commands!")
 
 @bot.command(name="ping", description="Send a ping to the bot")
 async def ping(interaction: mizuki.Interaction):
