@@ -7,7 +7,12 @@ __all__ = (
     "IntentFlags",
     "SystemChannelFlags",
     "GuildMemberFlags",
-    "ChannelFlags"
+    "ChannelFlags",
+    "EmbedMediaFlags",
+    "EmbedFlags",
+    "AttachmentFlags",
+    "MessageFlags",
+    "ActivityFlags"
 )
 
 class UserFlags(IntFlag):

@@ -28,7 +28,7 @@ from ..payloads.message import (
     RoleSubscriptionDataPayload,
     SharedClientThemePayload,
 )
-from .._utils import scls, siso
+from .._utils import assign_val, assign_val_dict, scls, siso, _MISSING
 from .channel import ChannelMention, ThreadChannel
 from .embed import Embed
 from .emoji import PartialEmoji, Reaction
@@ -113,6 +113,32 @@ class MessageReference:
         self.channel_id = Snowflake._from_str(data.get("channel_id"))
         self.guild_id = Snowflake._from_str(data.get("guild_id"))
         self.fail_if_not_exists = data.get("fail_if_not_exists", True)
+
+    def _to_dict(self) -> MessageReferencePayload:
+        return assign_val_dict(
+            MessageReferencePayload(type=self.type.value),
+            message_id=self.message_id,
+            channel_id=self.channel_id,
+            guild_id=self.guild_id,
+            fail_if_not_exists=self.fail_if_not_exists
+        )
+
+    @classmethod
+    def new(
+        cls, *,
+        type: MessageReferenceType = MessageReferenceType.DEFAULT,
+        message_id: int,
+        channel_id: int = _MISSING,
+        guild_id: int = _MISSING,
+        fail_if_not_exists: bool = True
+    ) -> Self:
+        return assign_val(
+            cls(MessageReferencePayload(type=type.value)),
+            message_id=message_id,
+            channel_id=channel_id,
+            guild_id=guild_id,
+            fail_if_not_exists=fail_if_not_exists
+        )
 
 class MessageActivity:
     __slots__ = (
