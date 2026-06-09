@@ -32,25 +32,4 @@ bot.run("TOKEN-HERE")
 
 ## Documentation
 
-There is no current hosted documentation (yet), but a local version of the documentation can be viewed by doing the following steps:
-
-```
-# 1. Clone the repository
-git clone https://github.com/TakemiSora/mizuki
-
-# 2. Navigate into the docs directory
-cd mizuki/docs/
-
-# 3. Build the HTML documentation
-## Linux/Mac
-make html
-
-## Windows
-make.bat html
-
-# 4. Start a local server to view them
-cd build/html
-python -m http.server 8000
-```
-
-Then open `https://localhost:8000/` to open the documentation.
+Documentation can be viewed [here](https://mizuki.readthedocs.io/).
