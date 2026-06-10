@@ -2,13 +2,13 @@
   "actions": [
     {
       "text": "Generate Docs",
-      "command": "cd docs; make html; exit",
+      "command": "source .venv/bin/activate; cd docs; make html; exit",
       "tooltip": "Generate HTML docs",
       "color": "#9ec1de"
     },
     {
-      "text": "Open Docs",
-      "command": "code docs/build/html/index.html&&exit",
+      "text": "Host Docs",
+      "command": "cd docs/build/html; py -m http.server; exit",
     }
   ]
 }

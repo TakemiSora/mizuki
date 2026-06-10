@@ -180,7 +180,7 @@ class HTTPClient:
                     if new_bucket_id:
                         bucket = self._buckets.get(new_bucket_id)
                         if bucket and bucket.remaining == 0:
-                            _log.info("Hit the ratelimit when accessing BucketID = %s on URL = %s. Continuing in %.2f", new_bucket_id, path.url, bucket.reset_after)
+                            _log.debug("Pre-emptively waiting for bucket reset on BucketID = %s on URL = %s. Continuing in %.2f seconds.", new_bucket_id, path.url, bucket.reset_after)
                             await asyncio.sleep(bucket.reset_after)
                     
                     if "application/json" in resp.headers.get("Content-Type", ""): return await resp.json()
@@ -192,7 +192,7 @@ class HTTPClient:
                 await asyncio.sleep(e.retry_after)
                 self._global_ratelimit.set()
             else:
-                _log.warning("Hit the ratelimit when accessing BucketID = %s on URL = %s. Continuing in %.2f", e.bucket_id, path.url, e.retry_after)
+                _log.warning("Hit the ratelimit when accessing BucketID = %s on URL = %s. Continuing in %.2f seconds.", e.bucket_id, path.url, e.retry_after)
                 await asyncio.sleep(e.retry_after)
 
             return await self.request(path, **kwargs)

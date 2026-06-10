@@ -4,7 +4,8 @@ __all__ = (
     "MessageReferenceType",
     "MessageActivityType",
     "MessageType",
-    "BaseThemeType"
+    "BaseThemeType",
+    "ReactionType"
 )
 
 class MessageReferenceType(IntEnum):
@@ -62,3 +63,7 @@ class BaseThemeType(IntEnum):
     LIGHT = 2
     DARKER = 3
     MIDNIGHT = 4
+    
+class ReactionType(IntEnum):
+    NORMAL = 0
+    BURST = 1
