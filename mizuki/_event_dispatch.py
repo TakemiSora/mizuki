@@ -61,33 +61,48 @@ class EventDispatcher:
         for f in self.bot._listeners.get(key, []):
             asyncio.create_task(f(*args)).add_done_callback(lambda t: self._on_task_done(t, f"Function {f.__name__} listening to '{key}'"))
             _log.debug("Dispatched %s to function '%s'.", key, f.__name__)
+            
+    def _parse_option_value(self, resolved: ResolvedData, option: InvokedApplicationCommandOption) -> Any:
+        match option.type:
+            case CommandOptionType.CHANNEL:
+                assert isinstance(option.value, str)
+                value = resolved.channels[int(option.value)]
+                
+            case CommandOptionType.ROLE:
+                assert isinstance(option.value, str)
+                value = resolved.roles[int(option.value)]
+            
+            case CommandOptionType.USER:
+                assert isinstance(option.value, str)
+                
+                if (m := resolved.members.get(int(option.value))) is not None:
+                    value = m
+                else:
+                    value = resolved.users[int(option.value)]
+                    
+            case CommandOptionType.MENTIONABLE:
+                assert isinstance(option.value, str)
+                val = int(option.value)
+                if (r := resolved.roles.get(val)) is not None:
+                    value = r
+                else:
+                    if (m := resolved.members.get(val)) is not None:
+                        value = m
+                    else:
+                        value = resolved.users[val]
+                        
+            case _:
+                value = None
+                
+        return value or option.value
+        
     
     def _parse_options(self, command_options: dict[str, ApplicationCommandOption], resolved: ResolvedData, options: list[InvokedApplicationCommandOption]) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
         display_to_callback_keys: dict[str, str] = {o.name: p for p, o in command_options.items()}
+        
         for option in options:
-            match option.type:
-                case CommandOptionType.CHANNEL:
-                    assert isinstance(option.value, str)
-                    value = resolved.channels[int(option.value)]
-                case CommandOptionType.ROLE:
-                    assert isinstance(option.value, str)
-                    value = resolved.roles[int(option.value)]
-                case CommandOptionType.USER:
-                    assert isinstance(option.value, str)
-                    if (m := resolved.members.get(int(option.value))) is not None: value = m
-                    else: value = resolved.users[int(option.value)]
-                case CommandOptionType.MENTIONABLE:
-                    assert isinstance(option.value, str)
-                    val = int(option.value)
-                    if (r := resolved.roles.get(val)) is not None:
-                        value = r
-                    else:
-                        if (m := resolved.members.get(val)) is not None: value = m
-                        else: value = resolved.users[val]
-                case _:
-                    value = None
-            kwargs[display_to_callback_keys.get(option.name, option.name)] = value or option.value
+            kwargs[display_to_callback_keys.get(option.name, option.name)] = self._parse_option_value(resolved, option)
             #                      ^^^^^^^^^^^^^^^^^^^
             #   Attempts to fjnd correct CallbackParameterName, if not defaults to DisplayParameterName
         return kwargs
