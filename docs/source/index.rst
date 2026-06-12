@@ -33,10 +33,10 @@ Quick Example
        description="Pings the bot!"
    )
    async def ping(interaction: mizuki.Interaction):
-       await interaction.response.send_message("Pong!")
+       await interaction.response.send_response("Pong!")
 
    bot.run("TOKEN-HERE")
-
+   
 .. toctree::
    :maxdepth: 2
    :caption: Contents:

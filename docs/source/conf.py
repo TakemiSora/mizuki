@@ -9,7 +9,7 @@
 project = 'mizuki'
 copyright = '2026, Takemi Sora'
 author = 'Takemi Sora'
-release = '0.1.0'
+release = '0.2.0'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -19,6 +19,8 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.intersphinx',
     'sphinx_copybutton',
+    'sphinx_design',
+    'sphinx_iconify'
 ]
 
 autodoc_default_options = {
@@ -48,6 +50,8 @@ html_context = {
     "source_user": "TakemiSora",
     "source_repo": "mizuki",
 }
+
+html_static_path = ['_static']
 
 import os
 import sys

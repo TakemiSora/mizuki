@@ -2,6 +2,11 @@ Resources
 =========
 
 .. toctree::
-   :maxdepth: 4
+    :maxdepth: 2
 
-   mizuki
+    guides
+
+.. toctree::
+    :maxdepth: 4
+
+    mizuki

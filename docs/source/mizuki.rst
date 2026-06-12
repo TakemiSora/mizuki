@@ -1,9 +1,6 @@
 API Reference
 =============
 
-Subpackages
------------
-
 .. toctree::
    :maxdepth: 4
 
