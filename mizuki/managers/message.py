@@ -6,6 +6,7 @@ from ..flags import MessageFlags
 from ..http import Path
 from ..objects.embed import Embed
 from ..objects.message import AllowedMentions, Message, MessageReference
+from ..file import File
 from ..objects.user import User
 from ._types import BaseManager
 
@@ -191,6 +192,7 @@ class MessageManager(BaseManager):
         embeds: list[Embed] = _MISSING,
         allowed_mentions: AllowedMentions = _MISSING,
         message_reference: MessageReference = _MISSING,
+        files: list[File] = _MISSING,
         sticker_ids: list[int] = _MISSING,
         flags: MessageFlags = _MISSING
     ) -> Message:
@@ -245,18 +247,19 @@ class MessageManager(BaseManager):
                     "channels/{channel_id}/messages",
                     channel_id=channel_id
                 ),
-                json=assign_val_dict(
-                    {}, _MISSING,
-                    content=content,
-                    tts=tts,
-                    embeds=(
-                        [e._to_dict() for e in embeds]
-                        if embeds is not _MISSING else _MISSING
-                    ),
-                    allowed_mentions=mtd(allowed_mentions),
-                    message_reference=mtd(message_reference),
-                    sticker_ids=sticker_ids,
-                    flags=flags.value if flags is not _MISSING else _MISSING
+                files=files,
+                json= assign_val_dict(
+                     {}, _MISSING,
+                     content=content,
+                     tts=tts,
+                     embeds=(
+                         [e._to_dict() for e in embeds]
+                         if embeds is not _MISSING else _MISSING
+                     ),
+                     allowed_mentions=mtd(allowed_mentions),
+                     message_reference=mtd(message_reference),
+                     sticker_ids=sticker_ids,
+                     flags=flags.value if flags is not _MISSING else _MISSING
                 )
             ))
         )

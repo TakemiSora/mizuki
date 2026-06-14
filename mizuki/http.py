@@ -2,8 +2,12 @@ import aiohttp
 import asyncio
 import logging
 from typing import Any
+from json import dumps
+from contextlib import ExitStack
 from urllib.parse import quote
+from .file import File
 from .errors import NotFound, HTTPException, Forbidden, Unauthorized, _RateLimitedRetry
+from ._utils import _MISSING
 
 _log  = logging.getLogger(__name__)
 
@@ -114,33 +118,7 @@ class HTTPClient:
         self._buckets_keys: dict[str, str] = {}
         self._buckets: dict[str, RateLimitBucket] = {}
         
-    async def request(self, path: Path, **kwargs: Any) -> Any:
-        """
-        Used to make a HTTP request to the Discord API.
-
-        Parameters
-        ----------
-        path : :class:`Path <mizuki.http.Path>`
-            The Path metadata for the request.
-        **kwargs : :class:`Any <typing.Any>`
-            The keyword arguments for the request. These are passed directly to :meth:`aiohttp.ClientSession.request()` method.
-
-        Returns
-        -------
-        :class:`Any <typing.Any>`
-            The data returned from the request. If the data is JSON, it is parsed into a :class:`dict`.
-        
-        Raises
-        ------
-        :class:`Unauthorized`
-            You are not authorized. Your token may be invalid.
-        :class:`Forbidden`
-            You are forbidden from accessing this endpoint.
-        :class:`NotFound`
-            The resource you tried to request wasn't found.
-        :class:`HTTPException`
-            An HTTP error occured.
-        """
+    async def _request(self, path: Path, **kwargs: Any) -> Any:
         await self._global_ratelimit.wait()
         
         _log.debug("Attempting to make request %s: %s", path.method, path.url)
@@ -195,4 +173,69 @@ class HTTPClient:
                 _log.warning("Hit the ratelimit when accessing BucketID = %s on URL = %s. Continuing in %.2f seconds.", e.bucket_id, path.url, e.retry_after)
                 await asyncio.sleep(e.retry_after)
 
-            return await self.request(path, **kwargs)
+            return await self._request(path, **kwargs)
+
+    async def request(
+        self, path: Path, *,
+        files: list[File] = _MISSING,
+        json: dict[str, Any] = _MISSING,
+        **kwargs: Any
+    ) -> Any:
+        """
+        Used to make a HTTP request to the Discord API.
+
+        Parameters
+        ----------
+        path : :class:`Path <mizuki.http.Path>`
+            The Path metadata for the request.
+            
+        files : list[:class:`File` <mizuki.file.File>`], optional
+            The files to upload with the request. Providing this field makes the request use ``multipart/form-data``.
+            
+        json : dict[:class:`str`, :class:`Any <typing.Any>`], optional
+            The JSON payload for the request, is added under ``payload_json`` in the FormData if files is also provided.
+            
+        **kwargs : :class:`Any <typing.Any>`
+            The keyword arguments for the request. These are passed directly to :meth:`aiohttp.ClientSession.request()` method.
+
+        Raises
+        ------
+        :class:`Unauthorized`
+            You are not authorized. Your token may be invalid.
+            
+        :class:`Forbidden`
+            You are forbidden from accessing this endpoint.
+            
+        :class:`NotFound`
+            The resource you tried to request wasn't found.
+            
+        :class:`HTTPException`
+            An HTTP error occured.
+        """
+        request_data = {}
+
+        with ExitStack() as stack:
+            if files: 
+                request_data["data"] = data = aiohttp.FormData()
+
+                for i, file in enumerate(files):
+                    file_bytes = stack.enter_context(open(file.path, "rb"))
+                    data.add_field(
+                        f"files[{i}]",
+                        file_bytes,
+                        filename=file.filename
+                    )
+
+                data.add_field(
+                    "payload_json",
+                    dumps(json)
+                )
+
+            elif json and not files:
+                 request_data["json"] = json
+
+            return await self._request(
+                path,
+                **request_data,
+                **kwargs
+            )

@@ -20,3 +20,6 @@ docs = [
     "sphinx-design>=0.7.0",
     "sphinx-iconify>=0.3.0",
 ]
+
+[tool.ruff.lint]
+ignore = ["E701"]

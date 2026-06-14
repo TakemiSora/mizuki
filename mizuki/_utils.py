@@ -22,7 +22,10 @@ def assign_val[T](obj: T, check_against: Any = _MISSING, /, **kwargs: Any) -> T:
     return obj
 
 def mtd[T: SupportsToDict](obj: T | None) -> T | None:
-    return obj._to_dict() if obj is not None else None
+    if (
+        obj is not None
+        and obj is not _MISSING
+    ): return obj._to_dict()
 
 def assign_val_dict[T](d: T, check_against: Any = None, /, **kwargs: Any) -> T:
     for key, val in kwargs.items():
