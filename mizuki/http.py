@@ -178,7 +178,7 @@ class HTTPClient:
     async def request(
         self, path: Path, *,
         files: list[File] = _MISSING,
-        json: dict[str, Any] = _MISSING,
+        json: Any = _MISSING,
         **kwargs: Any
     ) -> Any:
         """

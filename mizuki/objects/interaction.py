@@ -1,6 +1,8 @@
 from __future__ import annotations
 from typing import cast, Any, Literal
 
+from ..file import File
+
 from ..enums.command import ApplicationCommandType, CommandOptionType
 from ..enums.interaction import (
     ApplicationIntegrationType,
@@ -25,7 +27,7 @@ from ..payloads.interaction import (
     ResolvedDataPayload,
 )
 from ..flags import MessageFlags
-from .._utils import scls, _MISSING
+from .._utils import mtd, scls, _MISSING, assign_val_dict
 from .channel import parse_channel_payload
 from .embed import Embed
 from .guild import Guild
@@ -153,8 +155,13 @@ class ResponseHandler:
         self.interaction_token = interaction_token
         self.application_id = application_id
         self.acknowledged = False
-        
-    async def _post(self, type: InteractionCallbackType, data: InteractionCallbackDataPayload):
+
+    async def _post(
+        self,
+        type: InteractionCallbackType,
+        data: InteractionCallbackDataPayload,
+        files: list[File] = _MISSING
+    ):
         await self._http.request(
             Path(
                 "POST",
@@ -165,15 +172,17 @@ class ResponseHandler:
             json = InteractionResponseCallbackPayload(
                 type = type.value,
                 data = data
-            )
+            ),
+            files=files
         )
 
     async def send_response(
         self,
-        content: str | None = None,
+        content: str = _MISSING,
         *, tts: bool = False,
-        embeds: list[Embed] | None = None,
+        embeds: list[Embed] = _MISSING,
         allowed_mentions: AllowedMentions = AllowedMentions.new(),
+        files: list[File] = _MISSING,
         flags: MessageFlags = MessageFlags(0),
         ephemeral: bool = False,
         suppress_embeds: bool = False,
@@ -183,39 +192,48 @@ class ResponseHandler:
     ):
         if self.acknowledged:
             raise InteractionResponded()
-        
-        if any((content, embeds)):
-            data = InteractionCallbackDataPayload(
-                tts=tts,
-                allowed_mentions=allowed_mentions._to_dict()
-            )
 
-            if content is not None: data["content"] = content
-            if embeds is not None: data["embeds"] = [e._to_dict() for e in embeds]
-            
+        if any((content, embeds, files)):
             if ephemeral: flags |= MessageFlags.EPHEMERAL
             if suppress_embeds: flags |= MessageFlags.SUPPRESS_EMBEDS
             if suppress_notifications: flags |= MessageFlags.SUPPRESS_NOTIFICATIONS
             if is_components_v2: flags |= MessageFlags.IS_COMPONENTS_V2
             if is_voice_message: flags |= MessageFlags.IS_VOICE_MESSAGE
-            if flags != 0: data["flags"] = flags
-            
+
             await self._post(
-                InteractionCallbackType.CHANNEL_MESSAGE_WITH_SOURCE,
-                data
+                type=InteractionCallbackType.CHANNEL_MESSAGE_WITH_SOURCE,
+                files=files,
+                data=assign_val_dict(
+                    InteractionCallbackDataPayload(
+                        tts=tts,
+                        allowed_mentions=allowed_mentions._to_dict(),
+                    ), _MISSING,
+                    content=content,
+                    embeds=(
+                        [embed._to_dict() for embed in embeds]
+                        if embeds is not _MISSING
+                        else _MISSING
+                    ),
+                    attachments=(
+                        [file._to_attachment_dict(i) for i, file in enumerate(files)]
+                        if files is not _MISSING
+                        else _MISSING
+                    ),
+                    flags=flags.value
+                ),
             )
             self.acknowledged = True
             return
-        
+
         raise ValueError("No sendable field was passed to the response")
-    
+
     async def defer(
         self, *,
         ephemeral: bool = False
     ):
         if self.acknowledged:
             raise InteractionResponded()
-        
+
         await self._post(
             InteractionCallbackType.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE,
             InteractionCallbackDataPayload(
@@ -226,10 +244,11 @@ class ResponseHandler:
 
     async def send_followup(
         self,
-        content: str | None = None,
+        content: str = _MISSING,
         *, tts: bool = False,
-        embeds: list[Embed] | None = None,
+        embeds: list[Embed] = _MISSING,
         allowed_mentions: AllowedMentions = AllowedMentions.new(),
+        files: list[File] = _MISSING,
         flags: MessageFlags = MessageFlags(0),
         ephemeral: bool = False,
         suppress_embeds: bool = False,
@@ -239,20 +258,11 @@ class ResponseHandler:
         if not self.acknowledged:
             raise InteractionNotResponded()
         
-        if any((content, embeds)):
-            data = InteractionWebhookMessagePayload(
-                tts=tts,
-                allowed_mentions=allowed_mentions._to_dict()
-            )
-
-            if content is not None: data["content"] = content
-            if embeds is not None: data["embeds"] = [e._to_dict() for e in embeds]
-
+        if any((content, embeds, files)):
             if ephemeral: flags |= MessageFlags.EPHEMERAL
             if suppress_embeds: flags |= MessageFlags.SUPPRESS_EMBEDS
             if suppress_notifications: flags |= MessageFlags.SUPPRESS_NOTIFICATIONS
             if is_components_v2: flags |= MessageFlags.IS_COMPONENTS_V2
-            if flags != 0: data["flags"] = flags.value
 
             return Message(await self._http.request(
                 Path(
@@ -261,15 +271,34 @@ class ResponseHandler:
                     webhook_id = self.application_id,
                     webhook_token = self.interaction_token
                 ),
-                json = data
+                files=files,
+                json=assign_val_dict(
+                    InteractionWebhookMessagePayload(
+                        tts=tts,
+                        allowed_mentions=allowed_mentions._to_dict()
+                    ), _MISSING,
+                    content=content,
+                    embeds=(
+                        [embed._to_dict() for embed in embeds]
+                        if embeds is not _MISSING
+                        else _MISSING
+                    ),
+                    attachments=(
+                        [file._to_attachment_dict(i) for i, file in enumerate(files)]
+                        if files is not _MISSING
+                        else _MISSING
+                    ),
+                    flags=flags.value
+                )
             ))
-        
+
         raise ValueError("No sendable field was passed to the response")
 
     async def _webhook_messages_request(
         self, *,
         method: str,
         message: int | str = "@original",
+        files: list[File] = _MISSING,
         **kwargs: Any
     ) -> Any:
         return await self._http.request(
@@ -280,6 +309,7 @@ class ResponseHandler:
                 webhook_token = self.interaction_token,
                 message = str(message)
             ),
+            files=files,
             **kwargs
         )
 
@@ -289,11 +319,13 @@ class ResponseHandler:
     async def edit_original_response(
         self,
         content: str | None = _MISSING,
-        *, embeds: list[Embed] | None = _MISSING,
+        *, embeds: list[Embed] = _MISSING,
         flags: MessageFlags = _MISSING,
         allowed_mentions: AllowedMentions = _MISSING,
+        files: list[File] = _MISSING,
         suppress_embeds: bool = _MISSING,
-        is_components_v2: Literal[True] = _MISSING
+        is_components_v2: Literal[True] = _MISSING,
+        override_files: bool = True
     ) -> Message:
         if all(
             x is _MISSING
@@ -302,26 +334,38 @@ class ResponseHandler:
                 embeds,
                 flags,
                 allowed_mentions,
+                files,
                 suppress_embeds,
                 is_components_v2
             ]
         ):
             raise ValueError("No editable fields were passed in editing response.")
         
-        data = InteractionWebhookMessagePayload()
-
-        if content is not _MISSING: data["content"] = content
-        if embeds is not _MISSING: data["embeds"] = [e._to_dict() for e in embeds] if embeds is not None else None
-        if allowed_mentions is not _MISSING: data["allowed_mentions"] = allowed_mentions._to_dict() if allowed_mentions is not None else None
         if suppress_embeds is not _MISSING or is_components_v2 is not _MISSING:
             flags = MessageFlags(0)
             if suppress_embeds: flags |= MessageFlags.SUPPRESS_EMBEDS
             if is_components_v2: flags |= MessageFlags.IS_COMPONENTS_V2
-            data["flags"] = flags
             
         return Message(await self._webhook_messages_request(
             method="PATCH",
-            json=data
+            files=files,
+            json=assign_val_dict(
+                InteractionWebhookMessagePayload(),
+                _MISSING,
+                content=content,
+                embeds=(
+                    [embed._to_dict() for embed in embeds]
+                    if embeds is not _MISSING
+                    else _MISSING
+                ),
+                allowed_mentions=mtd(allowed_mentions),
+                attachments=(
+                    [file._to_attachment_dict(i) for i, file in enumerate(files)]
+                    if override_files and files is not _MISSING
+                    else _MISSING
+                ),
+                flags=flags.value if flags is not _MISSING else _MISSING
+            )
         ))
 
     async def delete_original_response(self):

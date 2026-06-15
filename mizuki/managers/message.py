@@ -201,7 +201,7 @@ class MessageManager(BaseManager):
         
         .. note::
             
-            At least one of, ``content``, ``embeds``, ``sticker_ids`` must be provided. For forwarding, only ``message_reference`` must be provided.
+            At least one of, ``content``, ``embeds``, ``sticker_ids``, ``files`` must be provided. For forwarding, only ``message_reference`` must be provided.
         
         Parameters
         ----------
@@ -219,7 +219,10 @@ class MessageManager(BaseManager):
             
         allowed_mentions : :class:`AllowedMentions <mizuki.objects.message.AllowedMentions>`
             The AllowedMentions object that dictates whether user, role or everyone pings are enabled.
-            
+
+        files : list[:class:`File <mizuki.file.File>`]
+            The files to upload with the message.
+
         message_reference : :class:`MessageReference <mizuki.objects.message.MessageReference>`
             The reference message for the new message, if any
             
@@ -256,6 +259,14 @@ class MessageManager(BaseManager):
                          [e._to_dict() for e in embeds]
                          if embeds is not _MISSING else _MISSING
                      ),
+                     attachments=(
+                         [file._to_attachment_dict(i) for i, file in enumerate(files)]
+                         if (
+                             files 
+                             and MessageFlags.IS_COMPONENTS_V2 not in (flags or MessageFlags(0))
+                         )
+                         else _MISSING
+                     ),
                      allowed_mentions=mtd(allowed_mentions),
                      message_reference=mtd(message_reference),
                      sticker_ids=sticker_ids,
@@ -273,42 +284,46 @@ class MessageManager(BaseManager):
         tts: bool = _MISSING,
         embeds: list[Embed] = _MISSING,
         allowed_mentions: AllowedMentions = _MISSING,
+        files: list[File] = _MISSING,
         sticker_ids: list[int] = _MISSING,
         flags: MessageFlags = _MISSING   
     ) -> Message:
         """
         Creates a new reply to a message in the specified channel.
-        
+
         .. note::
-            
-            At least one of, ``content``, ``embeds``, ``sticker_ids`` must be provided.
-        
+
+            At least one of, ``content``, ``embeds``, ``sticker_ids``, ``files`` must be provided.
+
         Parameters
         ----------
         channel_id : :class:`int`
             The ID of the Channel to send reply to.
-            
+
         message_id : :class:`int`
             The ID of the Message to reply to.
-        
+
         content : :class:`str`
             The content of the message.
-            
+
         tts : :class:`bool`
             Whether TTS is enabled for the message.
-        
+
         embeds : list[:class:`Embed <mizuki.objects.embed.Embed>`]
             The list of embeds to send along the message.
-            
+
         allowed_mentions : :class:`AllowedMentions <mizuki.objects.message.AllowedMentions>`
             The AllowedMentions object that dictates whether user, role or everyone pings are enabled.
-            
+
+        files : list[:class:`File <mizuki.file.File>`]
+            The files to upload with the message.
+
         sticker_ids : list[:class:`int`]
             The Guild Stickers to send with the message. Max 3.
-        
+
         flags : :class:`MessageFlags <mizuki.flags.MessageFlags>`
             The MessageFlags of the new message.
-            
+
         Raises
         ------
         :class:`NotFound`
@@ -326,6 +341,7 @@ class MessageManager(BaseManager):
             tts=tts,
             embeds=embeds,
             allowed_mentions=allowed_mentions,
+            files=files,
             message_reference=MessageReference.new(message_id=message_id),
             sticker_ids=sticker_ids,
             flags=flags
@@ -734,7 +750,9 @@ class MessageManager(BaseManager):
         content: str | None = _MISSING,
         embeds: list[Embed] = _MISSING,
         flags: MessageFlags = _MISSING,
-        allowed_mentions: AllowedMentions | None = _MISSING
+        allowed_mentions: AllowedMentions | None = _MISSING,
+        files: list[File] = _MISSING,
+        override_files: bool = True
     ) -> Message:
         """
         Edits a message sent by you.
@@ -758,7 +776,13 @@ class MessageManager(BaseManager):
         
         allowed_mentions : :class:`AllowedMentions <mizuki.objects.message.AllowedMentions>` | :class:`None`
             The AllowedMentions object that dictates whether user, role or everyone pings are enabled. Pass ``None`` to set this back to default.
-            
+
+        files : list[:class:`File <mizuki.file.File>`]
+            The files to upload to the message.
+
+        override_files : :class:`bool`
+            Whether to override or append the files to the message. Description is ignored when this is set to ``False``
+
         Raises
         ------
         :class:`NotFound`
@@ -778,6 +802,7 @@ class MessageManager(BaseManager):
                     channel_id=channel_id,
                     message_id=message_id
                 ),
+                files=files,
                 json=assign_val_dict(
                     {}, _MISSING,
                     content=content,
@@ -791,7 +816,12 @@ class MessageManager(BaseManager):
                         if flags is not _MISSING
                         else _MISSING
                     ),
-                    allowed_mentions=mtd(allowed_mentions)
+                    allowed_mentions=mtd(allowed_mentions),
+                    attachments=(
+                        [file._to_attachment_dict(i) for i, file in enumerate(files)]
+                        if override_files and files is not _MISSING
+                        else _MISSING
+                    )
                 )
             ))
         )

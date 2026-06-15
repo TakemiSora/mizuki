@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import Literal, Required, TypedDict
+
 from ._types import UNIMPLEMENTED, Permissions, Snowflake
 from .channel import (
     PartialGuildChannelPayload,
@@ -7,6 +8,7 @@ from .channel import (
     PrivateChannelPayload,
 )
 from .embed import EmbedPayload
+from .file import FileUploadPayload
 from .guild import GuildPayload
 from .member import MemberPayload, PartialMemberPayload
 from .message import AttachmentPayload, MessagePayload, PartialMessagePayload, AllowedMentionsPayload
@@ -69,7 +71,7 @@ class InteractionCallbackDataPayload(TypedDict, total=False):
     allowed_mentions: AllowedMentionsPayload
     flags: int
     components: list[UNIMPLEMENTED]
-    attachments: list[UNIMPLEMENTED]
+    attachments: list[FileUploadPayload]
     poll: UNIMPLEMENTED
 
 class InteractionWebhookMessagePayload(TypedDict, total=False):
@@ -80,7 +82,7 @@ class InteractionWebhookMessagePayload(TypedDict, total=False):
     flags: int | None
     components: list[UNIMPLEMENTED] | None
     # unimplemented files
-    attachments: list[UNIMPLEMENTED] | None
+    attachments: list[FileUploadPayload] | None
     poll: UNIMPLEMENTED | None
     
 class InteractionResponseCallbackPayload(TypedDict, total=False):

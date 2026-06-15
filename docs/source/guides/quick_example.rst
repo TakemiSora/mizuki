@@ -125,7 +125,7 @@ First start by adding ``python-dotenv`` to your dependencies and install it.
             pip install python-dotenv
             
             
-After installing the package, make a file named ``.env`` and put yout token in the ``.env`` file like:
+After installing the package, make a file named ``.env`` and put your token in the ``.env`` file like:
     
 .. code-block::
     :caption: .env
