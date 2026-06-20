@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Protocol
+from typing import Any, Protocol, TypedDict
 from collections.abc import Callable, Coroutine
 
 class Missing:
@@ -13,18 +13,18 @@ _MISSING: Any = Missing()
 type CoroFunc = Callable[..., Coroutine[Any, Any, Any]]
 type CoroDecorator = Callable[[CoroFunc], CoroFunc]
 
-class SupportsToDict(Protocol):
-    def _to_dict(self) -> Any: ...
+class SupportsToDict[T](Protocol):
+    def _to_dict(self) -> T: ...
 
 def assign_val[T](obj: T, check_against: Any = _MISSING, /, **kwargs: Any) -> T:
     for key, val in kwargs.items():
         if val is not check_against: setattr(obj, key, val)
     return obj
 
-def mtd[T: SupportsToDict](obj: T | None) -> T | None:
+def mtd[T](obj: SupportsToDict[T] | Missing | None) -> T | None:
     if (
         obj is not None
-        and obj is not _MISSING
+        and not isinstance(obj, Missing)
     ): return obj._to_dict()
 
 def assign_val_dict[T](d: T, check_against: Any = None, /, **kwargs: Any) -> T:

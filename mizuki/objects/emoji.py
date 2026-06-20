@@ -1,3 +1,5 @@
+from typing import Self
+
 from .user import User
 from .asset import Asset
 from .snowflake import Snowflake
@@ -5,7 +7,7 @@ from datetime import datetime
 from ..payloads.emoji import PartialEmojiPayload, EmojiPayload, ActivityEmojiPayload
 from ..payloads.channel import DefaultReactionPayload
 from ..payloads.message import ReactionCountDetailPayload, ReactionPayload
-from .._utils import scls
+from .._utils import assign_val, scls, _MISSING
 
 __all__ = (
     "ActivityEmoji",
@@ -89,14 +91,57 @@ class Emoji:
         return self.id
 
 class DefaultReaction:
+    """
+    Represents a Default Reaction object that is shown in every thread in a :attr:`GUILD_FORUM <mizuki.enums.channel.ChannelType.GUILD_FORUM>` and :attr:`GUILD_MEDIA <mizuki.enums.channel.ChannelType.GUILD_MEDIA` channel.
+    """
     __slots__ = (
         "emoji_id",
         "emoji_name"
     )
 
+    emoji_id: Snowflake | None
+    "The ID of the emoji. It is None for a unicode emoji."
+
+    emoji_name: str | None
+    "The unicode emoji. It is None for a custom emoji."
+
     def __init__(self, data: DefaultReactionPayload):
         self.emoji_id = Snowflake._from_str(data["emoji_id"])
         self.emoji_name = data["emoji_name"]
+
+    def _to_dict(self) -> DefaultReactionPayload:
+        return DefaultReactionPayload(
+            emoji_id=str(self.emoji_id),
+            emoji_name=self.emoji_name
+        )
+
+    @classmethod
+    def new(
+        cls, *,
+        emoji_id: int = _MISSING,
+        emoji_name: str = _MISSING
+    ) -> Self:
+        """
+        Creates a new instance of a DefaultReaction Object.
+
+        .. note::
+
+            Exactly one of ``emoji_id`` and ``emoji_name`` must be passed.
+
+        
+        Parameters
+        ----------
+        emoji_id : :class:`int`, optional
+            The ID of the custom emoji.
+
+        emoji_name : :class:`str`, optional
+            The unicode emoji.
+        """
+        return assign_val(
+            cls.__new__(cls),
+            emoji_id=emoji_id,
+            emoji_name=emoji_name
+        )
 
 class ReactionCountDetail:
     __slots__ = (

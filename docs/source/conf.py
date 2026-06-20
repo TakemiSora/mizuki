@@ -43,7 +43,8 @@ html_theme = 'shibuya'
 
 html_theme_options = {
   "accent_color": "pink",
-  "github_url": "https://github.com/TakemiSora/mizuki"
+  "github_url": "https://github.com/TakemiSora/mizuki",
+  "discord_url": "https://discord.gg/mxQxxxpBsB"
 }
 html_context = {
     "source_type": "github",

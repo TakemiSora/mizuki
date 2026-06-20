@@ -1,10 +1,14 @@
 from enum import IntFlag
+from typing import Self
+
+from mizuki._utils import assign_val
 from ..payloads.channel import ChannelPermissionOverwritePayload
 from .snowflake import Snowflake
 from ..enums.channel import ChannelPermissionOverwriteType
 
 __all__ = (
     "Permissions",
+    "ChannelPermissionOverwrite"
 )
 
 class Permissions(IntFlag):
@@ -67,3 +71,27 @@ class ChannelPermissionOverwrite:
         self.type = ChannelPermissionOverwriteType(data["type"])
         self.allow = Permissions(int(data["allow"]))
         self.deny = Permissions(int(data["deny"]))
+
+    def _to_dict(self) -> ChannelPermissionOverwritePayload:
+        return ChannelPermissionOverwritePayload(
+            id=str(self.id),
+            type=self.type.value,
+            allow=str(self.allow.value),
+            deny=str(self.deny.value)
+        )
+
+    @classmethod
+    def new(
+        cls, *,
+        id: int,
+        type: ChannelPermissionOverwriteType,
+        allow: Permissions = Permissions(0),
+        deny: Permissions = Permissions(0)
+    ) -> Self:
+        return assign_val(
+            cls.__new__(cls),
+            id=Snowflake(id),
+            type=type,
+            allow=allow,
+            deny=deny
+        )

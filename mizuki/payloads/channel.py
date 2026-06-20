@@ -25,9 +25,11 @@ class ThreadMemberPayload(TypedDict):
     flags: int
     member: NotRequired[MemberPayload]
 
-class ForumTagPayload(TypedDict):
-    id: Snowflake
+class PartialForumTagPayload(TypedDict):
     name: str
+
+class ForumTagPayload(PartialForumTagPayload):
+    id: Snowflake
     moderated: bool
     emoji_id: Snowflake | None
     emoji_name: str | None
