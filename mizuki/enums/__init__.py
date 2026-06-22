@@ -4,6 +4,7 @@ from .embed import *
 from .event_dispatch import *
 from .guild import *
 from .interaction import *
+from .invite import *
 from .message import *
 from .presence import *
 from .sticker import *

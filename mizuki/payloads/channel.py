@@ -106,3 +106,6 @@ class PartialGuildChannelPayload(BasePublicChannelPayload):
 class PartialThreadPayload(BasePublicChannelPayload):
     type: Literal[10, 11, 12]
     thread_metadata: ThreadMetaDataPayload
+    
+type ChannelPayload = GuildChannelPayload | PrivateChannelPayload | ThreadPayload
+type PartialChannelPayload = PartialGuildChannelPayload | PrivateChannelPayload | PartialThreadPayload

@@ -12,7 +12,8 @@ __all__ = (
     "EmbedFlags",
     "AttachmentFlags",
     "MessageFlags",
-    "ActivityFlags"
+    "ActivityFlags",
+    "InviteFlags"
 )
 
 class UserFlags(IntFlag):
@@ -33,11 +34,11 @@ class UserFlags(IntFlag):
 
 class RoleFlags(IntFlag):
     IN_PROMPT = 1 << 0
-    
+
 class IntentFlags(IntFlag):
     """
     A bitfield of IntentFlags to be provided to Discord Gateway. These determine which events you will be sent over the gateway. Read more about it on `Gateway Intents <https://docs.discord.com/developers/events/gateway#gateway-intents>`_.
-    
+
     Note that ``GUILD_PRESENCES``, ``MESSAGE_CONTENT`` and ``GUILD_MEMBERS`` are **privileged intents** and need to be enabled in the Developer Portal to use.
     """
     GUILDS = 1 << 0
@@ -132,7 +133,7 @@ class MessageFlags(IntFlag):
     IS_VOICE_MESSAGE = 1 << 13
     HAS_SNAPSHOT = 1 << 14
     IS_COMPONENTS_V2 = 1 << 15
-    
+
 class ActivityFlags(IntFlag):
     INSTANCE = 1 << 0
     JOIN = 1 << 1
@@ -143,3 +144,6 @@ class ActivityFlags(IntFlag):
     PARTY_PRIVACY_FRIENDS = 1 << 6
     PARTY_PRIVACY_VOICE_CHANNEL = 1 << 7
     EMBEDDED = 1 << 8
+
+class InviteFlags(IntFlag):
+    IS_GUEST_INVITE = 1 << 0

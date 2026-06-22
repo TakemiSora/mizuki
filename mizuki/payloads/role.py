@@ -1,4 +1,5 @@
 from typing import NotRequired, TypedDict
+
 from ._types import CDNHash, Permissions, Snowflake
 
 class RoleColorsPayload(TypedDict):
@@ -14,14 +15,16 @@ class RoleTagsPayload(TypedDict):
     available_for_purchase: NotRequired[None]
     guild_connections: NotRequired[None]
 
-class RolePayload(TypedDict):
+class PartialRolePayload(TypedDict):
     id: Snowflake
     name: str
     colors: RoleColorsPayload
-    hoist: bool
     icon: NotRequired[CDNHash | None]
     unicode_emoji: NotRequired[str | None]
     position: int
+
+class RolePayload(PartialRolePayload):
+    hoist: bool
     permissions: Permissions
     managed: bool
     mentionable: bool

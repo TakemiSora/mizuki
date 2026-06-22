@@ -1,20 +1,22 @@
 import aiohttp
 import asyncio
 import logging
+
 from typing import Any
 from json import dumps
 from contextlib import ExitStack
 from urllib.parse import quote
-from .file import File
-from .errors import NotFound, HTTPException, Forbidden, Unauthorized, _RateLimitedRetry
-from ._utils import _MISSING
+
+from mizuki.file import File
+from mizuki.errors import NotFound, HTTPException, Forbidden, Unauthorized, _RateLimitedRetry
+from mizuki._utils import _MISSING
 
 _log  = logging.getLogger(__name__)
 
 class Path:
     """
     The Path/URL metadata for a HTTP Request. Parameters should be initalized with keyword arguments rather than f-strings.
-    
+
     Parameters
     ----------
     method : :class:`str`
@@ -23,12 +25,12 @@ class Path:
         The URL endpoint to make the request to. Refer to examples below for formatting.
     **parameters : :class:`Any <typing.Any>`
         The Parameters for the URL. Refer at examples below for formatting.
-        
+
     Examples
     --------
-    
+
     .. code-block:: python
-    
+
         mizuki.Path(
             "GET",
             "channels/{channel_id}/messages/{message_id}",
@@ -36,10 +38,10 @@ class Path:
             message_id=message_id
         )))
     """
-    
+
     method: str
     "The HTTP Method for the request such as ``GET``, ``POST``."
-    
+
     url: str
     "The formatted URL endpoint to make the request to."
 
@@ -54,7 +56,7 @@ class Path:
 
     webhook_token: str | None
     ":meta private:"
-    
+
     __slots__ = (
         "method",
         "url",
@@ -63,7 +65,7 @@ class Path:
         "webhook_id",
         "webhook_token"
     )
-    
+
     def __init__(self, method: str, url: str, **parameters: Any):
         self.method = method
         if parameters:
@@ -87,7 +89,7 @@ class RateLimitBucket:
         "reset_after",
         "lock"
     )
-    
+
     def __init__(self, remaining: int, reset_after: float):
         self.remaining = remaining
         self.reset_after = reset_after
@@ -109,7 +111,7 @@ class HTTPClient:
         "_buckets_keys",
         "_buckets"
     )
-    
+
     def __init__(self):
         self._session: aiohttp.ClientSession | None = None
 
@@ -117,19 +119,19 @@ class HTTPClient:
         self._global_ratelimit.set()
         self._buckets_keys: dict[str, str] = {}
         self._buckets: dict[str, RateLimitBucket] = {}
-        
+
     async def _request(self, path: Path, **kwargs: Any) -> Any:
         await self._global_ratelimit.wait()
-        
+
         _log.debug("Attempting to make request %s: %s", path.method, path.url)
-        
+
         bucket_id = self._buckets_keys.get(path._route_key)
         bucket = self._buckets.get(bucket_id) if bucket_id else None
 
         try:
             async with (bucket.lock if bucket else asyncio.Lock()):
                 assert self._session is not None, "Cannot call session without intializing first."
-                    
+
                 async with self._session.request(path.method, path.url, **kwargs) as resp:
                     new_bucket_id = resp.headers.get("X-RateLimit-Bucket")
 
@@ -145,7 +147,7 @@ class HTTPClient:
                         limit_scope = resp.headers.get("X-RateLimit-Scope")
 
                         raise _RateLimitedRetry(data, retry_after, limit_scope, new_bucket_id or bucket_id)
-                    
+
                     if resp.status >= 400:
                         data = await resp.json()
                         message = data.get("message", "")
@@ -160,7 +162,7 @@ class HTTPClient:
                         if bucket and bucket.remaining == 0:
                             _log.debug("Pre-emptively waiting for bucket reset on BucketID = %s on URL = %s. Continuing in %.2f seconds.", new_bucket_id, path.url, bucket.reset_after)
                             await asyncio.sleep(bucket.reset_after)
-                    
+
                     if "application/json" in resp.headers.get("Content-Type", ""): return await resp.json()
 
         except _RateLimitedRetry as e:
@@ -188,13 +190,13 @@ class HTTPClient:
         ----------
         path : :class:`Path <mizuki.http.Path>`
             The Path metadata for the request.
-            
+
         files : list[:class:`File` <mizuki.file.File>`], optional
             The files to upload with the request. Providing this field makes the request use ``multipart/form-data``.
-            
+
         json : dict[:class:`str`, :class:`Any <typing.Any>`], optional
             The JSON payload for the request, is added under ``payload_json`` in the FormData if files is also provided.
-            
+
         **kwargs : :class:`Any <typing.Any>`
             The keyword arguments for the request. These are passed directly to :meth:`aiohttp.ClientSession.request()` method.
 
@@ -202,20 +204,20 @@ class HTTPClient:
         ------
         :class:`Unauthorized`
             You are not authorized. Your token may be invalid.
-            
+
         :class:`Forbidden`
             You are forbidden from accessing this endpoint.
-            
+
         :class:`NotFound`
             The resource you tried to request wasn't found.
-            
+
         :class:`HTTPException`
             An HTTP error occured.
         """
         request_data = {}
 
         with ExitStack() as stack:
-            if files: 
+            if files:
                 request_data["data"] = data = aiohttp.FormData()
 
                 for i, file in enumerate(files):
