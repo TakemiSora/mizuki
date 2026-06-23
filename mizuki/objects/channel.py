@@ -416,7 +416,7 @@ class ThreadChannel(BasePublicChannel):
         self.message_count = data["message_count"]
         self.member_count = data["member_count"]
         self.total_message_sent = data["total_message_sent"]
-        self.applied_tags = [Snowflake(s) for s in data["applied_tags"]]
+        self.applied_tags = [Snowflake(s) for s in data.get("applied_tags", [])]
 
 class PrivateChannel(BaseChannel):
     """
