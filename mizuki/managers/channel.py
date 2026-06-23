@@ -402,7 +402,7 @@ class ChannelManager(BaseManager):
             A HTTP error occured.
         """
         if (
-            require_tags is not _MISSING
+            require_tag is not _MISSING
             or hide_media_download_options is not _MISSING
         ):
             flags = ChannelFlags(0)
