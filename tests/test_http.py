@@ -1,15 +1,10 @@
-import pytest
-from mizuki.http import HTTPClient, Path, RateLimitBucket
+from mizuki.http import  Path 
 
-def test_pathwithnoparameters():
+def test_path_with_no_parameters():
     path = Path("GET", "gateway")
     assert path.url == "gateway"
  
- #This checks the no parameter tesr case 
-
-
-
-def test_pathform():
+def test_path_form():
     path = Path(
         "GET",
         "channels/{channel_id}",
@@ -19,8 +14,7 @@ def test_pathform():
     assert path.url == "channels/123"
 
 
-#Checks the formate of the path  
-def test_pathstring():
+def test_path_url_encoding():
     path = Path(
         "GET",
         "users/{name}",
@@ -28,14 +22,20 @@ def test_pathstring():
     )
 
     assert path.url == "users/hello%20world"
-#If the path is a string it should be formated correctly with the url encoding
 
-def test_route():
+def test_route_key():
     path = Path(
         "GET",
         "channels/{channel_id}",
         channel_id=123
     )
 
-    assert path._route_key.startswith("GET:")
-#Checks the route key starts with the method and a colon
+    assert path._route_key == "GET:channels/{channel_id}"
+
+def test_bucket_key_with_major_param():
+    path = Path(
+        "GET",
+        "channels/{channel_id}",
+        channel_id=123
+    )
+    assert path._bucket_key == "GET:channels/{channel_id}:123"
