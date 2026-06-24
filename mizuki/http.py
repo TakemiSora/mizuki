@@ -59,6 +59,7 @@ class Path:
 
     __slots__ = (
         "method",
+        "_raw_url",
         "url",
         "channel_id",
         "guild_id",
@@ -68,6 +69,7 @@ class Path:
 
     def __init__(self, method: str, url: str, **parameters: Any):
         self.method = method
+        self._raw_url = url
         if parameters:
             self.url = url.format_map({key: quote(val, safe = "") if isinstance(val, str) else val for key, val in parameters.items()})
         else:
@@ -79,8 +81,20 @@ class Path:
         self.webhook_token = parameters.get("webhook_token")
 
     @property
-    def _route_key(self) -> str:
-        return f"{self.method}:{self.url}+{"+".join(str(val) for val in [self.channel_id, self.guild_id, self.webhook_id, self.webhook_token])}"
+    def _bucket_key(self) -> str:
+        major = (
+            self.channel_id
+            or self.guild_id
+            or (
+                (
+                    f"{self.webhook_id}+{self.webhook_token}"
+                    if self.webhook_token
+                    else self.webhook_id
+                ) if self.webhook_id else None
+            )
+            or ""
+        )
+        return f"{self.method}:{self._raw_url}+{major}"
 
 class RateLimitBucket:
     ":meta private:"
@@ -125,7 +139,7 @@ class HTTPClient:
 
         _log.debug("Attempting to make request %s: %s", path.method, path.url)
 
-        bucket_id = self._buckets_keys.get(path._route_key)
+        bucket_id = self._buckets_keys.get(path._bucket_key)
         bucket = self._buckets.get(bucket_id) if bucket_id else None
 
         try:
@@ -139,7 +153,7 @@ class HTTPClient:
                         if new_bucket_id not in self._buckets:
                             self._buckets[new_bucket_id] = RateLimitBucket(1, 0)
                         self._buckets[new_bucket_id].update_bucket(resp)
-                        self._buckets_keys[path._route_key] = new_bucket_id
+                        self._buckets_keys[path._bucket_key] = new_bucket_id
 
                     if resp.status == 429:
                         data = await resp.json()
