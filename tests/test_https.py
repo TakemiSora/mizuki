@@ -31,3 +31,11 @@ def test_route_key():
     )
 
     assert path._route_key == "GET:channels/{channel_id}"
+
+def test_bucket_key_with_major_param():
+    path = Path(
+        "GET",
+        "channels/{channel_id}",
+        channel_id=123
+    )
+    assert path._bucket_key == "GET:channels/{channel_id}:123"
