@@ -55,6 +55,7 @@ class ConnectionState:
         assert hasattr(self, "http"), "Init Gateway was called without init http"
         self.gateway = GatewayClient(
             bot,
+            self,
             self.session,
             token,
             intents

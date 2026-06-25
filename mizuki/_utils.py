@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Protocol, TypedDict
+from typing import Any, Protocol
 from collections.abc import Callable, Coroutine
 
 class Missing:
@@ -38,5 +38,6 @@ def sint(txt: str | None) -> int | None:
 def siso(txt: str | None) -> datetime | None:
     return datetime.fromisoformat(txt) if txt else None
 
-def scls[C](cls: Callable[..., C], data: Any, **kwargs: Any) -> C | None:
-    return cls(data, **kwargs) if data else None
+def scls[C](cls: Callable[..., C], *args: Any, **kwargs: Any) -> C | None:
+    if args and args[0] is not None:
+        return cls(*args, **kwargs)

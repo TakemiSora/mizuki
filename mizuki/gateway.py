@@ -7,13 +7,16 @@ import time
 import json
 import random
 import logging
+
 from typing import Any, TYPE_CHECKING
-from .flags import IntentFlags
-from .errors import GatewayError
-from ._event_dispatch import EventDispatcher
+
+from mizuki.flags import IntentFlags
+from mizuki.errors import GatewayError
+from mizuki._event_dispatch import EventDispatcher
 
 if TYPE_CHECKING:
-    from .bot import Bot
+    from mizuki.bot import Bot
+    from mizuki.state import ConnectionState
 
 _log = logging.getLogger(__name__)
 
@@ -21,16 +24,16 @@ class GatewayClient:
     """
     The Client that is used to connect and recieve events over gateway. This should **not** be constructed by the user.
     """
-    
+
     token: str
     "The bot token used to authenticate with discord."
-    
+
     intents: IntentFlags
     "The IntentFlags passed to the gateway."
-    
+
     latency: float
     "The latency (in microseconds) for the gateway connection."
-    
+
     __slots__ = (
         "token",
         "intents",
@@ -50,7 +53,7 @@ class GatewayClient:
         "_reconnect_lock",
         "_handlers",
     )
-    
+
     _URL = "wss://gateway.discord.gg/?v=10&encoding=json"
     _RECONNECTABLE_CLOSE_CODES = [4000, 4001, 4002, 4003, 4005, 4007, 4008, 4009]
 
@@ -71,12 +74,12 @@ class GatewayClient:
         4014: "Disallowed intents: You sent a disallowed intent for a Gateway Intent. You may have tried to specify an intent that you have not enabled or are not approved for."
     }
 
-    def __init__(self, bot: Bot, session: aiohttp.ClientSession, token: str, intents: IntentFlags):
+    def __init__(self, bot: Bot, state: ConnectionState, session: aiohttp.ClientSession, token: str, intents: IntentFlags):
         self.token = token
         self.intents = intents
         self.latency = 0.0
 
-        self._dispatcher = EventDispatcher(bot)
+        self._dispatcher = EventDispatcher(bot, state)
         self._session = session
         self._ws: aiohttp.ClientWebSocketResponse | None = None
         self._sequence: int | None = None
@@ -122,7 +125,7 @@ class GatewayClient:
             _log.info("Resumed Gateway Connection with resume_url: %s", resume_url)
         self._listen_task = asyncio.create_task(self._listen())
         self._listen_task.add_done_callback(self._on_task_done)
-        
+
     def _on_task_done(self, task: asyncio.Task):
         if task.cancelled(): return
         if task.exception() is not None:
@@ -221,7 +224,7 @@ class GatewayClient:
                 }
             })
             _log.debug("Sent RESUME (Opcode = 6) to Discord Gateway (Session ID = %s)", self._session_id)
-        else:            
+        else:
             await self._send({
                 "op": 2,
                 "d": {
@@ -240,7 +243,7 @@ class GatewayClient:
         if self._reconnect_lock.locked():
             return
         asyncio.create_task(self._reconnect())
-    
+
     async def _reconnect(self, *_):
         async with self._reconnect_lock:
             if self._heartbeat_task:
@@ -254,7 +257,7 @@ class GatewayClient:
             if self._listen_task:
                 await self._listen_task
                 self._listen_task = None
-            
+
             await self.connect(self._resume_ws_url)
 
     async def _handle_ready(self, data: dict[str, Any]):
@@ -267,10 +270,10 @@ class GatewayClient:
             self._session_id = None
             self._sequence = None
             self._resume_ws_url = None
-        
+
         _log.info("Gateway Session was invalidated. Closing Gateway Connection now. (Resumable = %s)", data)
         if self._ws: await self._ws.close(code=4000)
-        
+
     async def _handle_dispatch(self, data: dict[str, Any], event: str):
         if event == "READY": await self._handle_ready(data)
         h = self._dispatcher._dispatch_handlers.get(event)

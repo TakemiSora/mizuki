@@ -1,3 +1,4 @@
+from typing import TYPE_CHECKING
 from datetime import datetime
 
 from mizuki.flags import InviteFlags
@@ -10,6 +11,9 @@ from mizuki.objects.user import User
 from mizuki.objects.role import PartialRole
 from mizuki.objects.guild import Guild, GuildScheduledEvent
 
+if TYPE_CHECKING:
+    from mizuki.state import ConnectionState
+
 __all__ = (
     "Invite",
     "InviteMetadata"
@@ -17,6 +21,7 @@ __all__ = (
 
 class Invite:
     __slots__ = (
+        "_state",
         "type",
         "code",
         "guild",
@@ -31,11 +36,12 @@ class Invite:
         "flags",
         "roles"
     )
-    
-    def __init__(self, data: InvitePayload):
+
+    def __init__(self, data: InvitePayload, *, state: ConnectionState):
+        self._state = state
         self.type = InviteType(data["type"])
         self.code = data["code"]
-        self.guild = scls(Guild, data.get("guild"))
+        self.guild = scls(Guild, data.get("guild"), state=self._state)
         self.channel = scls(
             PartialGuildChannel,
             data["channel"],
@@ -50,7 +56,7 @@ class Invite:
         self.guild_scheduled_event = scls(GuildScheduledEvent, data.get("guild_scheduled_event"))
         self.flags = scls(InviteFlags, data.get("flags"))
         self.roles = [PartialRole(p) for p in data.get("roles", [])]
-        
+
 class InviteMetadata(Invite):
     __slots__ = (
         "uses",
@@ -59,9 +65,9 @@ class InviteMetadata(Invite):
         "temporary",
         "created_at"
     )
-    
-    def __init__(self, data: InviteMetadataPayload):
-        super().__init__(data)
+
+    def __init__(self, data: InviteMetadataPayload, *, state: ConnectionState):
+        super().__init__(data, state=state)
         self.uses = data["uses"]
         self.max_uses = data["max_uses"]
         self.max_age = data["max_age"]

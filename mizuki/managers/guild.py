@@ -61,7 +61,8 @@ class GuildManager(BaseManager):
                     "GET",
                     "guilds/{guild_id}",
                     guild_id=guild_id
-            )))
+                )
+            ), state=self._state)
         )
 
     async def get_or_fetch(self, guild_id: int) -> Guild:

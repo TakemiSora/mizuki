@@ -87,7 +87,7 @@ class ResolvedData:
             int(id): Attachment(payload)
             for id, payload in data.get("attachments", {}).items()
         }
-        
+
 class InvokedApplicationCommandOption:
     __slots__ = (
         "name",
@@ -96,14 +96,14 @@ class InvokedApplicationCommandOption:
         "options",
         "focused"
     )
-    
+
     def __init__(self, data: ApplicationCommandInteractionOptionPayload):
         self.name = data["name"]
         self.type = CommandOptionType(data["type"])
         self.value = data.get("value")
         self.options = [InvokedApplicationCommandOption(o) for o in data.get("options", [])]
         self.focused = data.get("focused", False)
-  
+
 class InvokedApplicationCommand:
     __slots__ = (
         "id",
@@ -123,7 +123,7 @@ class InvokedApplicationCommand:
         self.guild_id = Snowflake._from_str(data.get("guild_id"))
         self.resolved = scls(ResolvedData, data.get("resolved"), guild_id=self.guild_id)
         self.target_id = Snowflake._from_str(data.get("target_id"))
-        
+
 def parse_interaction_data(type: InteractionType, data: InteractionData) -> InvokedApplicationCommand: #moretypes later
     match type:
         case (
@@ -133,7 +133,7 @@ def parse_interaction_data(type: InteractionType, data: InteractionData) -> Invo
             return InvokedApplicationCommand(cast(InvokedApplicationCommandPayload, data))
         case _:
             raise UnknownInteractionType(f"Received unknown interaction type '{type}'")
-            
+
 class ResponseHandler:
     __slots__ = (
         "_http",
@@ -142,7 +142,7 @@ class ResponseHandler:
         "application_id",
         "acknowledged"
     )
-    
+
     def __init__(
         self,
         http: HTTPClient,
@@ -257,7 +257,7 @@ class ResponseHandler:
     ) -> Message:
         if not self.acknowledged:
             raise InteractionNotResponded()
-        
+
         if any((content, embeds, files)):
             if ephemeral: flags |= MessageFlags.EPHEMERAL
             if suppress_embeds: flags |= MessageFlags.SUPPRESS_EMBEDS
@@ -315,7 +315,7 @@ class ResponseHandler:
 
     async def fetch_original_response(self) -> Message:
         return Message(await self._webhook_messages_request(method="GET"))
-    
+
     async def edit_original_response(
         self,
         content: str | None = _MISSING,
@@ -340,12 +340,12 @@ class ResponseHandler:
             ]
         ):
             raise ValueError("No editable fields were passed in editing response.")
-        
+
         if suppress_embeds is not _MISSING or is_components_v2 is not _MISSING:
             flags = MessageFlags(0)
             if suppress_embeds: flags |= MessageFlags.SUPPRESS_EMBEDS
             if is_components_v2: flags |= MessageFlags.IS_COMPONENTS_V2
-            
+
         return Message(await self._webhook_messages_request(
             method="PATCH",
             files=files,
@@ -417,5 +417,5 @@ class Interaction:
         self.authorizing_integration_owners = {ApplicationIntegrationType(int(a)): (Snowflake(id) if id != "0" else 0) for a, id in data.get("authorizing_integration_owners", {}).items()}
         self.context = scls(InteractionContextType, data.get("context"))
         self.attachment_size_limit = data["attachment_size_limit"]
-        
+
         self.response = ResponseHandler(http, self.id, self.token, self.application_id)
