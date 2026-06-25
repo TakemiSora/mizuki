@@ -1,18 +1,22 @@
-from typing import Any, overload
+from __future__ import annotations
+from typing import Any, overload, TYPE_CHECKING
 
-from ._types import BaseManager
-from ..http import HTTPClient, Path
-from ..cache import CacheStorage
-from ..objects.command import (
+from mizuki.http import Path
+from mizuki.cache import CacheStorage
+from mizuki._utils import _MISSING, assign_val_dict, mtd
+
+from mizuki.managers._types import BaseManager
+from mizuki.objects.command import (
     ApplicationCommandOption,
     Localization,
     ApplicationCommand,
     PartialApplicationCommand
 )
-from ..enums.interaction import InteractionContextType, ApplicationIntegrationType
-from ..objects.permissions import Permissions
+from mizuki.objects.permissions import Permissions
+from mizuki.enums.interaction import InteractionContextType, ApplicationIntegrationType
 
-from .._utils import _MISSING, assign_val_dict, mtd
+if TYPE_CHECKING:
+    from mizuki.state import ConnectionState
 
 class CommandManager(BaseManager):
     """
@@ -23,9 +27,9 @@ class CommandManager(BaseManager):
         "_application_id",
         "_commands_data"
     )
-    
-    def __init__(self, client: HTTPClient, storage: CacheStorage, application_id: int, commands_data: dict[str, tuple[int, PartialApplicationCommand]]):
-        super().__init__(client, storage)
+
+    def __init__(self, state: ConnectionState, storage: CacheStorage, application_id: int, commands_data: dict[str, tuple[int, PartialApplicationCommand]]):
+        super().__init__(state, storage)
         self._application_id = application_id
         self._commands_data = commands_data
 
@@ -36,7 +40,7 @@ class CommandManager(BaseManager):
         guild_id: int | None = None,
         **kwargs: Any
     ) -> Any:
-        return await self._http.request(
+        return await self._state.http.request(
             Path(
                 method,
                 "applications/{application_id}{guild_or_not}/commands{command_suffix}",
@@ -46,7 +50,7 @@ class CommandManager(BaseManager):
             ),
             **kwargs
         )
-        
+
     async def fetch_all(
         self, *,
         guild_id: int | None = None,
@@ -54,15 +58,15 @@ class CommandManager(BaseManager):
     ) -> list[ApplicationCommand]:
         """
         Fetches a list of all application commands from the Discord API.
-        
+
         Parameters
         ----------
         guild_id : :class:`int`, optional
             The guild ID for fetching commands scoped by guild.
-            
+
         with_localizations : :class:`bool`, optional
             Whether :attr:`~mizuki.objects.command.ApplicationCommand.name_localizations` and :attr:`~mizuki.objects.command.ApplicationCommand.description_localizations` should be fetched. Defaults to ``True``.
-        
+
         Raises
         ------
         :class:`Unauthorized`
@@ -81,14 +85,14 @@ class CommandManager(BaseManager):
                 }
             )
         ], guild_id=guild_id or 0)
-        
+
     def get_all(
         self, *,
         guild_id: int | None = None
     ) -> list[ApplicationCommand]:
         """
         Gets a list of ApplicationCommand frok the internal cache. Can be empty if the commands are not fetched atleast once.
-        
+
         Parameters
         ----------
         guild_id : :class:`int`
@@ -107,7 +111,7 @@ class CommandManager(BaseManager):
         ----------
         command : :class:`~mizuki.objects.command.PartialApplicationCommand`
             The command to sync.
-            
+
         guild_id : :class:`int`, optional
             The Guild ID to add to if scoped by guild.
 
@@ -137,7 +141,7 @@ class CommandManager(BaseManager):
         ----------
         command_id : :class:`int`
             The ID of the command to fetch.
-            
+
         guild_id : :class:`int`, optional
             The Guild ID for fetching commands if scoped by guild.
 
@@ -173,7 +177,7 @@ class CommandManager(BaseManager):
         """
         global_cmds: list[PartialApplicationCommand] = []
         guild_cmds: dict[int, list[PartialApplicationCommand]] = {}
-            
+
         for data in self._commands_data.values():
             id = data[0]
 
@@ -185,10 +189,10 @@ class CommandManager(BaseManager):
 
         to_return: list[ApplicationCommand] = []
         if global_cmds: to_return += await self.sync_bulk(global_cmds)
-        
+
         for guild_id, cmds in guild_cmds.items():
             to_return += await self.sync_bulk(cmds, guild_id=guild_id)
-        
+
         return to_return
 
     async def sync_bulk(
@@ -202,7 +206,7 @@ class CommandManager(BaseManager):
         ----------
         commands : list[:class:`~mizuki.objects.command.PartialApplicationCommand`]
             The new list of commands.
-            
+
         guild_id : :class:`int`, optional
             The Guild ID of the Guild to PUT to if scoped by guild.
 
@@ -222,7 +226,7 @@ class CommandManager(BaseManager):
                 json=[c._to_dict() for c in commands]
             )
         ], guild_id=guild_id or 0)
-        
+
     @overload
     async def edit(
         self, command_id: int,
@@ -236,7 +240,7 @@ class CommandManager(BaseManager):
         default_member_permissions: Permissions | None = _MISSING,
         nsfw: bool = _MISSING
     ) -> ApplicationCommand: ...
-    
+
     @overload
     async def edit(
         self, command_id: int,
@@ -273,42 +277,42 @@ class CommandManager(BaseManager):
         ----------
         command_id : :class:`int`
             The ID of the command to edit.
-        
+
         guild_id : :class:`int`
             The Guild ID of the Guild, if editing command scoped by guild.
-            
+
         name : :class:`str`
             The name of the command.
-            
+
         name_localizations : :class:`~mizuki.objects.command.Localization`
             The localizations for the name of the command.
-            
+
         description : :class:`str`
             The description of the command.
-            
+
         description_localizations : :class:`~mizuki.objects.command.Localization`
             The localizations for the description of the command.
-            
+
         options : list[:class:`~mizuki.objects.command.ApplicationCommandOption`]
             The options (parameters or sub-commands) of the command.
-        
+
         default_member_permissions : :class:`~mizuki.objects.permissions.Permissions`
             The default member permissions of the command.
-            
+
         integration_types : list[:class:`~mizuki.enums.interaction.ApplicationIntegrationType`]
             The installation contexts where the command is available.
-            
+
         contexts : list[:class:`~mizuki.enums.interaction.InteractionContextType`]
             The installation contexts where the command can be used.
-        
+
         nsfw : :class:`bool`
             Whether the command is NSFW.
-            
+
         Raises
         ------
         :class:`NotFound`
             The command you tried to edit does not exist.
-            
+
         :class:`Unauthorized`
             You are not authorized. Your token may be invalid.
 
@@ -358,20 +362,20 @@ class CommandManager(BaseManager):
     ) -> None:
         """
         Deletes an application command.
-        
+
         Parameters
         ----------
         command_id : :class:`int`
             The ID of the command to delete.
-            
+
         guild_id : :class:`int`, optional
             The Guild ID of the Guild, if deleting a command scoped by guild.
-            
+
         Raises
         ------
         :class:`NotFound`
             The command you tried to edit does not exist.
-            
+
         :class:`Unauthorized`
             You are not authorized. Your token may be invalid.
 

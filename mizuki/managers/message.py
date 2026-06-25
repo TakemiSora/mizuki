@@ -1,14 +1,23 @@
 from typing import Any, overload
 
-from .._utils import _MISSING, assign_val_dict, mtd
-from ..enums.message import MessageReferenceType, ReactionType
-from ..flags import MessageFlags
-from ..http import Path
-from ..objects.embed import Embed
-from ..objects.message import AllowedMentions, Message, MessageReference
-from ..file import File
-from ..objects.user import User
-from ._types import BaseManager
+from mizuki.http import Path
+from mizuki.file import File
+from mizuki.flags import MessageFlags
+from mizuki._utils import (
+    _MISSING,
+    assign_val_dict,
+    mtd
+)
+
+from mizuki.managers._types import BaseManager
+from mizuki.enums.message import MessageReferenceType, ReactionType
+from mizuki.objects.embed import Embed
+from mizuki.objects.user import User
+from mizuki.objects.message import (
+    AllowedMentions,
+    Message,
+    MessageReference
+)
 
 __all__ = (
     "MessageManager",
@@ -24,12 +33,12 @@ class MessageManager(BaseManager):
     def get(self, message_id: int) -> Message | None:
         """
         Attempts to fetch a :class:`Message <mizuki.objects.message.Message>` from the internal cache of the bot.
-        
+
         Parameters
         ----------
         message_id: :class:`int`
             The ID of the message to fetch.
-            
+
         Returns
         -------
         :class:`Message <mizuki.objects.message.Message>`
@@ -42,12 +51,12 @@ class MessageManager(BaseManager):
     async def fetch(self, channel_id: int, message_id: int) -> Message:
         """
         Attempts to fetch a :class:`Message <mizuki.objects.message.Message>` from the Discord API.
-        
+
         Parameters
         ----------
         message_id: :class:`int`
             The ID of the message to fetch.
-          
+
         Raises
         ------
         :class:`NotFound`
@@ -60,7 +69,7 @@ class MessageManager(BaseManager):
             A HTTP error occurred.
         """
         return self._cache_storage.update_messages(
-            Message(await self._http.request(
+            Message(await self._state.http.request(
                 Path(
                     "GET",
                     "channels/{channel_id}/messages/{message_id}",
@@ -73,12 +82,12 @@ class MessageManager(BaseManager):
     async def get_or_fetch(self, channel_id: int, message_id: int) -> Message:
         """
         A coroutine function that attempts to fetch a :class:`Message <mizuki.objects.message.Message>` from internal cache and if not present, fetches it from Discord.
-        
+
         Parameters
         ----------
         message_id: :class:`int`
             The message_id of the message to fetch.
-            
+
         Raises
         ------
         :class:`NotFound`
@@ -126,7 +135,7 @@ class MessageManager(BaseManager):
     ) -> list[Message]:
         """
         Fetches the messages in a channel based on the parameters.
-        
+
         On a Guild Channel, :attr:`VIEW_CHANNEL <mizuki.objects.permissions.Permissions.VIEW_CHANNEL>` (as well as :attr:`CONNECT <mizuki.objects.permissions.Permissions.CONNECT>` for a voice channel) are needed for fetching messages.
 
         Returns an empty array if missing :attr:`READ_MESSAGE_HISTORY <mizuki.objects.permissions.Permissions.READ_MESSAGE_HISTORY>`.
@@ -145,10 +154,10 @@ class MessageManager(BaseManager):
 
         before : :class:`int`, optional
             To fetch messages before this message ID.
-        
+
         after : :class:`int`, optional
             To fetch messages after this message ID.
-        
+
         limit : :class:`int`, optional
             Max number of messages to return. Can be 1-100. Defaults to 50.
 
@@ -174,7 +183,7 @@ class MessageManager(BaseManager):
 
         return [
             self._cache_storage.update_messages(Message(m))
-            for m in await self._http.request(
+            for m in await self._state.http.request(
                 Path(
                     "GET",
                     "channels/{channel_id}/messages",
@@ -198,25 +207,25 @@ class MessageManager(BaseManager):
     ) -> Message:
         """
         Creates a new message in the specified channel.
-        
+
         .. note::
-            
+
             At least one of, ``content``, ``embeds``, ``sticker_ids``, ``files`` must be provided. For forwarding, only ``message_reference`` must be provided.
-        
+
         Parameters
         ----------
         channel_id : :class:`int`
             The ID of the Channel to send message to.
-        
+
         content : :class:`str`
             The content of the message.
-            
+
         tts : :class:`bool`
             Whether TTS is enabled for the message.
-        
+
         embeds : list[:class:`Embed <mizuki.objects.embed.Embed>`]
             The list of embeds to send along the message.
-            
+
         allowed_mentions : :class:`AllowedMentions <mizuki.objects.message.AllowedMentions>`
             The AllowedMentions object that dictates whether user, role or everyone pings are enabled.
 
@@ -225,13 +234,13 @@ class MessageManager(BaseManager):
 
         message_reference : :class:`MessageReference <mizuki.objects.message.MessageReference>`
             The reference message for the new message, if any
-            
+
         sticker_ids : list[:class:`int`]
             The Guild Stickers to send with the message. Max 3.
-        
+
         flags : :class:`MessageFlags <mizuki.flags.MessageFlags>`
             The MessageFlags of the new message.
-            
+
         Raises
         ------
         :class:`NotFound`
@@ -244,7 +253,7 @@ class MessageManager(BaseManager):
             A HTTP error occurred.
         """
         return self._cache_storage.update_messages(
-            Message(await self._http.request(
+            Message(await self._state.http.request(
                 Path(
                     "POST",
                     "channels/{channel_id}/messages",
@@ -262,7 +271,7 @@ class MessageManager(BaseManager):
                      attachments=(
                          [file._to_attachment_dict(i) for i, file in enumerate(files)]
                          if (
-                             files 
+                             files
                              and MessageFlags.IS_COMPONENTS_V2 not in (flags or MessageFlags(0))
                          )
                          else _MISSING
@@ -274,9 +283,9 @@ class MessageManager(BaseManager):
                 )
             ))
         )
-        
+
     async def reply(
-        self, 
+        self,
         channel_id: int,
         message_id: int,
         *,
@@ -286,7 +295,7 @@ class MessageManager(BaseManager):
         allowed_mentions: AllowedMentions = _MISSING,
         files: list[File] = _MISSING,
         sticker_ids: list[int] = _MISSING,
-        flags: MessageFlags = _MISSING   
+        flags: MessageFlags = _MISSING
     ) -> Message:
         """
         Creates a new reply to a message in the specified channel.
@@ -331,7 +340,7 @@ class MessageManager(BaseManager):
 
         :class:`Forbidden`
             You are not allowed to send the message. You may be missing a specific permission.
-            
+
         :class:`HTTPException`
             A HTTP error occurred.
         """
@@ -346,7 +355,7 @@ class MessageManager(BaseManager):
             sticker_ids=sticker_ids,
             flags=flags
         )
-    
+
     async def forward(
         self, target_channel_id: int,
         *,
@@ -356,18 +365,18 @@ class MessageManager(BaseManager):
     ) -> Message:
         """
         Forwards a message to a channel.
-        
+
         Parameters
         ----------
         target_channel_id : :class:`int`
             The ID of the target Channel.
-        
+
         message_id : :class:`int`
             The ID to the message to forward.
-            
+
         channel_id : :class:`int`
             The ID of the source Channel.
-            
+
         guild_id : :class:`int`, optional
             The ID of the source Guild.
 
@@ -422,7 +431,7 @@ class MessageManager(BaseManager):
             A HTTP error occurred.
         """
         return self._cache_storage.update_messages(
-            Message(await self._http.request(
+            Message(await self._state.http.request(
                 Path(
                     "POST",
                     "channels/{channel_id}/messages/{message_id}/crosspost",
@@ -431,7 +440,7 @@ class MessageManager(BaseManager):
                 )
             ))
         )
-        
+
     async def _react_endpoints(
         self, method: str, *,
         channel_id: int,
@@ -453,7 +462,7 @@ class MessageManager(BaseManager):
         if user is not _MISSING:
             suffix += f"/{user}"
 
-        return await self._http.request(
+        return await self._state.http.request(
             Path(
                 method,
                 "channels/{channel_id}/messages/{message_id}/reactions{suffix}",
@@ -473,7 +482,7 @@ class MessageManager(BaseManager):
     ) -> None:
         """
         Adds a reaction to a message.
-        
+
         Requires :attr:`READ_MESSAGE_HISTORY <mizuki.objects.permissions.Permissions.READ_MESSAGE_HISTORY>`. Also requires :attr:`ADD_REACTIONS <mizuki.objects.permissions.Permissions.ADD_REACTIONS>` if no one has reacted with this emoji.
 
         Parameters
@@ -483,18 +492,18 @@ class MessageManager(BaseManager):
 
         message_id : :class:`int`
             The ID of the target message.
-            
+
         emoji_id : :class:`int`, optional
             The ID of the custom emoji. Omit when reacting with a unicode emoji.
-            
+
         emoji_name : :class:`str`
             The unicode emoji or the name of the custom emoji.
-        
+
         Raises
         ------
         :class:`NotFound`
             The message you tried to react to or the emoji you tried to react with wasn't found.
-        
+
         :class:`Forbidden`
             You are not allowed to react/see the message. You may be missing a specific permission.
 
@@ -509,7 +518,7 @@ class MessageManager(BaseManager):
             emoji_name=emoji_name,
             user="@me"
         )
-        
+
     async def remove_reaction(
         self, *,
         channel_id: int,
@@ -519,7 +528,7 @@ class MessageManager(BaseManager):
     ) -> None:
         """
         Removes your reaction from a message.
-        
+
         Parameters
         ----------
         channel_id : :class:`int`
@@ -527,10 +536,10 @@ class MessageManager(BaseManager):
 
         message_id : :class:`int`
             The ID of the target message.
-            
+
         emoji_id : :class:`int`, optional
             The ID of the custom emoji. Omit when reacting with a unicode emoji.
-            
+
         emoji_name : :class:`str`
             The unicode emoji or the name of the custom emoji.
 
@@ -538,7 +547,7 @@ class MessageManager(BaseManager):
         ------
         :class:`NotFound`
             The message you tried to remove reaction from or the emoji you tried to remove reaction of wasn't found.
-        
+
         :class:`Forbidden`
             You are not allowed to remove reaction/see the message. You may be missing a specific permission.
 
@@ -553,7 +562,7 @@ class MessageManager(BaseManager):
             emoji_name=emoji_name,
             user="@me"
         )
-        
+
     async def remove_user_reaction(
         self, user_id: int, *,
         channel_id: int,
@@ -563,21 +572,21 @@ class MessageManager(BaseManager):
     ) -> None:
         """
         Removes a specific user's reaction from a message.
-        
+
         Parameters
         ----------
         user_id : :class:`int`
             The ID of the user to delete reaction of.
-        
+
         channel_id : :class:`int`
             The ID of the channel the target message is in.
 
         message_id : :class:`int`
             The ID of the target message.
-            
+
         emoji_id : :class:`int`, optional
             The ID of the custom emoji. Omit when reacting with a unicode emoji.
-            
+
         emoji_name : :class:`str`
             The unicode emoji or the name of the custom emoji.
 
@@ -585,7 +594,7 @@ class MessageManager(BaseManager):
         ------
         :class:`NotFound`
             The message you tried to remove reaction from or the emoji you tried to remove reaction of wasn't found.
-        
+
         :class:`Forbidden`
             You are not allowed to remove reaction/see the message. You may be missing a specific permission.
 
@@ -618,16 +627,16 @@ class MessageManager(BaseManager):
         ----------
         channel_id : :class:`int`
             The ID of the channel containing the target message.
-        
+
         message_id : :class:`int`
             The ID of the target message.
 
         emoji_id : :class:`int`, optional
             The ID of the custom emoji. Omit when reacting with a unicode emoji.
-            
+
         emoji_name : :class:`str`
             The unicode emoji or the name of the custom emoji.
-        
+
         type : :class:`ReactionType <mizuki.enums.message.ReactionType>`, optional
             The type of the reaction to fetch. Defaults to fetches :attr:`NORMAL <mizuki.enums.message.ReactionType.NORMAL>`.
 
@@ -636,12 +645,12 @@ class MessageManager(BaseManager):
 
         limit : :class:`int`, optional
             The max number of users to retrieve. Can be 1-100. Defaults to 25.
-        
+
         Raises
         ------
         :class:`NotFound`
             The message you tried to fetch reactions of could not be found.
-        
+
         :class:`Forbidden`
             You are not allowed to fetch the message.
 
@@ -650,7 +659,7 @@ class MessageManager(BaseManager):
         """
         return [
             self._cache_storage.update_users(User(u))
-            for u in 
+            for u in
             await self._react_endpoints(
                 "GET",
                 channel_id=channel_id,
@@ -658,7 +667,7 @@ class MessageManager(BaseManager):
                 emoji_id=emoji_id,
                 emoji_name=emoji_name,
                 type=(
-                    type.value 
+                    type.value
                     if type is not _MISSING
                     else _MISSING
                 ),
@@ -681,13 +690,13 @@ class MessageManager(BaseManager):
         ----------
         channel_id : :class:`int`
             The ID of the channel containing the target message.
-        
+
         message_id : :class:`int`
             The ID of the target message.
 
         emoji_id : :class:`int`, optional
             The ID of the custom emoji. Omit when reacting with a unicode emoji.
-            
+
         emoji_name : :class:`str`
             The unicode emoji or the name of the custom emoji.
 
@@ -695,7 +704,7 @@ class MessageManager(BaseManager):
         ------
         :class:`NotFound`
             The message you tried to do this action on or the emoji does not exist.
-        
+
         :class:`Forbidden`
             You are not allowed to fetch the message. Or you are missing the permissions to do this action.
 
@@ -722,7 +731,7 @@ class MessageManager(BaseManager):
         ----------
         channel_id : :class:`int`
             The ID of the channel containing the target message.
-        
+
         message_id : :class:`int`
             The ID of the target message.
 
@@ -730,7 +739,7 @@ class MessageManager(BaseManager):
         ------
         :class:`NotFound`
             The message you tried to do this action on does not exist.
-        
+
         :class:`Forbidden`
             You are not allowed to fetch the message. Or you are missing the permissions to do this action.
 
@@ -742,7 +751,7 @@ class MessageManager(BaseManager):
             channel_id=channel_id,
             message_id=message_id
         )
-        
+
     async def edit(
         self, *,
         channel_id: int,
@@ -756,24 +765,24 @@ class MessageManager(BaseManager):
     ) -> Message:
         """
         Edits a message sent by you.
-        
+
         Parameters
         ----------
         channel_id : :class:`int` | :class:`None`
             The ID of the channel the target message is in. Pass ``None`` to clear content.
-        
+
         message_id : :class:`int`
             The ID of the target message.
-        
+
         content : :class:`str`
             The content of the message.
-        
+
         embeds : list[:class:`Embed <mizuki.objects.embed.Embed>`]
             The embeds of the message.
-        
+
         flags : :class:`MessageFlags <mizuki.flags.MessageFlags>`
             The flags of the message.
-        
+
         allowed_mentions : :class:`AllowedMentions <mizuki.objects.message.AllowedMentions>` | :class:`None`
             The AllowedMentions object that dictates whether user, role or everyone pings are enabled. Pass ``None`` to set this back to default.
 
@@ -787,15 +796,15 @@ class MessageManager(BaseManager):
         ------
         :class:`NotFound`
             The message you tried to edit was not found.
-            
+
         :class:`Forbidden`
             You are not allowed to edit that message.
-            
+
         :class:`HTTPException`
             A HTTP error occurred.
         """
         return self._cache_storage.update_messages(
-            Message(await self._http.request(
+            Message(await self._state.http.request(
                 Path(
                     "PATCH",
                     "channels/{channel_id}/messages/{message_id}",
@@ -825,7 +834,7 @@ class MessageManager(BaseManager):
                 )
             ))
         )
-        
+
     async def delete(
         self, *,
         channel_id: int,
@@ -833,29 +842,29 @@ class MessageManager(BaseManager):
     ) -> None:
         """
         Deletes a message from a channel.
-        
+
         This method requires :attr:`MANAGE_MESSAGES <mizuki.objects.permissions.Permissions.MANAGE_MESSAGES>` if deleting a message from someone else.
-        
+
         Parameters
         ----------
         channel_id : :class:`int`
             The ID of the channel to delete the message from.
-        
+
         message_id : :class:`int`
             The ID of the message to delete.
-        
+
         Raises
         ------
         :class:`NotFound`
             The message you tried to delete does not exist.
-        
+
         :class:`Forbidden`
             You are not allowed to delete that message.
-            
+
         :class:`HTTPException`
             A HTTP error occurred.
         """
-        await self._http.request(
+        await self._state.http.request(
             Path(
                 "DELETE",
                 "channels/{channel_id}/messages/{message_id}",
@@ -864,7 +873,7 @@ class MessageManager(BaseManager):
             )
         )
         self._cache_storage.remove_message(message_id)
-    
+
     async def bulk_delete(
         self, *,
         channel_id: int,
@@ -872,29 +881,29 @@ class MessageManager(BaseManager):
     ) -> None:
         """
         Bulk deletes messages from a channel.
-        
+
         This method requires :attr:`MANAGE_MESSAGES <mizuki.objects.permissions.Permissions.MANAGE_MESSAGES>`.
-        
+
         Parameters
         ----------
         channel_id : :class:`int`
             The ID of the channel to delete the message from.
-            
+
         message_ids : list[:class:`int`]
             The list of ID of the messages to delete. Minimum and maximum length of list required are 2 and 100 respectively.
-            
+
         Raises
         ------
         :class:`NotFound`
             The channel you tried to bulk delete from does not exist.
-        
+
         :class:`Forbidden`
             You do not have the required permission to bulk delete.
-            
+
         :class:`HTTPException`
             A HTTP error occurred.
         """
-        await self._http.request(
+        await self._state.http.request(
             Path(
                 "POST",
                 "channels/{channel_id}/messages/bulk-delete",

@@ -1,46 +1,17 @@
+from __future__ import annotations
 import aiohttp
 
 from typing import TYPE_CHECKING
 
-from mizuki.cache import CacheStorage
 from mizuki.flags import IntentFlags
 from mizuki.http import HTTPClient
 from mizuki.gateway import GatewayClient
-from mizuki.managers import (
-    UserManager,
-    ChannelManager,
-    CommandManager,
-    MessageManager,
-    GuildManager
-)
-
-from mizuki.objects.command import PartialApplicationCommand
+from mizuki.managers.resource import Managers
 
 if TYPE_CHECKING:
     from mizuki.bot import Bot
-
-class Managers:
-    __slots__ = (
-        "users",
-        "channels",
-        "commands",
-        "messages",
-        "guilds"
-    )
-
-    def __init__(
-        self, *,
-        client: HTTPClient,
-        cache_storage: CacheStorage,
-        application_id: int,
-        commands_data: dict[str, tuple[int, PartialApplicationCommand]]
-    ):
-        self.users = UserManager(client, cache_storage)
-        self.channels = ChannelManager(client, cache_storage)
-        self.messages = MessageManager(client, cache_storage)
-        self.guilds = GuildManager(client, cache_storage)
-
-        self.commands = CommandManager(client, cache_storage, application_id, commands_data)
+    from mizuki.cache import CacheStorage
+    from mizuki.objects.command import PartialApplicationCommand
 
 class ConnectionState:
     __slots__ = (
@@ -68,7 +39,7 @@ class ConnectionState:
     ) -> Managers:
         assert hasattr(self, "http"), "Init Manager was called without init http"
         self.managers = Managers(
-            client=self.http,
+            state=self,
             cache_storage=cache_storage,
             application_id=application_id,
             commands_data=commands_data

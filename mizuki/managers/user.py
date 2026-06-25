@@ -1,6 +1,7 @@
-from ._types import BaseManager
-from ..http import Path
-from ..objects.user import User
+from mizuki.http import Path
+
+from mizuki.managers._types import BaseManager
+from mizuki.objects.user import User
 
 __all__ = (
     "UserManager",
@@ -12,11 +13,11 @@ class UserManager(BaseManager):
     """
 
     __slots__ = ()
-    
+
     async def fetch_me(self) -> User:
         """
         Fetches the user object of the bot. This should generally not be called as it is accessible on startup via :attr:`Bot.user <mizuki.bot.Bot.user>`.
-        
+
         Raises
         ------
         :class:`HTTPException`
@@ -24,7 +25,7 @@ class UserManager(BaseManager):
         """
         return self._cache_storage.update_users(
             User(
-                await self._http.request(
+                await self._state.http.request(
                     Path(
                         "GET",
                         "users/@me"
@@ -34,12 +35,12 @@ class UserManager(BaseManager):
     def get(self, user_id: int) -> User | None:
         """
         Attempts to fetch a :class:`User <mizuki.objects.user.User>` from the internal cache of the bot.
-        
+
         Parameters
         ----------
         user_id: :class:`int`
             The user_id of the user to fetch.
-            
+
         Returns
         -------
         :class:`User <mizuki.objects.user.User>`
@@ -52,17 +53,17 @@ class UserManager(BaseManager):
     async def fetch(self, user_id: int) -> User:
         """
         Attempts to fetch a :class:`User <mizuki.objects.user.User>` from the Discord API.
-        
+
         Parameters
         ----------
         user_id: :class:`int`
             The user_id of the user to fetch.
-            
+
         Returns
         -------
         :class:`User <mizuki.objects.user.User>`
             The User object recieved from Discord API.
-            
+
         Raises
         ------
         :class:`NotFound`
@@ -71,7 +72,7 @@ class UserManager(BaseManager):
             A HTTP error occured.
         """
         return self._cache_storage.update_users(
-            User(await self._http.request(
+            User(await self._state.http.request(
                 Path(
                     "GET",
                     "users/{user_id}",
@@ -82,17 +83,17 @@ class UserManager(BaseManager):
     async def get_or_fetch(self, user_id: int) -> User:
         """
         A couroutine function that attempts to fetch a :class:`User <mizuki.objects.user.User>` from internal cache and if not present, makes an API call to discord.
-        
+
         Parameters
         ----------
         user_id: :class:`int`
             The user_id of the user to fetch.
-            
+
         Returns
         -------
         :class:`User <mizuki.objects.user.User>`
             The User object recieved from Discord API or cache.
-            
+
         Raises
         ------
         :class:`NotFound`

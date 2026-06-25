@@ -1,6 +1,7 @@
-from ._types import BaseManager
-from ..http import Path
-from ..objects.guild import Guild
+from mizuki.http import Path
+
+from mizuki.objects.guild import Guild
+from mizuki.managers._types import BaseManager
 
 __all__ = (
     "GuildManager",
@@ -16,12 +17,12 @@ class GuildManager(BaseManager):
     def get(self, guild_id: int) -> Guild | None:
         """
         Attempts to fetch a :class:`Guild <mizuki.objects.guild.Guild>` from the internal cache of the bot.
-        
+
         Parameters
         ----------
         guild_id: :class:`int`
             The guild_id of the guild to fetch.
-            
+
         Returns
         -------
         :class:`Guild <mizuki.objects.guild.Guild>`
@@ -34,17 +35,17 @@ class GuildManager(BaseManager):
     async def fetch(self, guild_id: int) -> Guild:
         """
         Attempts to fetch a :class:`Guild <mizuki.objects.guild.Guild>` from the Discord API.
-        
+
         Parameters
         ----------
         guild_id: :class:`int`
             The guild_id of the guild to fetch.
-            
+
         Returns
         -------
         :class:`Guild <mizuki.objects.guild.Guild>`
             The Message object recieved from Discord API.
-            
+
         Raises
         ------
         :class:`NotFound`
@@ -55,14 +56,14 @@ class GuildManager(BaseManager):
             A HTTP error occured.
         """
         return self._cache_storage.update_guilds(
-            Guild(await self._http.request(
+            Guild(await self._state.http.request(
                 Path(
                     "GET",
                     "guilds/{guild_id}",
                     guild_id=guild_id
             )))
         )
-    
+
     async def get_or_fetch(self, guild_id: int) -> Guild:
         """
         A couroutine function that attempts to fetch a :class:`Guild <mizuki.objects.guild.Guild>` from internal cache and if not present, makes an API call to discord.
@@ -71,12 +72,12 @@ class GuildManager(BaseManager):
         ----------
         guild_id: :class:`int`
             The guild_id of the guild to fetch.
-            
+
         Returns
         -------
         :class:`Guild <mizuki.objects.guild.Guild>`
             The Message object recieved from Discord API.
-            
+
         Raises
         ------
         :class:`NotFound`
