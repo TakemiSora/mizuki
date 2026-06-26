@@ -2,6 +2,9 @@ from typing import cast
 
 from mizuki.flags import ChannelFlags
 from mizuki.http import Path
+from mizuki._utils import _MISSING, assign_val_dict, mtd
+
+from mizuki.managers._types import BaseManager
 from mizuki.objects.channel import (
     PartialForumTag,
     ThreadChannel,
@@ -15,11 +18,8 @@ from mizuki.enums.channel import (
     SortOrderType,
     VideoQualityMode
 )
-from mizuki._utils import _MISSING, assign_val_dict, mtd
 from mizuki.objects.emoji import DefaultReaction
 from mizuki.objects.permissions import ChannelPermissionOverwrite
-
-from ._types import BaseManager
 
 __all__ = (
     "ChannelManager",
@@ -72,12 +72,13 @@ class ChannelManager(BaseManager):
             A HTTP error occured.
         """
         return self._cache_storage.update_channels(
-            parse_channel_payload(await self._http.request(
+            parse_channel_payload(await self._state.http.request(
                 Path(
                     "GET",
                     "channels/{channel_id}",
                     channel_id=channel_id
-            )))
+                )
+            ), state=self._state)
         )
 
     async def get_or_fetch(self, channel_id: int) -> Channel:
@@ -228,7 +229,7 @@ class ChannelManager(BaseManager):
             A HTTP error occured.
         """
         return self._cache_storage.update_channels(
-            parse_channel_payload(await self._http.request(
+            parse_channel_payload(await self._state.http.request(
                 Path(
                     "PATCH",
                     "channels/{channel_id}",
@@ -289,7 +290,7 @@ class ChannelManager(BaseManager):
                     locked=locked,
                     applied_tags=applied_tags
                 )
-            ))
+            ), state=self._state)
     )
 
     async def edit_guild_channel(
@@ -542,7 +543,7 @@ class ChannelManager(BaseManager):
         :class:`HTTPException`
             A HTTP error occured.
         """
-        await self._http.request(
+        await self._state.http.request(
             Path(
                 "PUT",
                 "channels/{channel_id}/voice-status",
@@ -575,13 +576,13 @@ class ChannelManager(BaseManager):
         :class:`HTTPException`
             A HTTP error occured.
         """
-        channel = parse_channel_payload(await self._http.request(
+        channel = parse_channel_payload(await self._state.http.request(
             Path(
                 "DELETE",
                 "channels/{channel_id}",
                 channel_id=channel_id
             )
-        ))
+        ), state=self._state)
 
         self._cache_storage.remove_channel(channel_id)
         return channel
@@ -612,7 +613,7 @@ class ChannelManager(BaseManager):
         :class:`HTTPException`
             A HTTP error occured.
         """
-        await self._http.request(
+        await self._state.http.request(
             Path(
                 "PUT",
                 "channels/{channel_id}/permissions/{overwrite_id}",

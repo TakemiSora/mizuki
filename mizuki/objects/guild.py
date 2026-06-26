@@ -1,37 +1,47 @@
-from typing import cast, overload
-from .asset import Asset
-from ..enums.guild import (
-    EventRecurrenceRuleMonth,
-    EventRecurrenceRuleWeekday,
-    GuildScheduledEventEntityType,
-    EventRecurrenceRuleFrequency,
-    GuildVerificationLevel,
-    GuildNotificationLevel,
-    GuildExplicitContentLevel,
-    GuildFeature, GuildMFALevel,
-    GuildPremiumTier, GuildNSFWLevel,
-    GuildScheduledEventStatus
-)
-from ..payloads.guild import (
+from __future__ import annotations
+from datetime import datetime
+from typing import cast, overload, TYPE_CHECKING
+
+from mizuki.flags import SystemChannelFlags
+from mizuki._utils import scls, siso, _MISSING
+
+from mizuki.objects.asset import Asset
+from mizuki.objects.channel import ThreadChannel, parse_channel_payload
+from mizuki.objects.emoji import Emoji
+from mizuki.objects.member import Member
+from mizuki.objects.presence import Presence
+from mizuki.objects.role import Role
+from mizuki.objects.snowflake import Snowflake
+from mizuki.objects.sticker import Sticker
+from mizuki.objects.user import User
+
+from mizuki.payloads.guild import (
     EntityMetadataPayload,
     GuildPayload,
     GuildScheduledEventPayload,
     GuildScheduledEventRecurrenceRulePayload,
     RecurrenceRuleNWeekdayPayload,
     StageInstancePayload,
-    UnavailableGuildPayload
+    UnavailableGuildPayload,
 )
-from ..flags import SystemChannelFlags
-from .sticker import Sticker
-from .role import Role
-from .presence import Presence
-from .user import User
-from .emoji import Emoji
-from .snowflake import Snowflake
-from .member import Member
-from .channel import ThreadChannel, parse_channel_payload
-from datetime import datetime
-from .._utils import siso, scls
+
+from mizuki.enums.guild import (
+    EventRecurrenceRuleFrequency,
+    EventRecurrenceRuleMonth,
+    EventRecurrenceRuleWeekday,
+    GuildExplicitContentLevel,
+    GuildFeature,
+    GuildMFALevel,
+    GuildNSFWLevel,
+    GuildNotificationLevel,
+    GuildPremiumTier,
+    GuildScheduledEventEntityType,
+    GuildScheduledEventStatus,
+    GuildVerificationLevel,
+)
+
+if TYPE_CHECKING:
+    from mizuki.state import ConnectionState
 
 __all__ = (
     "UnavailableGuild",
@@ -44,7 +54,7 @@ class UnavailableGuild:
         "id",
         "unavailable"
     )
-    
+
     def __init__(self, data: UnavailableGuildPayload):
         self.id = Snowflake(data["id"])
         self.unavailable = data.get("unavailable", False)
@@ -69,20 +79,20 @@ class EntityMetadata:
     __slots__ = (
         "location",
     )
-    
+
     def __init__(self, data: EntityMetadataPayload):
         self.location = data.get("location")
-        
+
 class RecurrenceRuleNWeekday:
     __slots__ = (
         "n",
         "day"
     )
-    
+
     def __init__(self, data: RecurrenceRuleNWeekdayPayload):
         self.n = data["n"]
         self.day = EventRecurrenceRuleWeekday(data["day"])
-        
+
 class GuildScheduledEventRecurrenceRule:
     __slots__ = (
         "start",
@@ -96,7 +106,7 @@ class GuildScheduledEventRecurrenceRule:
         "by_year_day",
         "count"
     )
-    
+
     def __init__(self, data: GuildScheduledEventRecurrenceRulePayload):
         self.start = datetime.fromisoformat(data["start"])
         self.end = siso(data["end"])
@@ -107,7 +117,7 @@ class GuildScheduledEventRecurrenceRule:
         self.by_month_day = d if (d := data["by_month_day"]) is not None else []
         self.by_year_day = d if (d := data["by_year_day"]) is not None else []
         self.count = data["count"]
-        
+
 class GuildScheduledEvent:
     __slots__ = (
         "id",
@@ -128,8 +138,8 @@ class GuildScheduledEvent:
         "image",
         "recurrence_rule"
     )
-    
-    def __init__(self, data: GuildScheduledEventPayload):
+
+    def __init__(self, data: GuildScheduledEventPayload, *, state: ConnectionState):
         self.id = Snowflake(data["id"])
         self.guild_id = Snowflake(data["guild_id"])
         self.channel_id = Snowflake._from_str(data["channel_id"])
@@ -143,13 +153,14 @@ class GuildScheduledEvent:
         self.entity_type = GuildScheduledEventEntityType(data["entity_type"])
         self.entity_id = Snowflake._from_str(data["entity_id"])
         self.entity_metadata = scls(EntityMetadata, data["entity_metadata"])
-        self.creator = scls(User, data.get("creator"))
+        self.creator = scls(User, data.get("creator"), state=state)
         self.user_count = data.get("user_count")
         self.image = Asset._from_guild_scheduled_event_cover(self.id, data.get("image"))
         self.recurrence_rule = scls(GuildScheduledEventRecurrenceRule, data["recurrence_rule"])
-        
+
 class Guild:
     __slots__ = (
+        "_state",
         "id",
         "name",
         "icon",
@@ -198,8 +209,9 @@ class Guild:
         "guild_scheduled_events",
         "soundboard_sounds",
     )
-    
-    def __init__(self, data: GuildPayload):
+
+    def __init__(self, data: GuildPayload, *, state: ConnectionState):
+        self._state = state
         self.id = Snowflake(data["id"])
         self.name = data["name"]
         self.icon = Asset._from_guild_avatar(self.id, data.get("icon"))
@@ -212,7 +224,7 @@ class Guild:
         self.default_message_notifications = GuildNotificationLevel(data["default_message_notifications"])
         self.explicit_level = GuildExplicitContentLevel(data["explicit_content_filter"])
         self.roles = [Role(r) for r in data["roles"]]
-        self.emojis = [Emoji(e) for e in data["emojis"]]
+        self.emojis = [Emoji(e, state=state) for e in data["emojis"]]
         self.features = set(GuildFeature(f) for f in data["features"])
         self.mfa_level = GuildMFALevel(data["mfa_level"])
         self.application_id = Snowflake._from_str(data["application_id"])
@@ -233,44 +245,44 @@ class Guild:
         self.approximate_member_count = data.get("approximate_member_count")
         self.approximate_presence_count = data.get("approximate_presence_count")
         self.nsfw_level = GuildNSFWLevel(data["nsfw_level"])
-        self.stickers = [Sticker(s) for s in data.get("stickers", [])]
-        self.premium_progress_bar_enabled = data["premium_progress_bar_enabled"]        
+        self.stickers = [Sticker(s, state=state) for s in data.get("stickers", [])]
+        self.premium_progress_bar_enabled = data["premium_progress_bar_enabled"]
         self.safety_alerts_channel_id = Snowflake._from_str(data["safety_alerts_channel_id"])
 
         self.joined_at = siso(data.get("joined_at"))
         self.large = data.get("large", False)
         self.member_count = data.get("member_count")
-        self.members = [Member(m, guild_id=self.id) for m in data.get("members", [])]
-        self.channels = [parse_channel_payload(c, self.id) for c in data.get("channels", [])]
-        self.threads = [ThreadChannel(c, self.id) for c in data.get("threads", [])]
-        self.presences = [Presence(p) for p in data.get("presences", [])]
+        self.members = [Member(m, guild_id=self.id, state=state) for m in data.get("members", [])]
+        self.channels = [parse_channel_payload(c, self.id, state=self._state) for c in data.get("channels", [])]
+        self.threads = [ThreadChannel(c, self.id, state=self._state) for c in data.get("threads", [])]
+        self.presences = [Presence(p, state=state) for p in data.get("presences", [])]
         self.stage_instances = [StageInstance(s) for s in data.get("stage_instances", [])]
-        self.guild_scheduled_events = [GuildScheduledEvent(g) for g in data.get("guild_scheduled_events", [])]
-        
+        self.guild_scheduled_events = [GuildScheduledEvent(g, state=state) for g in data.get("guild_scheduled_events", [])]
+
     def __str__(self) -> str:
         return self.name
-    
+
     def __eq__(self, obj: object) -> bool:
         if isinstance(obj, self.__class__):
             return self.id == obj.id
         return NotImplemented
-    
+
     def __hash__(self) -> int:
         return self.id
-            
+
     @property
     def created_at(self) -> datetime:
         return self.id.created_at
 
 @overload
-def parse_guild_payload(data: GuildPayload) -> Guild: ...
-    
+def parse_guild_payload(data: GuildPayload, *, state: ConnectionState) -> Guild: ...
+
 @overload
-def parse_guild_payload(data: UnavailableGuildPayload) -> UnavailableGuild: ...
-        
-def parse_guild_payload(data: GuildPayload | UnavailableGuildPayload) -> Guild | UnavailableGuild:
+def parse_guild_payload(data: UnavailableGuildPayload, *, state: ConnectionState = _MISSING) -> UnavailableGuild: ...
+
+def parse_guild_payload(data: GuildPayload | UnavailableGuildPayload, *, state: ConnectionState = _MISSING) -> Guild | UnavailableGuild:
     unavailable = data.get("unavailable", False)
     if unavailable:
         return UnavailableGuild(cast(UnavailableGuildPayload, data))
     else:
-        return Guild(cast(GuildPayload, data))
+        return Guild(cast(GuildPayload, data), state=state)

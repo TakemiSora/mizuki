@@ -79,7 +79,7 @@ class ThreadPayload(BasePublicChannelPayload):
     message_count: int
     member_count: int
     total_message_sent: int
-    applied_tags: list[Snowflake]
+    applied_tags: NotRequired[list[Snowflake]]
 
 class ThreadCreatePayload(ThreadPayload, total=False):
     newly_created: bool
