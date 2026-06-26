@@ -1,6 +1,5 @@
 from mizuki.objects.asset import Asset
 from mizuki.objects.snowflake import Snowflake
-from datetime import datetime
 from mizuki.payloads.avatar_decoration import AvatarDecorationPayload
 
 __all__ = ("AvatarDecoration",)

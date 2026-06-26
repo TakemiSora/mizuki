@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import inspect
 import types
-from typing import get_origin, get_args, cast
+from typing import get_origin, get_args
 
 from typing import Any, Literal, Self, overload
 
