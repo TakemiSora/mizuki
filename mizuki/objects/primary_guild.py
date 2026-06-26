@@ -1,7 +1,7 @@
-from .asset import Asset
-from .snowflake import Snowflake
+from mizuki.objects.asset import Asset
+from mizuki.objects.snowflake import Snowflake
 from datetime import datetime
-from ..payloads.primary_guild import UserPrimaryGuildPayload
+from mizuki.payloads.primary_guild import UserPrimaryGuildPayload
 
 __all__ = ("UserPrimaryGuild",)
 

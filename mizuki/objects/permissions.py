@@ -2,9 +2,9 @@ from enum import IntFlag
 from typing import Self
 
 from mizuki._utils import assign_val
-from ..payloads.channel import ChannelPermissionOverwritePayload
-from .snowflake import Snowflake
-from ..enums.channel import ChannelPermissionOverwriteType
+from mizuki.payloads.channel import ChannelPermissionOverwritePayload
+from mizuki.objects.snowflake import Snowflake
+from mizuki.enums.channel import ChannelPermissionOverwriteType
 
 __all__ = ("Permissions", "ChannelPermissionOverwrite")
 

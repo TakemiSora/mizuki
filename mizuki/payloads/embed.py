@@ -1,5 +1,5 @@
 from typing import NotRequired, Required, TypedDict
-from ._types import ISO8601Timestamp
+from mizuki.payloads._types import ISO8601Timestamp
 
 
 class EmbedFooterPayload(TypedDict, total=False):

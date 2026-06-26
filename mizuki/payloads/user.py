@@ -1,13 +1,13 @@
 from __future__ import annotations
 from typing import Required, TypedDict, TYPE_CHECKING
 
-from ._types import CDNHash, Snowflake
-from .avatar_decoration import AvatarDecorationPayload
-from .collectibles import CollectiblePayload
-from .primary_guild import UserPrimaryGuildPayload
+from mizuki.payloads._types import CDNHash, Snowflake
+from mizuki.payloads.avatar_decoration import AvatarDecorationPayload
+from mizuki.payloads.collectibles import CollectiblePayload
+from mizuki.payloads.primary_guild import UserPrimaryGuildPayload
 
 if TYPE_CHECKING:
-    from .member import PartialMemberPayload
+    from mizuki.payloads.member import PartialMemberPayload
 
 
 class PartialUserPayload(TypedDict):

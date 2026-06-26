@@ -1,9 +1,9 @@
 from typing import Required, TypedDict
 
-from ._types import CDNHash, ISO8601Timestamp, Snowflake
-from .avatar_decoration import AvatarDecorationPayload
-from .collectibles import CollectiblePayload
-from .user import UserPayload
+from mizuki.payloads._types import CDNHash, ISO8601Timestamp, Snowflake
+from mizuki.payloads.avatar_decoration import AvatarDecorationPayload
+from mizuki.payloads.collectibles import CollectiblePayload
+from mizuki.payloads.user import UserPayload
 
 
 class PartialMemberPayload(TypedDict, total=False):

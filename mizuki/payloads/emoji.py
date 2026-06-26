@@ -1,6 +1,6 @@
 from typing import TypedDict, NotRequired, Required
-from .user import UserPayload
-from ._types import Snowflake
+from mizuki.payloads.user import UserPayload
+from mizuki.payloads._types import Snowflake
 
 
 class ActivityEmojiPayload(TypedDict, total=False):

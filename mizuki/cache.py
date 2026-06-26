@@ -1,9 +1,9 @@
 import asyncio
-from .objects.user import User
-from .objects.message import Message
-from .objects.channel import Channel
-from .objects.command import ApplicationCommand
-from .objects.guild import Guild
+from mizuki.objects.user import User
+from mizuki.objects.message import Message
+from mizuki.objects.channel import Channel
+from mizuki.objects.command import ApplicationCommand
+from mizuki.objects.guild import Guild
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 

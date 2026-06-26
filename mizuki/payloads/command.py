@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Literal, NotRequired, Required, TypedDict
 
-from ._types import Permissions, Snowflake
+from mizuki.payloads._types import Permissions, Snowflake
 
 LocalizationPayload = TypedDict(
     "LocalizationPayload",

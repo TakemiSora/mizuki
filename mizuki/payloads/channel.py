@@ -1,8 +1,8 @@
 from typing import Literal, NotRequired, TypedDict
 
-from ._types import ISO8601Timestamp, Permissions, Snowflake
-from .member import MemberPayload
-from .user import UserPayload
+from mizuki.payloads._types import ISO8601Timestamp, Permissions, Snowflake
+from mizuki.payloads.member import MemberPayload
+from mizuki.payloads.user import UserPayload
 
 
 class ChannelPermissionOverwritePayload(TypedDict):

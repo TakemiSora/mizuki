@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Self
 
-from ..payloads.embed import (
+from mizuki.payloads.embed import (
     EmbedAuthorPayload,
     EmbedFieldPayload,
     EmbedFooterPayload,
@@ -11,9 +11,9 @@ from ..payloads.embed import (
     EmbedProviderPayload,
     EmbedVideoPayload,
 )
-from ..enums.embed import EmbedType
-from ..flags import EmbedMediaFlags, EmbedFlags
-from .._utils import mtd, siso, scls, assign_val, assign_val_dict, _MISSING
+from mizuki.enums.embed import EmbedType
+from mizuki.flags import EmbedMediaFlags, EmbedFlags
+from mizuki._utils import mtd, siso, scls, assign_val, assign_val_dict, _MISSING
 
 __all__ = (
     "EmbedFooter",

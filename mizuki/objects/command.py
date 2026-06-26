@@ -6,11 +6,23 @@ from typing import get_origin, get_args, cast
 
 from typing import Any, Literal, Self, overload
 
-from .._utils import _MISSING, assign_val, assign_val_dict, mtd, scls, sint, CoroFunc
-from ..enums.channel import ChannelType
-from ..enums.command import ApplicationCommandType, CommandHandler, CommandOptionType
-from ..enums.interaction import ApplicationIntegrationType, InteractionContextType
-from ..payloads.command import (
+from mizuki._utils import (
+    _MISSING,
+    assign_val,
+    assign_val_dict,
+    mtd,
+    scls,
+    sint,
+    CoroFunc,
+)
+from mizuki.enums.channel import ChannelType
+from mizuki.enums.command import (
+    ApplicationCommandType,
+    CommandHandler,
+    CommandOptionType,
+)
+from mizuki.enums.interaction import ApplicationIntegrationType, InteractionContextType
+from mizuki.payloads.command import (
     ApplicationCommandPayload,
     BaseApplicationCommandPayload,
     CommandChoicePayload,
@@ -18,12 +30,12 @@ from ..payloads.command import (
     LocalizationPayload,
     PartialApplicationCommandPayload,
 )
-from .permissions import Permissions
-from .snowflake import Snowflake
+from mizuki.objects.permissions import Permissions
+from mizuki.objects.snowflake import Snowflake
 
-from .user import User
-from .channel import PartialGuildChannel, PartialThreadChannel
-from .role import Role
+from mizuki.objects.user import User
+from mizuki.objects.channel import PartialGuildChannel, PartialThreadChannel
+from mizuki.objects.role import Role
 
 __all__ = (
     "Mentionable",

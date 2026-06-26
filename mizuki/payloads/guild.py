@@ -1,12 +1,12 @@
 from typing import NotRequired, TypedDict, Literal
-from .emoji import EmojiPayload
-from .role import RolePayload
-from .sticker import StickerPayload
-from ._types import UNIMPLEMENTED, ISO8601Timestamp, Snowflake, CDNHash
-from .member import MemberPayload
-from .channel import GuildChannelPayload, ThreadPayload
-from .user import UserPayload
-from .presence import PresencePayload
+from mizuki.payloads.emoji import EmojiPayload
+from mizuki.payloads.role import RolePayload
+from mizuki.payloads.sticker import StickerPayload
+from mizuki.payloads._types import UNIMPLEMENTED, ISO8601Timestamp, Snowflake, CDNHash
+from mizuki.payloads.member import MemberPayload
+from mizuki.payloads.channel import GuildChannelPayload, ThreadPayload
+from mizuki.payloads.user import UserPayload
+from mizuki.payloads.presence import PresencePayload
 
 
 class UnavailableGuildPayload(TypedDict):

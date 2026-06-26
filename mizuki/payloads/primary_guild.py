@@ -1,5 +1,5 @@
 from typing import TypedDict
-from ._types import CDNHash, Snowflake
+from mizuki.payloads._types import CDNHash, Snowflake
 
 
 class UserPrimaryGuildPayload(TypedDict):

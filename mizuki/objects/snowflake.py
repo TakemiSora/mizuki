@@ -1,6 +1,6 @@
 from typing import Self
 from datetime import datetime, UTC
-from .._utils import sint
+from mizuki._utils import sint
 
 
 class Snowflake(int):

@@ -1,6 +1,6 @@
 from typing import Self
 
-from ..enums.sticker import StickerFormatType
+from mizuki.enums.sticker import StickerFormatType
 
 __all__ = ("Asset", "MediaProxyAsset")
 

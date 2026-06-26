@@ -1,24 +1,24 @@
 from __future__ import annotations
 from typing import Literal, Required, TypedDict
 
-from ._types import UNIMPLEMENTED, Permissions, Snowflake
-from .channel import (
+from mizuki.payloads._types import UNIMPLEMENTED, Permissions, Snowflake
+from mizuki.payloads.channel import (
     PartialGuildChannelPayload,
     PartialThreadPayload,
     PrivateChannelPayload,
 )
-from .embed import EmbedPayload
-from .file import FileUploadPayload
-from .guild import GuildPayload
-from .member import MemberPayload, PartialMemberPayload
-from .message import (
+from mizuki.payloads.embed import EmbedPayload
+from mizuki.payloads.file import FileUploadPayload
+from mizuki.payloads.guild import GuildPayload
+from mizuki.payloads.member import MemberPayload, PartialMemberPayload
+from mizuki.payloads.message import (
     AttachmentPayload,
     MessagePayload,
     PartialMessagePayload,
     AllowedMentionsPayload,
 )
-from .role import RolePayload
-from .user import UserPayload
+from mizuki.payloads.role import RolePayload
+from mizuki.payloads.user import UserPayload
 
 
 class ResolvedDataPayload(TypedDict, total=False):

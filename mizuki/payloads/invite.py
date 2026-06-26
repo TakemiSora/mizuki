@@ -1,10 +1,10 @@
 from typing import TypedDict, Literal, Required
 
-from ._types import UNIMPLEMENTED, ISO8601Timestamp
-from .channel import PartialGuildChannelPayload
-from .user import UserPayload
-from .role import PartialRolePayload
-from .guild import GuildPayload, GuildScheduledEventPayload
+from mizuki.payloads._types import UNIMPLEMENTED, ISO8601Timestamp
+from mizuki.payloads.channel import PartialGuildChannelPayload
+from mizuki.payloads.user import UserPayload
+from mizuki.payloads.role import PartialRolePayload
+from mizuki.payloads.guild import GuildPayload, GuildScheduledEventPayload
 
 
 class InvitePayload(TypedDict, total=False):

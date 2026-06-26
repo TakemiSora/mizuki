@@ -1,14 +1,14 @@
 import inspect
 from typing import overload, Literal
 
-from .enums.channel import ChannelType
-from .enums.command import CommandOptionType
-from .objects.command import (
+from mizuki.enums.channel import ChannelType
+from mizuki.enums.command import CommandOptionType
+from mizuki.objects.command import (
     ApplicationCommandChoice,
     ApplicationCommandOption,
     Localization,
 )
-from ._utils import CoroDecorator, CoroFunc, _MISSING, assign_val
+from mizuki._utils import CoroDecorator, CoroFunc, _MISSING, assign_val
 
 __all__ = ("Parameter", "parameters")
 

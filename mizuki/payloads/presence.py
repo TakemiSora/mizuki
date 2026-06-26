@@ -1,8 +1,8 @@
 from typing import Literal, Required, TypedDict
 
-from ._types import CDNHash, Snowflake, UnixTime
-from .user import UserPayload
-from .emoji import ActivityEmojiPayload
+from mizuki.payloads._types import CDNHash, Snowflake, UnixTime
+from mizuki.payloads.user import UserPayload
+from mizuki.payloads.emoji import ActivityEmojiPayload
 
 
 class TimestampsPayload(TypedDict, total=False):

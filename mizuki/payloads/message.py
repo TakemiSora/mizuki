@@ -1,11 +1,11 @@
 from __future__ import annotations
 from typing import Required, TypedDict, NotRequired, Literal
-from ._types import ISO8601Timestamp, Snowflake, UNIMPLEMENTED
-from .user import UserPayload
-from .channel import ChannelMentionPayload, ThreadPayload
-from .emoji import PartialEmojiPayload
-from .embed import EmbedPayload
-from .sticker import PartialStickerPayload
+from mizuki.payloads._types import ISO8601Timestamp, Snowflake, UNIMPLEMENTED
+from mizuki.payloads.user import UserPayload
+from mizuki.payloads.channel import ChannelMentionPayload, ThreadPayload
+from mizuki.payloads.emoji import PartialEmojiPayload
+from mizuki.payloads.embed import EmbedPayload
+from mizuki.payloads.sticker import PartialStickerPayload
 
 
 class AttachmentPayload(TypedDict, total=False):

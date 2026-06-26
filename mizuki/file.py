@@ -1,6 +1,6 @@
 import pathlib
 from typing import Any
-from ._utils import _MISSING, assign_val_dict
+from mizuki._utils import _MISSING, assign_val_dict
 
 __all__ = ("File",)
 

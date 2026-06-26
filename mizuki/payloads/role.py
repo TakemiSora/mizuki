@@ -1,6 +1,6 @@
 from typing import NotRequired, TypedDict
 
-from ._types import CDNHash, Permissions, Snowflake
+from mizuki.payloads._types import CDNHash, Permissions, Snowflake
 
 
 class RoleColorsPayload(TypedDict):
