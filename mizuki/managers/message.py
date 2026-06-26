@@ -658,7 +658,7 @@ class MessageManager(BaseManager):
             A HTTP error occurred.
         """
         return [
-            self._cache_storage.update_users(User(u))
+            self._cache_storage.update_users(User(u, state=self._state))
             for u in
             await self._react_endpoints(
                 "GET",

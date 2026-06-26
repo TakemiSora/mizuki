@@ -48,13 +48,13 @@ class Invite:
             data["channel"],
             guild_id=self.guild.id if self.guild is not None else None
         )
-        self.inviter = scls(User, data.get("inviter"))
+        self.inviter = scls(User, data.get("inviter"), state=state)
         self.target_type = scls(InviteTargetType, data.get("target_type"))
-        self.target_user = scls(User, data.get("target_user"))
+        self.target_user = scls(User, data.get("target_user"), state=state)
         self.approximate_presence_count = data.get("approximate_presence_count")
         self.approximate_member_count = data.get("approximate_member_count")
         self.expires_at = siso(data["expires_at"])
-        self.guild_scheduled_event = scls(GuildScheduledEvent, data.get("guild_scheduled_event"))
+        self.guild_scheduled_event = scls(GuildScheduledEvent, data.get("guild_scheduled_event"), state=state)
         self.flags = scls(InviteFlags, data.get("flags"))
         self.roles = [PartialRole(p) for p in data.get("roles", [])]
 

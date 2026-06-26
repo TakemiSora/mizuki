@@ -1,8 +1,15 @@
+from __future__ import annotations
 from datetime import datetime
+from typing import TYPE_CHECKING
 
-from ..enums.presence import ActivityType, PresenceStatusType, StatusDisplayType
-from ..flags import ActivityFlags
-from ..payloads.presence import (
+from mizuki._utils import scls
+from mizuki.enums.presence import ActivityType, PresenceStatusType, StatusDisplayType
+from mizuki.flags import ActivityFlags
+from mizuki.objects.asset import activity_asset_parse
+from mizuki.objects.emoji import ActivityEmoji
+from mizuki.objects.snowflake import Snowflake
+from mizuki.objects.user import User
+from mizuki.payloads.presence import (
     ActivityAssetsPayload,
     ActivityButtonPayload,
     ActivityPartyPayload,
@@ -11,11 +18,9 @@ from ..payloads.presence import (
     PresencePayload,
     TimestampsPayload,
 )
-from .._utils import scls
-from .asset import activity_asset_parse
-from .emoji import ActivityEmoji
-from .snowflake import Snowflake
-from .user import User
+
+if TYPE_CHECKING:
+    from mizuki.state import ConnectionState
 
 __all__ = (
     "Activity",
@@ -31,25 +36,25 @@ class ActivityTimestamps:
     def __init__(self, data: TimestampsPayload):
         self.start = scls(datetime.fromtimestamp, data.get("start"))
         self.end = scls(datetime.fromtimestamp, data.get("end"))
-        
+
 class ActivityParty:
     __slots__ = (
         "id",
         "size"
     )
-    
+
     def __init__(self, data: ActivityPartyPayload):
         self.id = data.get("id")
         self.size = data.get("size")
-        
+
     @property
     def current_size(self) -> int | None:
         return self.size[0] if self.size is not None else None
-            
+
     @property
     def max_size(self) -> int | None:
         return self.size[1] if self.size is not None else None
-            
+
 class ActivityAssets:
     __slots__ = (
         "large_image",
@@ -60,7 +65,7 @@ class ActivityAssets:
         "small_url",
         "invite_cover_image"
     )
-    
+
     def __init__(self, data: ActivityAssetsPayload, *, application_id: int | None):
         self.large_image = activity_asset_parse(application_id, data.get("large_image"))
         self.large_text = data.get("large_text")
@@ -69,25 +74,25 @@ class ActivityAssets:
         self.small_text = data.get("small_text")
         self.small_url = data.get("small_url")
         self.invite_cover_image = activity_asset_parse(application_id, data.get("invite_cover_image"))
-        
+
 class ActivitySecrets:
     __slots__ = (
         "join",
         "spectate",
         "match"
     )
-    
+
     def __init__(self, data: ActivitySecretsPayload):
         self.join = data.get("join")
         self.spectate = data.get("spectate")
         self.match = data.get("match")
-        
+
 class ActivityButton:
     __slots__ = (
         "label",
         "url"
     )
-    
+
     def __init__(self, data: ActivityButtonPayload):
         self.label = data["label"]
         self.url = data["url"]
@@ -141,9 +146,9 @@ class Presence:
         "status",
         "activities"
     )
-    
-    def __init__(self, data: PresencePayload):
-        self.user = User(data["user"])
+
+    def __init__(self, data: PresencePayload, *, state: ConnectionState):
+        self.user = User(data["user"], state=state)
         self.guild_id = Snowflake(data["guild_id"])
         self.status = PresenceStatusType(data["status"])
         self.activities = [Activity(a) for a in data["activities"]]

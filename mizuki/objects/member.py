@@ -1,15 +1,19 @@
+from __future__ import annotations
 from datetime import datetime, timezone
-from typing import overload, Self
+from typing import Self, overload, TYPE_CHECKING
 
-from ..flags import GuildMemberFlags
-from ..payloads.member import MemberPayload, PartialMemberPayload
-from .._utils import scls, sint, siso
-from .asset import Asset
-from .avatar_decoration import AvatarDecoration
-from .collectibles import Nameplate
-from .permissions import Permissions
-from .snowflake import Snowflake
-from .user import User
+from mizuki._utils import scls, sint, siso
+from mizuki.flags import GuildMemberFlags
+from mizuki.objects.asset import Asset
+from mizuki.objects.avatar_decoration import AvatarDecoration
+from mizuki.objects.collectibles import Nameplate
+from mizuki.objects.permissions import Permissions
+from mizuki.objects.snowflake import Snowflake
+from mizuki.objects.user import User
+from mizuki.payloads.member import MemberPayload, PartialMemberPayload
+
+if TYPE_CHECKING:
+    from mizuki.state import ConnectionState
 
 __all__ = (
     "PartialMember",
@@ -33,8 +37,8 @@ class PartialMember:
         "avatar_decoration_data",
         "nameplate"
     )
-    
-    def __init__(self, data: PartialMemberPayload, *, guild_id: int, user_id: int):
+
+    def __init__(self, data: PartialMemberPayload, *, guild_id: int, user_id: int, state: ConnectionState):
         self.guild_id = Snowflake(guild_id)
         self.id = Snowflake(user_id)
         self.nick = data.get("nick")
@@ -51,7 +55,7 @@ class PartialMember:
         collectibles = data.get("collectibles")
         nameplate = collectibles.get("nameplate") if collectibles else None
         self.nameplate = scls(Nameplate, nameplate)
-        
+
     @property
     def is_timed_out(self) -> bool:
         return datetime.now(timezone.utc) > self.communication_disabled_until if self.communication_disabled_until else False
@@ -87,17 +91,17 @@ class Member(PartialMember):
     )
 
     @overload
-    def __init__(self, data: MemberPayload, *, guild_id: int, user_id: None = None) -> None: ...
+    def __init__(self, data: MemberPayload, *, guild_id: int, user_id: None = None, state: ConnectionState) -> None: ...
 
     @overload
-    def __init__(self, data: MemberPayload, *, guild_id: int, user_id: int) -> None: ...
+    def __init__(self, data: MemberPayload, *, guild_id: int, user_id: int, state: ConnectionState) -> None: ...
 
-    def __init__(self, data: MemberPayload, *, guild_id: int, user_id: int | None = None):
-        self.user = scls(User, data.get("user"))
+    def __init__(self, data: MemberPayload, *, guild_id: int, user_id: int | None = None, state: ConnectionState):
+        self.user = scls(User, data.get("user"), state=state)
         user_id = int(self.user.id) if self.user is not None else user_id
         if user_id is None:
             raise ValueError("Both user object and user_id cannot be None for a member object.")
-        super().__init__(data, guild_id=guild_id, user_id=user_id)
+        super().__init__(data, guild_id=guild_id, user_id=user_id, state=state)
 
         self.deaf = data["deaf"]
         self.mute = data["mute"]

@@ -127,7 +127,7 @@ class Bot:
                     "GET",
                     "users/@me"
                 )
-            ))
+            ), state=self._state)
         except Unauthorized:
             raise ImproperToken(401, "Improper token has been passed.")
 
@@ -151,7 +151,7 @@ class Bot:
 
             self.http = self._state.init_http(token)
             self._session = self.http._session
-            
+
             _log.debug("Attempting to verify token (length=%s)", len(token))
             self.user = await self._verify_token()
             _log.info("Verified token successfully.")
@@ -166,7 +166,7 @@ class Bot:
             self.messages = managers.messages
             self.commands = managers.commands
             self.guilds = managers.guilds
-            
+
             self.gateway = await self._state.init_gateway(
                 bot=self,
                 token=token,

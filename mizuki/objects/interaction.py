@@ -58,13 +58,13 @@ class ResolvedData:
 
     def __init__(self, data: ResolvedDataPayload, *, guild_id: int | None, state: ConnectionState):
         self.users = {
-            int(id): User(payload)
+            int(id): User(payload, state=state)
             for id, payload in data.get("users", {}).items()
         }
 
         self.members = {
             int(id): ResolvedMember._from_partial_member(
-                PartialMember(payload, guild_id=guild_id, user_id=int(id)),
+                PartialMember(payload, guild_id=guild_id, user_id=int(id), state=state),
                 user=self.users[int(id)]
             )
             for id, payload in data.get("members", {}).items()
@@ -86,7 +86,7 @@ class ResolvedData:
         }
 
         self.attachments = {
-            int(id): Attachment(payload)
+            int(id): Attachment(payload, state=state)
             for id, payload in data.get("attachments", {}).items()
         }
 
@@ -408,8 +408,8 @@ class Interaction:
         self.guild_id = Snowflake._from_str(data.get("guild_id"))
         self.channel = parse_channel_payload(c, partial=True, state=state) if (c := data.get("channel")) is not None else None
         self.channel_id = Snowflake._from_str(data.get("channel_id"))
-        self.member = scls(Member, data.get("member"), guild_id=self.guild_id)
-        self.user = scls(User, data.get("user"))
+        self.member = scls(Member, data.get("member"), guild_id=self.guild_id, state=state)
+        self.user = scls(User, data.get("user"), state=state)
         self.token = data["token"]
         self.version = data["version"]
         self.message = scls(Message, data.get("message"), state=state)

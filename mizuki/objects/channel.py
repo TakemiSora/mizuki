@@ -115,13 +115,13 @@ class ThreadMember:
         "member"
     )
 
-    def __init__(self, data: ThreadMemberPayload, guild_id: int | None = None, user_id: int | None = None):
+    def __init__(self, data: ThreadMemberPayload, guild_id: int | None = None, user_id: int | None = None, *, state: ConnectionState):
         self.id = Snowflake._from_str(data.get("id"))
         self.user_id = Snowflake._from_str(data.get("user_id"))
         self.join_timestamp = datetime.fromisoformat(data["join_timestamp"])
         self.notifications = bool(data["flags"])
         if guild_id and user_id:
-            self.member = scls(Member, data.get("member"), guild_id=guild_id, user_id=user_id)
+            self.member = scls(Member, data.get("member"), guild_id=guild_id, user_id=user_id, state=state)
         else:
             self.member = None
 
@@ -442,7 +442,7 @@ class PrivateChannel(BaseChannel):
 
     def __init__(self, data: PrivateChannelPayload, *, state: ConnectionState):
         super().__init__(data, state=state)
-        self.recipients = [User(u) for u in data["recipients"]]
+        self.recipients = [User(u, state=state) for u in data["recipients"]]
         self.type = ChannelType(data["type"])
 
 class PartialGuildChannel(BasePublicChannel):

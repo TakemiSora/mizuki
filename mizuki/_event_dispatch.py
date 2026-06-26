@@ -164,7 +164,7 @@ class EventDispatcher:
 
     async def _handle_thread_create(self, data: ThreadCreatePayload):
         newly_created = data.get("newly_created", False)
-        thread_member = scls(ThreadMember, data.get("member"))
+        thread_member = scls(ThreadMember, data.get("member"), state=self.bot._state)
         channel = self.bot._storage.update_channels(ThreadChannel(data, state=self.bot._state))
         await self._dispatch("on_thread_create", channel, newly_created, thread_member)
 

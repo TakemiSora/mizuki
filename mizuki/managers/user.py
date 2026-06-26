@@ -24,12 +24,12 @@ class UserManager(BaseManager):
             A HTTP error occured.
         """
         return self._cache_storage.update_users(
-            User(
-                await self._state.http.request(
+            User(await self._state.http.request(
                     Path(
                         "GET",
                         "users/@me"
-            )))
+                    )
+            ), state=self._state)
         )
 
     def get(self, user_id: int) -> User | None:
@@ -77,7 +77,8 @@ class UserManager(BaseManager):
                     "GET",
                     "users/{user_id}",
                     user_id=user_id
-            )))
+                )
+            ), state=self._state)
         )
 
     async def get_or_fetch(self, user_id: int) -> User:

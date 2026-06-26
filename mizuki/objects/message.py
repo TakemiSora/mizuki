@@ -81,7 +81,7 @@ class Attachment:
         "application",
     )
 
-    def __init__(self, data: AttachmentPayload):
+    def __init__(self, data: AttachmentPayload, *, state: ConnectionState):
         self.id = Snowflake(data["id"])
         self.filename = data["filename"]
         self.title = data.get("title")
@@ -98,7 +98,7 @@ class Attachment:
         self.duration_secs = data.get("duration_secs")
         self.waveform = data.get("waveform")
         self.flags = AttachmentFlags(data.get("flags", 0))
-        self.clip_participants = [User(u) for u in data.get("clip_participants", [])]
+        self.clip_participants = [User(u, state=state) for u in data.get("clip_participants", [])]
         self.clip_created_at = siso(data.get("clip_created_at"))
         self.application = data.get("application") # placeholder
 
@@ -172,11 +172,11 @@ class PartialMessage:
         self._state = state
         self.content = data["content"]
         self.embeds = [Embed(e) for e in data["embeds"]]
-        self.attachments = [Attachment(a) for a in data["attachments"]]
+        self.attachments = [Attachment(a, state=state) for a in data["attachments"]]
         self.timestamp = datetime.fromisoformat(data["timestamp"])
         self.edited_timestamp = siso(data["edited_timestamp"])
         self.flags = MessageFlags(data.get("flags", 0))
-        self.mentions = [User(u) for u in data["mentions"]]
+        self.mentions = [User(u, state=state) for u in data["mentions"]]
         self.mention_roles = [Snowflake(s) for s in data["mention_roles"]]
         self.type = MessageType(data["type"])
 
@@ -199,13 +199,13 @@ class MessageInteractionMetadata:
         "target_message_id"
     )
 
-    def __init__(self, data: MessageInteractionMetadataPayload):
+    def __init__(self, data: MessageInteractionMetadataPayload, *, state: ConnectionState):
         self.id = Snowflake(data["id"])
         self.type = InteractionType(data["type"])
-        self.user = User(data["user"])
+        self.user = User(data["user"], state=state)
         self.authorizing_integration_owners = {ApplicationIntegrationType(int(a)): Snowflake(s) for a, s in data["authorizing_integration_owners"].items()}
         self.original_response_message_id = Snowflake._from_str(data.get("original_response_message_id"))
-        self.target_user = scls(User, data.get("target_user"))
+        self.target_user = scls(User, data.get("target_user"), state=state)
         self.target_message_id = Snowflake._from_str(data.get("target_message_id"))
 
 class RoleSubscriptionData:
@@ -350,7 +350,7 @@ class Message(PartialMessage):
         super().__init__(data, state=state)
         self.id = Snowflake(data["id"])
         self.channel_id = Snowflake(data["channel_id"])
-        self.author = User(data["author"])
+        self.author = User(data["author"], state=state)
         self.tts = data["tts"]
         self.mention_everyone = data["mention_everyone"]
         self.mention_channels = [ChannelMention(c) for c in data.get("mention_channels", [])]
@@ -364,10 +364,10 @@ class Message(PartialMessage):
         self.message_reference = scls(MessageReference, data.get("message_reference"))
         self.message_snapshots = [MessageSnapshot(m, state=state) for m in data.get("message_snapshots", [])]
         self.referenced_message = scls(Message, data.get("referenced_message"), state=state)
-        self.interaction_metadata = scls(MessageInteractionMetadata, data.get("interaction_metadata"))
+        self.interaction_metadata = scls(MessageInteractionMetadata, data.get("interaction_metadata"), state=state)
         self.thread = scls(ThreadChannel, data.get("thread"), state=state)
         self.components = data.get("components", []) # placeholder
-        self.sticker_items = [PartialSticker(s) for s in data.get("sticker_items", [])]
+        self.sticker_items = [PartialSticker(s, state=state) for s in data.get("sticker_items", [])]
         self.position = data.get("position")
         self.role_subscription_data = scls(RoleSubscriptionData, data.get("role_subscription_data"))
         self.poll = scls(Poll, data.get("poll"))
