@@ -44,8 +44,9 @@ __all__ = (
     "PartialGuildChannel",
     "PartialThreadChannel",
     "ChannelMention",
-    "Channel"
+    "Channel",
 )
+
 
 class ThreadMetaData:
     """
@@ -76,7 +77,7 @@ class ThreadMetaData:
         "archive_timestamp",
         "locked",
         "invitable",
-        "create_timestamp"
+        "create_timestamp",
     )
 
     def __init__(self, data: ThreadMetaDataPayload):
@@ -86,6 +87,7 @@ class ThreadMetaData:
         self.locked = data["locked"]
         self.invitable = data.get("invitable", False)
         self.create_timestamp = siso(data.get("create_timestamp"))
+
 
 class ThreadMember:
     """
@@ -107,34 +109,41 @@ class ThreadMember:
     member: Member | None
     "The Member Object for the user in the :class:`Guild <mizuki.objects.guild.Guild>`. Omitted in :attr:`GUILD_CREATE <mizuki.enums.event_dispatch.Event.GUILD_CREATE>`."
 
-    __slots__ = (
-        "id",
-        "user_id",
-        "join_timestamp",
-        "notifications",
-        "member"
-    )
+    __slots__ = ("id", "user_id", "join_timestamp", "notifications", "member")
 
-    def __init__(self, data: ThreadMemberPayload, guild_id: int | None = None, user_id: int | None = None, *, state: ConnectionState):
+    def __init__(
+        self,
+        data: ThreadMemberPayload,
+        guild_id: int | None = None,
+        user_id: int | None = None,
+        *,
+        state: ConnectionState,
+    ):
         self.id = Snowflake._from_str(data.get("id"))
         self.user_id = Snowflake._from_str(data.get("user_id"))
         self.join_timestamp = datetime.fromisoformat(data["join_timestamp"])
         self.notifications = bool(data["flags"])
         if guild_id and user_id:
-            self.member = scls(Member, data.get("member"), guild_id=guild_id, user_id=user_id, state=state)
+            self.member = scls(
+                Member,
+                data.get("member"),
+                guild_id=guild_id,
+                user_id=user_id,
+                state=state,
+            )
         else:
             self.member = None
+
 
 class PartialForumTag:
     """
     Represents a partial Forum Tag object to be passed for editing the available tags of a channel.
     """
+
     name: str
     "The name of the tag. (0-20 characters long)"
 
-    __slots__ = (
-        "name",
-    )
+    __slots__ = ("name",)
 
     def __init__(self, data: PartialForumTagPayload):
         self.name = data["name"]
@@ -153,6 +162,7 @@ class PartialForumTag:
             The name of the tag.
         """
         return assign_val(cls.__new__(cls), name=name)
+
 
 class ForumTag(PartialForumTag):
     """
@@ -175,12 +185,7 @@ class ForumTag(PartialForumTag):
     emoji_name: str | None
     "The unicode character of the emoji."
 
-    __slots__ = (
-        "id",
-        "moderated",
-        "emoji_id",
-        "emoji_name"
-    )
+    __slots__ = ("id", "moderated", "emoji_id", "emoji_name")
 
     def __init__(self, data: ForumTagPayload):
         super().__init__(data)
@@ -195,11 +200,11 @@ class ForumTag(PartialForumTag):
             name=self.name,
             moderated=self.moderated,
             emoji_id=str(self.emoji_id),
-            emoji_name=self.emoji_name
+            emoji_name=self.emoji_name,
         )
 
-class BaseChannel:
 
+class BaseChannel:
     id: Snowflake
     "The ID of the Channel."
 
@@ -212,13 +217,7 @@ class BaseChannel:
     last_pin_timestamp: datetime | None
     "The timestamp when the last pinned message was pinned. May be ``None`` if no messages are pinned."
 
-    __slots__ = (
-        "_state",
-        "id",
-        "last_message_id",
-        "flags",
-        "last_pin_timestamp"
-    )
+    __slots__ = ("_state", "id", "last_message_id", "flags", "last_pin_timestamp")
 
     def __init__(self, data: BaseChannelPayload, *, state: ConnectionState):
         self._state = state
@@ -246,6 +245,7 @@ class BaseChannel:
         """
         return self.id.created_at
 
+
 class BasePublicChannel(BaseChannel):
     guild_id: Snowflake
     "The :class:`Guild <mizuki.objects.guild.Guild>` ID of the Channel."
@@ -267,15 +267,24 @@ class BasePublicChannel(BaseChannel):
         "permissions",
     )
 
-    def __init__(self, data: BasePublicChannelPayload, guild_id: int | None = None, *, state: ConnectionState):
+    def __init__(
+        self,
+        data: BasePublicChannelPayload,
+        guild_id: int | None = None,
+        *,
+        state: ConnectionState,
+    ):
         super().__init__(data, state=state)
         resolved_guild_id = data.get("guild_id") or str(guild_id)
-        assert resolved_guild_id is not None, "A PublicChannel object formed without any guild_id."
+        assert resolved_guild_id is not None, (
+            "A PublicChannel object formed without any guild_id."
+        )
         self.guild_id = Snowflake(resolved_guild_id)
         self.name = data["name"]
         self.parent_id = Snowflake._from_str(data.get("parent_id"))
         self.rate_limit_per_user = data.get("rate_limit_per_user")
         self.permissions = scls(Permissions, sint(data.get("permissions")))
+
 
 class GuildChannel(BasePublicChannel):
     """
@@ -355,22 +364,37 @@ class GuildChannel(BasePublicChannel):
         "video_quality_mode",
     )
 
-    def __init__(self, data: GuildChannelPayload, guild_id: int | None = None, *, state: ConnectionState):
+    def __init__(
+        self,
+        data: GuildChannelPayload,
+        guild_id: int | None = None,
+        *,
+        state: ConnectionState,
+    ):
         super().__init__(data, guild_id, state=state)
         self.type = ChannelType(data["type"])
         self.topic = data.get("topic")
-        self.default_auto_archive_duration = scls(timedelta, data.get("default_auto_archive_duration"))
-        self.default_thread_rate_limit_per_user = data.get("default_thread_rate_limit_per_user")
+        self.default_auto_archive_duration = scls(
+            timedelta, data.get("default_auto_archive_duration")
+        )
+        self.default_thread_rate_limit_per_user = data.get(
+            "default_thread_rate_limit_per_user"
+        )
         self.position = data["position"]
-        self.permission_overwrites = [ChannelPermissionOverwrite(p) for p in data.get("permission_overwrites", [])]
+        self.permission_overwrites = [
+            ChannelPermissionOverwrite(p) for p in data.get("permission_overwrites", [])
+        ]
         self.nsfw = data.get("nsfw", False)
         self.available_tags = [ForumTag(f) for f in data.get("available_tags", [])]
         self.default_sort_order = scls(SortOrderType, data.get("default_sort_order"))
-        self.default_forum_layout = scls(ForumLayoutType, data.get("default_forum_layout"))
+        self.default_forum_layout = scls(
+            ForumLayoutType, data.get("default_forum_layout")
+        )
         self.bitrate = data.get("bitrate")
         self.user_limit = data.get("user_limit")
         self.rtc_region = data.get("rtc_region")
         self.video_quality_mode = VideoQualityMode(data.get("video_quality_mode", 1))
+
 
 class ThreadChannel(BasePublicChannel):
     """
@@ -414,7 +438,13 @@ class ThreadChannel(BasePublicChannel):
         "applied_tags",
     )
 
-    def __init__(self, data: ThreadPayload, guild_id: int | None = None, *, state: ConnectionState):
+    def __init__(
+        self,
+        data: ThreadPayload,
+        guild_id: int | None = None,
+        *,
+        state: ConnectionState,
+    ):
         super().__init__(data, guild_id, state=state)
         self.type = ChannelType(data["type"])
         self.owner_id = Snowflake(data["owner_id"])
@@ -423,6 +453,7 @@ class ThreadChannel(BasePublicChannel):
         self.member_count = data["member_count"]
         self.total_message_sent = data["total_message_sent"]
         self.applied_tags = [Snowflake(s) for s in data.get("applied_tags", [])]
+
 
 class PrivateChannel(BaseChannel):
     """
@@ -435,15 +466,13 @@ class PrivateChannel(BaseChannel):
     type: ChannelType
     "The ChannelType of this Channel. Always :attr:`DM <mizuki.enums.channel.ChannelType.DM>`."
 
-    __slots__ = (
-        "recipients",
-        "type"
-    )
+    __slots__ = ("recipients", "type")
 
     def __init__(self, data: PrivateChannelPayload, *, state: ConnectionState):
         super().__init__(data, state=state)
         self.recipients = [User(u, state=state) for u in data["recipients"]]
         self.type = ChannelType(data["type"])
+
 
 class PartialGuildChannel(BasePublicChannel):
     """
@@ -476,19 +505,21 @@ class PartialGuildChannel(BasePublicChannel):
     nsfw: bool
     "Whether the channel is NSFW."
 
-    __slots__ = (
-        "type",
-        "topic",
-        "position",
-        "nsfw"
-    )
+    __slots__ = ("type", "topic", "position", "nsfw")
 
-    def __init__(self, data: PartialGuildChannelPayload, guild_id: int | None, *, state: ConnectionState):
+    def __init__(
+        self,
+        data: PartialGuildChannelPayload,
+        guild_id: int | None,
+        *,
+        state: ConnectionState,
+    ):
         super().__init__(data, guild_id, state=state)
         self.type = ChannelType(data["type"])
         self.topic = data.get("topic")
         self.position = data["position"]
         self.nsfw = data.get("nsfw", False)
+
 
 class PartialThreadChannel(BasePublicChannel):
     """
@@ -507,15 +538,19 @@ class PartialThreadChannel(BasePublicChannel):
     thread_metadata: ThreadMetaData
     "Metadata of the thread."
 
-    __slots__ = (
-        "type",
-        "thread_metadata"
-    )
+    __slots__ = ("type", "thread_metadata")
 
-    def __init__(self, data: PartialThreadPayload, guild_id: int | None = None, *, state: ConnectionState):
+    def __init__(
+        self,
+        data: PartialThreadPayload,
+        guild_id: int | None = None,
+        *,
+        state: ConnectionState,
+    ):
         super().__init__(data, guild_id, state=state)
         self.type = ChannelType(data["type"])
         self.thread_metadata = ThreadMetaData(data["thread_metadata"])
+
 
 class ChannelMention:
     """
@@ -534,12 +569,7 @@ class ChannelMention:
     name: str
     "The name of the channel."
 
-    __slots__ = (
-        "id",
-        "guild_id",
-        "type",
-        "name"
-    )
+    __slots__ = ("id", "guild_id", "type", "name")
 
     def __init__(self, data: ChannelMentionPayload):
         self.id = Snowflake(data["id"])
@@ -547,51 +577,70 @@ class ChannelMention:
         self.type = ChannelType(data["type"])
         self.name = data["name"]
 
+
 @overload
 def parse_channel_payload(
     data: GuildChannelPayload,
     guild_id: int | None = None,
-    *, partial: Literal[False] = False,
-    state: ConnectionState
+    *,
+    partial: Literal[False] = False,
+    state: ConnectionState,
 ) -> GuildChannel: ...
+
 
 @overload
 def parse_channel_payload(
     data: ThreadPayload,
     guild_id: int | None = None,
-    *, partial: Literal[False] = False,
-    state: ConnectionState
+    *,
+    partial: Literal[False] = False,
+    state: ConnectionState,
 ) -> ThreadChannel: ...
+
 
 @overload
 def parse_channel_payload(
-    data: PrivateChannelPayload,
-    *, partial: bool = False,
-    state: ConnectionState
+    data: PrivateChannelPayload, *, partial: bool = False, state: ConnectionState
 ) -> PrivateChannel: ...
+
 
 @overload
 def parse_channel_payload(
     data: PartialGuildChannelPayload,
     guild_id: int | None = None,
-    *, partial: Literal[True],
-    state: ConnectionState
+    *,
+    partial: Literal[True],
+    state: ConnectionState,
 ) -> PartialGuildChannel: ...
+
 
 @overload
 def parse_channel_payload(
     data: PartialThreadPayload,
     guild_id: int | None = None,
-    *, partial: Literal[True],
-    state: ConnectionState
+    *,
+    partial: Literal[True],
+    state: ConnectionState,
 ) -> PartialThreadChannel: ...
 
+
 def parse_channel_payload(
-    data: GuildChannelPayload | ThreadPayload | PrivateChannelPayload | PartialGuildChannelPayload | PartialThreadPayload,
+    data: GuildChannelPayload
+    | ThreadPayload
+    | PrivateChannelPayload
+    | PartialGuildChannelPayload
+    | PartialThreadPayload,
     guild_id: int | None = None,
-    *, partial: bool = False,
-    state: ConnectionState
-) -> GuildChannel | ThreadChannel | PrivateChannel | PartialGuildChannel | PartialThreadChannel:
+    *,
+    partial: bool = False,
+    state: ConnectionState,
+) -> (
+    GuildChannel
+    | ThreadChannel
+    | PrivateChannel
+    | PartialGuildChannel
+    | PartialThreadChannel
+):
     match ChannelType(data["type"]):
         case ChannelType.DM:
             return PrivateChannel(cast(PrivateChannelPayload, data), state=state)
@@ -601,8 +650,11 @@ def parse_channel_payload(
             | ChannelType.PRIVATE_THREAD
         ):
             return (
-                PartialThreadChannel(cast(PartialThreadPayload, data), guild_id, state=state)
-                if partial else ThreadChannel(cast(ThreadPayload, data), guild_id, state=state)
+                PartialThreadChannel(
+                    cast(PartialThreadPayload, data), guild_id, state=state
+                )
+                if partial
+                else ThreadChannel(cast(ThreadPayload, data), guild_id, state=state)
             )
         case (
             ChannelType.GUILD_TEXT
@@ -616,11 +668,17 @@ def parse_channel_payload(
             | ChannelType.GUILD_MEDIA
         ):
             return (
-                PartialGuildChannel(cast(PartialGuildChannelPayload, data), guild_id, state=state)
-                if partial else GuildChannel(cast(GuildChannelPayload, data), guild_id, state=state)
+                PartialGuildChannel(
+                    cast(PartialGuildChannelPayload, data), guild_id, state=state
+                )
+                if partial
+                else GuildChannel(
+                    cast(GuildChannelPayload, data), guild_id, state=state
+                )
             )
         case _:
-            raise UnknownChannelType(f"Received unknown channel type '{data["type"]}'")
+            raise UnknownChannelType(f"Received unknown channel type '{data['type']}'")
+
 
 type Channel = ThreadChannel | PrivateChannel | GuildChannel
 "This is only a type hint for all channel types, not an object."

@@ -3,9 +3,8 @@ from mizuki.http import Path
 from mizuki.objects.guild import Guild
 from mizuki.managers._types import BaseManager
 
-__all__ = (
-    "GuildManager",
-)
+__all__ = ("GuildManager",)
+
 
 class GuildManager(BaseManager):
     """
@@ -56,13 +55,12 @@ class GuildManager(BaseManager):
             A HTTP error occured.
         """
         return self._cache_storage.update_guilds(
-            Guild(await self._state.http.request(
-                Path(
-                    "GET",
-                    "guilds/{guild_id}",
-                    guild_id=guild_id
-                )
-            ), state=self._state)
+            Guild(
+                await self._state.http.request(
+                    Path("GET", "guilds/{guild_id}", guild_id=guild_id)
+                ),
+                state=self._state,
+            )
         )
 
     async def get_or_fetch(self, guild_id: int) -> Guild:

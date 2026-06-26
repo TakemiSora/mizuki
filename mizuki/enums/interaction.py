@@ -1,27 +1,27 @@
 from enum import IntEnum
 
-__all__ = (
-    "InteractionType",
-    "ApplicationIntegrationType",
-    "InteractionContextType"
-)
+__all__ = ("InteractionType", "ApplicationIntegrationType", "InteractionContextType")
+
 
 class InteractionType(IntEnum):
-   PING = 1
-   APPLICATION_COMMAND = 2 
-   MESSAGE_COMPONENT = 3
-   APPLICATION_COMMAND_AUTOCOMPLETE = 4
-   MODAL_SUBMIT = 5
+    PING = 1
+    APPLICATION_COMMAND = 2
+    MESSAGE_COMPONENT = 3
+    APPLICATION_COMMAND_AUTOCOMPLETE = 4
+    MODAL_SUBMIT = 5
+
 
 class ApplicationIntegrationType(IntEnum):
-   GUILD_INSTALL = 0
-   USER_INSTALL = 1
+    GUILD_INSTALL = 0
+    USER_INSTALL = 1
+
 
 class InteractionContextType(IntEnum):
-   GUILD = 0
-   BOT_DM = 1
-   PRIVATE_CHANNEL = 2
-   
+    GUILD = 0
+    BOT_DM = 1
+    PRIVATE_CHANNEL = 2
+
+
 class InteractionCallbackType(IntEnum):
     PONG = 1
     CHANNEL_MESSAGE_WITH_SOURCE = 4

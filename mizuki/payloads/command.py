@@ -1,47 +1,53 @@
 from __future__ import annotations
 from typing import Literal, NotRequired, Required, TypedDict
 
-from ._types import Permissions, Snowflake
+from mizuki.payloads._types import Permissions, Snowflake
 
-LocalizationPayload = TypedDict("LocalizationPayload", {
-    "id": str,
-    "da": str,
-    "de": str,
-    "en-GB": str,
-    "en-US": str,
-    "es-ES": str,
-    "es-419": str,
-    "fr": str,
-    "hr": str,
-    "it": str,
-    "lt": str,
-    "hu": str,
-    "nl": str,
-    "no": str,
-    "pl": str,
-    "pt-BR": str,
-    "ro": str,
-    "fi": str,
-    "sv-SE": str,
-    "vi": str,
-    "tr": str,
-    "cs": str,
-    "el": str,
-    "bg": str,
-    "ru": str,
-    "uk": str,
-    "hi": str,
-    "th": str,
-    "zh-CN": str,
-    "ja": str,
-    "zh-TW": str,
-    "ko": str,
-}, total=False)
+LocalizationPayload = TypedDict(
+    "LocalizationPayload",
+    {
+        "id": str,
+        "da": str,
+        "de": str,
+        "en-GB": str,
+        "en-US": str,
+        "es-ES": str,
+        "es-419": str,
+        "fr": str,
+        "hr": str,
+        "it": str,
+        "lt": str,
+        "hu": str,
+        "nl": str,
+        "no": str,
+        "pl": str,
+        "pt-BR": str,
+        "ro": str,
+        "fi": str,
+        "sv-SE": str,
+        "vi": str,
+        "tr": str,
+        "cs": str,
+        "el": str,
+        "bg": str,
+        "ru": str,
+        "uk": str,
+        "hi": str,
+        "th": str,
+        "zh-CN": str,
+        "ja": str,
+        "zh-TW": str,
+        "ko": str,
+    },
+    total=False,
+)
+
 
 class CommandChoicePayload(TypedDict):
     name: str
     name_localizations: NotRequired[LocalizationPayload | None]
     value: str | int | float
+
 
 class CommandOptionPayload(TypedDict, total=False):
     type: Required[Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]]
@@ -59,6 +65,7 @@ class CommandOptionPayload(TypedDict, total=False):
     max_length: int
     autocomplete: bool
 
+
 class BaseApplicationCommandPayload(TypedDict, total=False):
     type: Literal[1, 2, 3, 4]
     name: Required[str]
@@ -69,10 +76,12 @@ class BaseApplicationCommandPayload(TypedDict, total=False):
     integration_types: list[Literal[0, 1]]
     contexts: list[Literal[0, 1, 2]] | None
 
+
 class PartialApplicationCommandPayload(BaseApplicationCommandPayload, total=False):
     description: str
     default_member_permissions: Permissions
-   
+
+
 class ApplicationCommandPayload(BaseApplicationCommandPayload, total=False):
     id: Required[Snowflake]
     description: Required[str]

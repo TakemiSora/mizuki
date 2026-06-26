@@ -15,10 +15,8 @@ from mizuki.objects.guild import Guild, GuildScheduledEvent
 if TYPE_CHECKING:
     from mizuki.state import ConnectionState
 
-__all__ = (
-    "Invite",
-    "InviteMetadata"
-)
+__all__ = ("Invite", "InviteMetadata")
+
 
 class Invite:
     __slots__ = (
@@ -35,7 +33,7 @@ class Invite:
         "expires_at",
         "guild_scheduled_event",
         "flags",
-        "roles"
+        "roles",
     )
 
     def __init__(self, data: InvitePayload, *, state: ConnectionState):
@@ -46,7 +44,7 @@ class Invite:
         self.channel = scls(
             PartialGuildChannel,
             data["channel"],
-            guild_id=self.guild.id if self.guild is not None else None
+            guild_id=self.guild.id if self.guild is not None else None,
         )
         self.inviter = scls(User, data.get("inviter"), state=state)
         self.target_type = scls(InviteTargetType, data.get("target_type"))
@@ -54,18 +52,15 @@ class Invite:
         self.approximate_presence_count = data.get("approximate_presence_count")
         self.approximate_member_count = data.get("approximate_member_count")
         self.expires_at = siso(data["expires_at"])
-        self.guild_scheduled_event = scls(GuildScheduledEvent, data.get("guild_scheduled_event"), state=state)
+        self.guild_scheduled_event = scls(
+            GuildScheduledEvent, data.get("guild_scheduled_event"), state=state
+        )
         self.flags = scls(InviteFlags, data.get("flags"))
         self.roles = [PartialRole(p) for p in data.get("roles", [])]
 
+
 class InviteMetadata(Invite):
-    __slots__ = (
-        "uses",
-        "max_uses",
-        "max_age",
-        "temporary",
-        "created_at"
-    )
+    __slots__ = ("uses", "max_uses", "max_age", "temporary", "created_at")
 
     def __init__(self, data: InviteMetadataPayload, *, state: ConnectionState):
         super().__init__(data, state=state)

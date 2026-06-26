@@ -22,26 +22,19 @@ from mizuki.payloads.presence import (
 if TYPE_CHECKING:
     from mizuki.state import ConnectionState
 
-__all__ = (
-    "Activity",
-    "Presence"
-)
+__all__ = ("Activity", "Presence")
+
 
 class ActivityTimestamps:
-    __slots__ = (
-        "start",
-        "end"
-    )
+    __slots__ = ("start", "end")
 
     def __init__(self, data: TimestampsPayload):
         self.start = scls(datetime.fromtimestamp, data.get("start"))
         self.end = scls(datetime.fromtimestamp, data.get("end"))
 
+
 class ActivityParty:
-    __slots__ = (
-        "id",
-        "size"
-    )
+    __slots__ = ("id", "size")
 
     def __init__(self, data: ActivityPartyPayload):
         self.id = data.get("id")
@@ -55,6 +48,7 @@ class ActivityParty:
     def max_size(self) -> int | None:
         return self.size[1] if self.size is not None else None
 
+
 class ActivityAssets:
     __slots__ = (
         "large_image",
@@ -63,7 +57,7 @@ class ActivityAssets:
         "small_image",
         "small_text",
         "small_url",
-        "invite_cover_image"
+        "invite_cover_image",
     )
 
     def __init__(self, data: ActivityAssetsPayload, *, application_id: int | None):
@@ -73,29 +67,27 @@ class ActivityAssets:
         self.small_image = activity_asset_parse(application_id, data.get("small_image"))
         self.small_text = data.get("small_text")
         self.small_url = data.get("small_url")
-        self.invite_cover_image = activity_asset_parse(application_id, data.get("invite_cover_image"))
+        self.invite_cover_image = activity_asset_parse(
+            application_id, data.get("invite_cover_image")
+        )
+
 
 class ActivitySecrets:
-    __slots__ = (
-        "join",
-        "spectate",
-        "match"
-    )
+    __slots__ = ("join", "spectate", "match")
 
     def __init__(self, data: ActivitySecretsPayload):
         self.join = data.get("join")
         self.spectate = data.get("spectate")
         self.match = data.get("match")
 
+
 class ActivityButton:
-    __slots__ = (
-        "label",
-        "url"
-    )
+    __slots__ = ("label", "url")
 
     def __init__(self, data: ActivityButtonPayload):
         self.label = data["label"]
         self.url = data["url"]
+
 
 class Activity:
     __slots__ = (
@@ -126,7 +118,9 @@ class Activity:
         self.created_at = datetime.fromtimestamp(data["created_at"])
         self.timestamps = scls(ActivityTimestamps, data.get("timestamps"))
         self.application_id = Snowflake._from_str(data.get("application_id"))
-        self.status_display_type = scls(StatusDisplayType, data.get("status_display_type"))
+        self.status_display_type = scls(
+            StatusDisplayType, data.get("status_display_type")
+        )
         self.details = data.get("details")
         self.details_url = data.get("details_url")
         self.state = data.get("state")
@@ -139,13 +133,9 @@ class Activity:
         self.flags = scls(ActivityFlags, data.get("flags"))
         self.buttons = [ActivityButton(a) for a in data.get("buttons", [])]
 
+
 class Presence:
-    __slots__ = (
-        "user",
-        "guild_id",
-        "status",
-        "activities"
-    )
+    __slots__ = ("user", "guild_id", "status", "activities")
 
     def __init__(self, data: PresencePayload, *, state: ConnectionState):
         self.user = User(data["user"], state=state)

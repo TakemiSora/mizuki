@@ -13,8 +13,9 @@ __all__ = (
     "AttachmentFlags",
     "MessageFlags",
     "ActivityFlags",
-    "InviteFlags"
+    "InviteFlags",
 )
+
 
 class UserFlags(IntFlag):
     STAFF = 1 << 0
@@ -32,8 +33,10 @@ class UserFlags(IntFlag):
     CERTIFIED_MODERATOR = 1 << 18
     BOT_HTTP_INTERACTIONS = 1 << 19
 
+
 class RoleFlags(IntFlag):
     IN_PROMPT = 1 << 0
+
 
 class IntentFlags(IntFlag):
     """
@@ -41,6 +44,7 @@ class IntentFlags(IntFlag):
 
     Note that ``GUILD_PRESENCES``, ``MESSAGE_CONTENT`` and ``GUILD_MEMBERS`` are **privileged intents** and need to be enabled in the Developer Portal to use.
     """
+
     GUILDS = 1 << 0
     GUILD_MEMBERS = 1 << 1
     GUILD_MODERATION = 1 << 2
@@ -82,12 +86,14 @@ class IntentFlags(IntFlag):
         privileged = cls.GUILD_PRESENCES | cls.MESSAGE_CONTENT | cls.GUILD_MEMBERS
         return cls.all() & ~privileged
 
+
 class SystemChannelFlags(IntFlag):
     SUPPRESS_JOIN_NOTIFICATIONS = 1 << 0
     SUPPRESS_PREMIUM_SUBSCRIPTIONS = 1 << 1
     SUPPRESS_GUILD_REMINDER_NOTIFICATIONS = 1 << 2
     SUPPRESS_JOIN_NOTIFICATION_REPLIES = 1 << 3
     SUPPRESS_ROLE_SUBSCRIPTION_PURCHASE_NOTIFICATIONS = 1 << 4
+
 
 class GuildMemberFlags(IntFlag):
     DID_REJOIN = 1 << 0
@@ -101,16 +107,20 @@ class GuildMemberFlags(IntFlag):
     DM_SETTINGS_UPSELL_ACKNOWLEDGED = 1 << 8
     AUTOMOD_QUARANTINED_GUILD_TAG = 1 << 9
 
+
 class ChannelFlags(IntFlag):
     PINNED = 1 << 1
     REQUIRE_TAG = 1 << 4
     HIDE_MEDIA_DOWNLOAD_OPTIONS = 1 << 15
 
+
 class EmbedMediaFlags(IntFlag):
     IS_ANIMATED = 1 << 5
 
+
 class EmbedFlags(IntFlag):
     IS_CONTENT_INVENTORY_ENTRY = 1 << 5
+
 
 class AttachmentFlags(IntFlag):
     IS_CLIP = 1 << 0
@@ -118,6 +128,7 @@ class AttachmentFlags(IntFlag):
     IS_REMIX = 1 << 2
     IS_SPOILER = 1 << 3
     IS_ANIMATED = 1 << 5
+
 
 class MessageFlags(IntFlag):
     CROSSPOSTED = 1 << 0
@@ -134,6 +145,7 @@ class MessageFlags(IntFlag):
     HAS_SNAPSHOT = 1 << 14
     IS_COMPONENTS_V2 = 1 << 15
 
+
 class ActivityFlags(IntFlag):
     INSTANCE = 1 << 0
     JOIN = 1 << 1
@@ -144,6 +156,7 @@ class ActivityFlags(IntFlag):
     PARTY_PRIVACY_FRIENDS = 1 << 6
     PARTY_PRIVACY_VOICE_CHANNEL = 1 << 7
     EMBEDDED = 1 << 8
+
 
 class InviteFlags(IntFlag):
     IS_GUEST_INVITE = 1 << 0

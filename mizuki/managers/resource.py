@@ -12,25 +12,23 @@ if TYPE_CHECKING:
     from mizuki.objects.command import PartialApplicationCommand
     from mizuki.cache import CacheStorage
 
+
 class Managers:
-    __slots__ = (
-        "users",
-        "channels",
-        "commands",
-        "messages",
-        "guilds"
-    )
+    __slots__ = ("users", "channels", "commands", "messages", "guilds")
 
     def __init__(
-        self, *,
+        self,
+        *,
         state: ConnectionState,
         cache_storage: CacheStorage,
         application_id: int,
-        commands_data: dict[str, tuple[int, PartialApplicationCommand]]
+        commands_data: dict[str, tuple[int, PartialApplicationCommand]],
     ):
         self.users = UserManager(state, cache_storage)
         self.channels = ChannelManager(state, cache_storage)
         self.messages = MessageManager(state, cache_storage)
         self.guilds = GuildManager(state, cache_storage)
 
-        self.commands = CommandManager(state, cache_storage, application_id, commands_data)
+        self.commands = CommandManager(
+            state, cache_storage, application_id, commands_data
+        )
