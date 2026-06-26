@@ -3,25 +3,16 @@ from typing import Any, overload
 from mizuki.http import Path
 from mizuki.file import File
 from mizuki.flags import MessageFlags
-from mizuki._utils import (
-    _MISSING,
-    assign_val_dict,
-    mtd
-)
+from mizuki._utils import _MISSING, assign_val_dict, mtd
 
 from mizuki.managers._types import BaseManager
 from mizuki.enums.message import MessageReferenceType, ReactionType
 from mizuki.objects.embed import Embed
 from mizuki.objects.user import User
-from mizuki.objects.message import (
-    AllowedMentions,
-    Message,
-    MessageReference
-)
+from mizuki.objects.message import AllowedMentions, Message, MessageReference
 
-__all__ = (
-    "MessageManager",
-)
+__all__ = ("MessageManager",)
+
 
 class MessageManager(BaseManager):
     """
@@ -69,14 +60,17 @@ class MessageManager(BaseManager):
             A HTTP error occurred.
         """
         return self._cache_storage.update_messages(
-            Message(await self._state.http.request(
-                Path(
-                    "GET",
-                    "channels/{channel_id}/messages/{message_id}",
-                    channel_id=channel_id,
-                    message_id=message_id
-                )
-            ), state=self._state)
+            Message(
+                await self._state.http.request(
+                    Path(
+                        "GET",
+                        "channels/{channel_id}/messages/{message_id}",
+                        channel_id=channel_id,
+                        message_id=message_id,
+                    )
+                ),
+                state=self._state,
+            )
         )
 
     async def get_or_fetch(self, channel_id: int, message_id: int) -> Message:
@@ -103,35 +97,27 @@ class MessageManager(BaseManager):
 
     @overload
     async def fetch_channel_messages(
-        self, channel_id: int,
-        *,
-        around: int = _MISSING,
-        limit: int = _MISSING
+        self, channel_id: int, *, around: int = _MISSING, limit: int = _MISSING
     ) -> list[Message]: ...
 
     @overload
     async def fetch_channel_messages(
-        self, channel_id: int,
-        *,
-        before: int = _MISSING,
-        limit: int = _MISSING
+        self, channel_id: int, *, before: int = _MISSING, limit: int = _MISSING
     ) -> list[Message]: ...
 
     @overload
     async def fetch_channel_messages(
-        self, channel_id: int,
-        *,
-        after: int = _MISSING,
-        limit: int = _MISSING
+        self, channel_id: int, *, after: int = _MISSING, limit: int = _MISSING
     ) -> list[Message]: ...
 
     async def fetch_channel_messages(
-        self, channel_id: int,
+        self,
+        channel_id: int,
         *,
         around: int = _MISSING,
         before: int = _MISSING,
         after: int = _MISSING,
-        limit: int = _MISSING
+        limit: int = _MISSING,
     ) -> list[Message]:
         """
         Fetches the messages in a channel based on the parameters.
@@ -173,28 +159,25 @@ class MessageManager(BaseManager):
             A HTTP error occurred.
         """
         params = assign_val_dict(
-            {}, _MISSING,
-            around=around,
-            before=before,
-            after=after
+            {}, _MISSING, around=around, before=before, after=after
         )
 
-        if len(params) > 1: raise TypeError("'around', 'before', and 'after' parameters are mutually exclusive. Only one should be provided at a time.")
+        if len(params) > 1:
+            raise TypeError(
+                "'around', 'before', and 'after' parameters are mutually exclusive. Only one should be provided at a time."
+            )
 
         return [
             self._cache_storage.update_messages(Message(m, state=self._state))
             for m in await self._state.http.request(
-                Path(
-                    "GET",
-                    "channels/{channel_id}/messages",
-                    channel_id=channel_id
-                ),
-                params=assign_val_dict(params, _MISSING, limit=limit)
+                Path("GET", "channels/{channel_id}/messages", channel_id=channel_id),
+                params=assign_val_dict(params, _MISSING, limit=limit),
             )
         ]
 
     async def create(
-        self, channel_id: int,
+        self,
+        channel_id: int,
         *,
         content: str = _MISSING,
         tts: bool = _MISSING,
@@ -203,7 +186,7 @@ class MessageManager(BaseManager):
         message_reference: MessageReference = _MISSING,
         files: list[File] = _MISSING,
         sticker_ids: list[int] = _MISSING,
-        flags: MessageFlags = _MISSING
+        flags: MessageFlags = _MISSING,
     ) -> Message:
         """
         Creates a new message in the specified channel.
@@ -253,35 +236,42 @@ class MessageManager(BaseManager):
             A HTTP error occurred.
         """
         return self._cache_storage.update_messages(
-            Message(await self._state.http.request(
-                Path(
-                    "POST",
-                    "channels/{channel_id}/messages",
-                    channel_id=channel_id
+            Message(
+                await self._state.http.request(
+                    Path(
+                        "POST", "channels/{channel_id}/messages", channel_id=channel_id
+                    ),
+                    files=files,
+                    json=assign_val_dict(
+                        {},
+                        _MISSING,
+                        content=content,
+                        tts=tts,
+                        embeds=(
+                            [e._to_dict() for e in embeds]
+                            if embeds is not _MISSING
+                            else _MISSING
+                        ),
+                        attachments=(
+                            [
+                                file._to_attachment_dict(i)
+                                for i, file in enumerate(files)
+                            ]
+                            if (
+                                files
+                                and MessageFlags.IS_COMPONENTS_V2
+                                not in (flags or MessageFlags(0))
+                            )
+                            else _MISSING
+                        ),
+                        allowed_mentions=mtd(allowed_mentions),
+                        message_reference=mtd(message_reference),
+                        sticker_ids=sticker_ids,
+                        flags=flags.value if flags is not _MISSING else _MISSING,
+                    ),
                 ),
-                files=files,
-                json= assign_val_dict(
-                     {}, _MISSING,
-                     content=content,
-                     tts=tts,
-                     embeds=(
-                         [e._to_dict() for e in embeds]
-                         if embeds is not _MISSING else _MISSING
-                     ),
-                     attachments=(
-                         [file._to_attachment_dict(i) for i, file in enumerate(files)]
-                         if (
-                             files
-                             and MessageFlags.IS_COMPONENTS_V2 not in (flags or MessageFlags(0))
-                         )
-                         else _MISSING
-                     ),
-                     allowed_mentions=mtd(allowed_mentions),
-                     message_reference=mtd(message_reference),
-                     sticker_ids=sticker_ids,
-                     flags=flags.value if flags is not _MISSING else _MISSING
-                )
-            ), state=self._state)
+                state=self._state,
+            )
         )
 
     async def reply(
@@ -295,7 +285,7 @@ class MessageManager(BaseManager):
         allowed_mentions: AllowedMentions = _MISSING,
         files: list[File] = _MISSING,
         sticker_ids: list[int] = _MISSING,
-        flags: MessageFlags = _MISSING
+        flags: MessageFlags = _MISSING,
     ) -> Message:
         """
         Creates a new reply to a message in the specified channel.
@@ -353,15 +343,16 @@ class MessageManager(BaseManager):
             files=files,
             message_reference=MessageReference.new(message_id=message_id),
             sticker_ids=sticker_ids,
-            flags=flags
+            flags=flags,
         )
 
     async def forward(
-        self, target_channel_id: int,
+        self,
+        target_channel_id: int,
         *,
         message_id: int,
         channel_id: int,
-        guild_id: int = _MISSING
+        guild_id: int = _MISSING,
     ) -> Message:
         """
         Forwards a message to a channel.
@@ -391,20 +382,17 @@ class MessageManager(BaseManager):
         :class:`HTTPException`
             A HTTP error occurred.
         """
-        return await self.create(target_channel_id,
+        return await self.create(
+            target_channel_id,
             message_reference=MessageReference.new(
                 type=MessageReferenceType.FORWARD,
                 message_id=message_id,
                 channel_id=channel_id,
-                guild_id=guild_id
-            )
+                guild_id=guild_id,
+            ),
         )
 
-    async def crosspost(
-        self,
-        channel_id: int,
-        message_id: int
-    ) -> Message:
+    async def crosspost(self, channel_id: int, message_id: int) -> Message:
         """
         Crossposts a message from an Announcement Channel to all following channels.
 
@@ -431,24 +419,29 @@ class MessageManager(BaseManager):
             A HTTP error occurred.
         """
         return self._cache_storage.update_messages(
-            Message(await self._state.http.request(
-                Path(
-                    "POST",
-                    "channels/{channel_id}/messages/{message_id}/crosspost",
-                    message_id=message_id,
-                    channel_id=channel_id
-                )
-            ), state=self._state)
+            Message(
+                await self._state.http.request(
+                    Path(
+                        "POST",
+                        "channels/{channel_id}/messages/{message_id}/crosspost",
+                        message_id=message_id,
+                        channel_id=channel_id,
+                    )
+                ),
+                state=self._state,
+            )
         )
 
     async def _react_endpoints(
-        self, method: str, *,
+        self,
+        method: str,
+        *,
         channel_id: int,
         message_id: int,
         emoji_id: int = _MISSING,
         emoji_name: str = _MISSING,
         user: int | str = _MISSING,
-        **params: Any
+        **params: Any,
     ) -> Any:
         suffix = ""
 
@@ -469,16 +462,17 @@ class MessageManager(BaseManager):
                 channel_id=channel_id,
                 message_id=message_id,
                 suffix=suffix,
-                params=params
+                params=params,
             )
         )
 
     async def react(
-        self, *,
+        self,
+        *,
         channel_id: int,
         message_id: int,
         emoji_id: int = _MISSING,
-        emoji_name: str
+        emoji_name: str,
     ) -> None:
         """
         Adds a reaction to a message.
@@ -516,15 +510,16 @@ class MessageManager(BaseManager):
             message_id=message_id,
             emoji_id=emoji_id,
             emoji_name=emoji_name,
-            user="@me"
+            user="@me",
         )
 
     async def remove_reaction(
-        self, *,
+        self,
+        *,
         channel_id: int,
         message_id: int,
         emoji_id: int = _MISSING,
-        emoji_name: str
+        emoji_name: str,
     ) -> None:
         """
         Removes your reaction from a message.
@@ -560,11 +555,13 @@ class MessageManager(BaseManager):
             message_id=message_id,
             emoji_id=emoji_id,
             emoji_name=emoji_name,
-            user="@me"
+            user="@me",
         )
 
     async def remove_user_reaction(
-        self, user_id: int, *,
+        self,
+        user_id: int,
+        *,
         channel_id: int,
         message_id: int,
         emoji_id: int = _MISSING,
@@ -607,18 +604,19 @@ class MessageManager(BaseManager):
             message_id=message_id,
             emoji_id=emoji_id,
             emoji_name=emoji_name,
-            user=user_id
+            user=user_id,
         )
 
     async def get_reactions(
-        self, *,
+        self,
+        *,
         channel_id: int,
         message_id: int,
         emoji_id: int = _MISSING,
         emoji_name: str,
         type: ReactionType = _MISSING,
         after: int = _MISSING,
-        limit: int = _MISSING
+        limit: int = _MISSING,
     ) -> list[User]:
         """
         Fetch a list of users that reacted with this emoji.
@@ -659,29 +657,25 @@ class MessageManager(BaseManager):
         """
         return [
             self._cache_storage.update_users(User(u, state=self._state))
-            for u in
-            await self._react_endpoints(
+            for u in await self._react_endpoints(
                 "GET",
                 channel_id=channel_id,
                 message_id=message_id,
                 emoji_id=emoji_id,
                 emoji_name=emoji_name,
-                type=(
-                    type.value
-                    if type is not _MISSING
-                    else _MISSING
-                ),
+                type=(type.value if type is not _MISSING else _MISSING),
                 after=after,
-                limit=limit
+                limit=limit,
             )
         ]
 
     async def delete_emoji_reactions(
-        self, *,
+        self,
+        *,
         channel_id: int,
         message_id: int,
         emoji_id: int = _MISSING,
-        emoji_name: str
+        emoji_name: str,
     ) -> None:
         """
         Removes all reactions of a specified emoji from a message. This method requires :attr:`MANAGE_MESSAGES <mizuki.objects.permissions.Permissions.MANAGE_MESSAGES>`.
@@ -716,14 +710,10 @@ class MessageManager(BaseManager):
             channel_id=channel_id,
             message_id=message_id,
             emoji_id=emoji_id,
-            emoji_name=emoji_name
+            emoji_name=emoji_name,
         )
 
-    async def delete_all_reactions(
-        self, *,
-        channel_id: int,
-        message_id: int
-    ) -> None:
+    async def delete_all_reactions(self, *, channel_id: int, message_id: int) -> None:
         """
         Removes all reactions from a message. This method requires :attr:`MANAGE_MESSAGES <mizuki.objects.permissions.Permissions.MANAGE_MESSAGES>`.
 
@@ -747,13 +737,12 @@ class MessageManager(BaseManager):
             A HTTP error occurred.
         """
         await self._react_endpoints(
-            "DELETE",
-            channel_id=channel_id,
-            message_id=message_id
+            "DELETE", channel_id=channel_id, message_id=message_id
         )
 
     async def edit(
-        self, *,
+        self,
+        *,
         channel_id: int,
         message_id: int,
         content: str | None = _MISSING,
@@ -761,7 +750,7 @@ class MessageManager(BaseManager):
         flags: MessageFlags = _MISSING,
         allowed_mentions: AllowedMentions | None = _MISSING,
         files: list[File] = _MISSING,
-        override_files: bool = True
+        override_files: bool = True,
     ) -> Message:
         """
         Edits a message sent by you.
@@ -804,42 +793,41 @@ class MessageManager(BaseManager):
             A HTTP error occurred.
         """
         return self._cache_storage.update_messages(
-            Message(await self._state.http.request(
-                Path(
-                    "PATCH",
-                    "channels/{channel_id}/messages/{message_id}",
-                    channel_id=channel_id,
-                    message_id=message_id
+            Message(
+                await self._state.http.request(
+                    Path(
+                        "PATCH",
+                        "channels/{channel_id}/messages/{message_id}",
+                        channel_id=channel_id,
+                        message_id=message_id,
+                    ),
+                    files=files,
+                    json=assign_val_dict(
+                        {},
+                        _MISSING,
+                        content=content,
+                        embeds=(
+                            [e._to_dict() for e in embeds]
+                            if embeds is not _MISSING
+                            else _MISSING
+                        ),
+                        flags=(flags.value if flags is not _MISSING else _MISSING),
+                        allowed_mentions=mtd(allowed_mentions),
+                        attachments=(
+                            [
+                                file._to_attachment_dict(i)
+                                for i, file in enumerate(files)
+                            ]
+                            if override_files and files is not _MISSING
+                            else _MISSING
+                        ),
+                    ),
                 ),
-                files=files,
-                json=assign_val_dict(
-                    {}, _MISSING,
-                    content=content,
-                    embeds=(
-                        [e._to_dict() for e in embeds]
-                        if embeds is not _MISSING
-                        else _MISSING
-                    ),
-                    flags=(
-                        flags.value
-                        if flags is not _MISSING
-                        else _MISSING
-                    ),
-                    allowed_mentions=mtd(allowed_mentions),
-                    attachments=(
-                        [file._to_attachment_dict(i) for i, file in enumerate(files)]
-                        if override_files and files is not _MISSING
-                        else _MISSING
-                    )
-                )
-            ), state=self._state)
+                state=self._state,
+            )
         )
 
-    async def delete(
-        self, *,
-        channel_id: int,
-        message_id: int
-    ) -> None:
+    async def delete(self, *, channel_id: int, message_id: int) -> None:
         """
         Deletes a message from a channel.
 
@@ -869,16 +857,12 @@ class MessageManager(BaseManager):
                 "DELETE",
                 "channels/{channel_id}/messages/{message_id}",
                 channel_id=channel_id,
-                message_id=message_id
+                message_id=message_id,
             )
         )
         self._cache_storage.remove_message(message_id)
 
-    async def bulk_delete(
-        self, *,
-        channel_id: int,
-        message_ids: list[int]
-    ) -> None:
+    async def bulk_delete(self, *, channel_id: int, message_ids: list[int]) -> None:
         """
         Bulk deletes messages from a channel.
 
@@ -907,9 +891,7 @@ class MessageManager(BaseManager):
             Path(
                 "POST",
                 "channels/{channel_id}/messages/bulk-delete",
-                channel_id=channel_id
+                channel_id=channel_id,
             ),
-            json={
-                "message_ids": message_ids
-            }
+            json={"message_ids": message_ids},
         )

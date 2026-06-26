@@ -6,6 +6,7 @@ from .user import UserPayload
 from .role import PartialRolePayload
 from .guild import GuildPayload, GuildScheduledEventPayload
 
+
 class InvitePayload(TypedDict, total=False):
     type: Required[Literal[0, 1, 2]]
     code: Required[str]
@@ -21,7 +22,8 @@ class InvitePayload(TypedDict, total=False):
     guild_scheduled_event: GuildScheduledEventPayload
     flags: Literal[0, 1]
     roles: list[PartialRolePayload]
-    
+
+
 class InviteMetadataPayload(InvitePayload):
     uses: int
     max_uses: int

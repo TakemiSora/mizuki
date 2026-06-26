@@ -17,17 +17,15 @@ __all__ = (
     "Sticker",
 )
 
+
 class PartialSticker:
-    __slots__ = (
-        "id",
-        "name",
-        "format_type"
-    )
+    __slots__ = ("id", "name", "format_type")
 
     def __init__(self, data: PartialStickerPayload, *, state: ConnectionState):
         self.id = Snowflake(data["id"])
         self.name = data["name"]
         self.format_type = StickerFormatType(data["format_type"])
+
 
 class Sticker(PartialSticker):
     __slots__ = (
@@ -39,7 +37,7 @@ class Sticker(PartialSticker):
         "guild_id",
         "user",
         "sort_value",
-        "asset"
+        "asset",
     )
 
     def __init__(self, data: StickerPayload, *, state: ConnectionState):

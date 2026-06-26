@@ -5,11 +5,14 @@ from ._types import CDNHash, Snowflake
 from .avatar_decoration import AvatarDecorationPayload
 from .collectibles import CollectiblePayload
 from .primary_guild import UserPrimaryGuildPayload
+
 if TYPE_CHECKING:
     from .member import PartialMemberPayload
 
+
 class PartialUserPayload(TypedDict):
     id: Snowflake
+
 
 class UserPayload(PartialUserPayload, total=False):
     username: Required[str]

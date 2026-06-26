@@ -1,8 +1,7 @@
 from enum import StrEnum
 
-__all__ = (
-    "Event",
-)
+__all__ = ("Event",)
+
 
 class Event(StrEnum):
     """

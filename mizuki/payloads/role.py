@@ -2,10 +2,12 @@ from typing import NotRequired, TypedDict
 
 from ._types import CDNHash, Permissions, Snowflake
 
+
 class RoleColorsPayload(TypedDict):
     primary_color: int
     secondary_color: int | None
     tertiary_color: int | None
+
 
 class RoleTagsPayload(TypedDict):
     bot_id: NotRequired[Snowflake]
@@ -15,6 +17,7 @@ class RoleTagsPayload(TypedDict):
     available_for_purchase: NotRequired[None]
     guild_connections: NotRequired[None]
 
+
 class PartialRolePayload(TypedDict):
     id: Snowflake
     name: str
@@ -22,6 +25,7 @@ class PartialRolePayload(TypedDict):
     icon: NotRequired[CDNHash | None]
     unicode_emoji: NotRequired[str | None]
     position: int
+
 
 class RolePayload(PartialRolePayload):
     hoist: bool

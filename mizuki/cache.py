@@ -9,19 +9,19 @@ from datetime import datetime, timedelta
 
 type Cachable = User | Message | Channel | Guild | ApplicationCommand
 
-__all__ = (
-    "CacheSettings",
-)
+__all__ = ("CacheSettings",)
+
 
 @dataclass(slots=True)
 class CacheEntry[D: Cachable]:
     created_at: datetime
     data: D
 
+
 class CacheSettings:
     """
     Cache Settings used to determine how cache is handles by a CacheStorage.
-    
+
     In the max limits of cache entries such as :attr:`CacheSettings.max_users_store`, :class:`None` represents infinite or no limit.
 
     Parameters
@@ -51,43 +51,43 @@ class CacheSettings:
     max_guilds_store : :class:`int` | :class:`None`, optional
         Determines the max amount of :class:`Guild <mizuki.objects.guild.Guild>` objects the cache will store. Defaults to ``None``.
     """
-    
+
     users: bool
     "Whether :class:`User <mizuki.objects.user.User>` caching is enabled."
-    
+
     messages: bool
     "Whether :class:`Message <mizuki.objects.message.Message>` caching is enabled."
-    
+
     channels: bool
     "Whether :class:`PrivateChannel <mizuki.objects.channel.PrivateChannel>`, :class:`ThreadChannel <mizuki.objects.channel.ThreadChannel>` and :class:`GuildChannel <mizuki.objects.channel.GuildChannel>` caching is enabled."
-    
+
     guilds: bool
     "Whether :class:`Guild <mizuki.objects.guild.Guild>` caching is enabled."
-    
+
     commands: bool
     "Whether :class:`ApplicationCommand <mizuki.objects.command.ApplicationCommand>` caching is enabled."
-    
+
     cache_invalidation: bool
     "Whether time-based cache invalidation is enabled, commands remain unaffected by this invalidation."
-    
+
     invalidation_time: timedelta
     "The amount of time a cach can live, before being invalidated."
-    
+
     cleanup_interval: timedelta
     "The interval at which the cleanup tasks will happen."
-    
+
     max_users_store: int | None
     "The max amount of :class:`User <mizuki.objects.user.User>` objects the cache will store."
-    
+
     max_messages_store: int | None
     "The max amount of :class:`Message <mizuki.objects.message.Message>` objects the cache will store."
-    
+
     max_channels_store: int | None
     "The max amount of :class:`PrivateChannel <mizuki.objects.channel.PrivateChannel>`, :class:`ThreadChannel <mizuki.objects.channel.ThreadChannel>` and :class:`GuildChannel <mizuki.objects.channel.GuildChannel>` objects the cache will store."
-    
+
     max_guilds_store: int | None
     "The max amount of :class:`Guild <mizuki.objects.guild.Guild>` objects the cache will store."
-    
+
     __slots__ = (
         "users",
         "messages",
@@ -100,7 +100,7 @@ class CacheSettings:
         "max_users_store",
         "max_messages_store",
         "max_channels_store",
-        "max_guilds_store"
+        "max_guilds_store",
     )
 
     def __init__(
@@ -116,7 +116,7 @@ class CacheSettings:
         max_users_store: int | None = None,
         max_messages_store: int | None = 2000,
         max_channels_store: int | None = None,
-        max_guilds_store: int | None = None
+        max_guilds_store: int | None = None,
     ):
         self.users = users
         self.messages = messages
@@ -131,9 +131,10 @@ class CacheSettings:
         self.max_channels_store = max_channels_store
         self.max_guilds_store = max_guilds_store
 
+
 class CacheStorage:
     ":meta private:"
-    
+
     __slots__ = (
         "settings",
         "users",
@@ -144,7 +145,7 @@ class CacheStorage:
         "_users_cleanup_task",
         "_messages_cleanup_task",
         "_channels_cleanup_task",
-        "_guilds_cleanup_task"
+        "_guilds_cleanup_task",
     )
 
     def __init__(self, settings: CacheSettings):
@@ -153,17 +154,29 @@ class CacheStorage:
         self.messages: dict[int, CacheEntry[Message]] = {}
         self.channels: dict[int, CacheEntry[Channel]] = {}
         self.guilds: dict[int, CacheEntry[Guild]] = {}
-        
+
         self.commands: dict[int, dict[int, ApplicationCommand]] = {}
-        #Guild ID (Global 0) ^         ^ Command ID
+        # Guild ID (Global 0) ^         ^ Command ID
 
     def start_cleanup_tasks(self) -> None:
         self._users_cleanup_task = asyncio.create_task(self._cleanup_cache(self.users))
-        self._messages_cleanup_task = asyncio.create_task(self._cleanup_cache(self.messages))
-        self._channels_cleanup_task = asyncio.create_task(self._cleanup_cache(self.channels))
-        self._guilds_cleanup_task = asyncio.create_task(self._cleanup_cache(self.guilds))
+        self._messages_cleanup_task = asyncio.create_task(
+            self._cleanup_cache(self.messages)
+        )
+        self._channels_cleanup_task = asyncio.create_task(
+            self._cleanup_cache(self.channels)
+        )
+        self._guilds_cleanup_task = asyncio.create_task(
+            self._cleanup_cache(self.guilds)
+        )
 
-    def _add_to_cache[T: Cachable](self, setting: bool, max_take: int | None, cache: dict[int, CacheEntry[T]], data: T) -> T:
+    def _add_to_cache[T: Cachable](
+        self,
+        setting: bool,
+        max_take: int | None,
+        cache: dict[int, CacheEntry[T]],
+        data: T,
+    ) -> T:
         if setting:
             if max_take is not None and len(cache) > max_take:
                 cache.pop(next(iter(cache)))
@@ -174,40 +187,42 @@ class CacheStorage:
 
     def update_users(self, user: User) -> User:
         return self._add_to_cache(
-            self.settings.users,
-            self.settings.max_users_store,
-            self.users, user
+            self.settings.users, self.settings.max_users_store, self.users, user
         )
 
     def update_messages(self, message: Message) -> Message:
         return self._add_to_cache(
             self.settings.messages,
             self.settings.max_messages_store,
-            self.messages, message
+            self.messages,
+            message,
         )
 
     def update_channels(self, channel: Channel) -> Channel:
         return self._add_to_cache(
             self.settings.channels,
             self.settings.max_channels_store,
-            self.channels, channel
-        )
-    
-    def update_guilds(self, guild: Guild) -> Guild:
-        for c in guild.channels: self.update_channels(c)
-        for t in guild.threads: self.update_channels(t)
-        return self._add_to_cache(
-            self.settings.guilds,
-            self.settings.max_guilds_store,
-            self.guilds, guild
+            self.channels,
+            channel,
         )
 
-    def _get_from_cache[T: Cachable](self, cache: dict[int, CacheEntry[T]], id: int) -> T | None:
+    def update_guilds(self, guild: Guild) -> Guild:
+        for c in guild.channels:
+            self.update_channels(c)
+        for t in guild.threads:
+            self.update_channels(t)
+        return self._add_to_cache(
+            self.settings.guilds, self.settings.max_guilds_store, self.guilds, guild
+        )
+
+    def _get_from_cache[T: Cachable](
+        self, cache: dict[int, CacheEntry[T]], id: int
+    ) -> T | None:
         return item.data if (item := cache.get(id)) is not None else None
 
     def get_user(self, user_id: int) -> User | None:
         return self._get_from_cache(self.users, user_id)
-    
+
     def get_message(self, message_id: int) -> Message | None:
         return self._get_from_cache(self.messages, message_id)
 
@@ -217,13 +232,14 @@ class CacheStorage:
     def get_guild(self, guild_id: int) -> Guild | None:
         return self._get_from_cache(self.guilds, guild_id)
 
-
-    def _remove_from_cache[T: Cachable](self, cache: dict[int, CacheEntry[T]], id: int) -> T | None:
+    def _remove_from_cache[T: Cachable](
+        self, cache: dict[int, CacheEntry[T]], id: int
+    ) -> T | None:
         return o.data if (o := cache.pop(id, None)) else None
 
     def remove_user(self, user_id: int) -> User | None:
         return self._remove_from_cache(self.users, user_id)
-    
+
     def remove_message(self, message_id: int) -> Message | None:
         return self._remove_from_cache(self.messages, message_id)
 
@@ -232,7 +248,6 @@ class CacheStorage:
 
     def remove_guild(self, guild_id: int) -> Guild | None:
         return self._remove_from_cache(self.guilds, guild_id)
-
 
     async def _cleanup_cache[T: Cachable](self, cache: dict[int, CacheEntry[T]]):
         while True:
@@ -247,20 +262,18 @@ class CacheStorage:
 
             for i in to_remove:
                 cache.pop(i, None)
-            
+
             await asyncio.sleep(self.settings.cleanup_interval.total_seconds())
-            
+
     def update_command(
-        self, command: ApplicationCommand,
-        *, guild_id: int = 0
+        self, command: ApplicationCommand, *, guild_id: int = 0
     ) -> ApplicationCommand:
         if self.settings.commands:
             self.commands.setdefault(guild_id, {})[command.id] = command
         return command
-        
+
     def update_commands_bulk(
-        self, commands: list[ApplicationCommand],
-        *, guild_id: int = 0
+        self, commands: list[ApplicationCommand], *, guild_id: int = 0
     ) -> list[ApplicationCommand]:
         if self.settings.commands:
             gcache = self.commands[guild_id] = {}
@@ -268,23 +281,18 @@ class CacheStorage:
             for command in commands:
                 gcache[command.id] = command
         return commands
-        
+
     def remove_command(
-        self, command_id: int,
-        *, guild_id: int = 0
+        self, command_id: int, *, guild_id: int = 0
     ) -> ApplicationCommand | None:
         if self.settings.commands and guild_id in self.commands:
             return self.commands[guild_id].pop(command_id, None)
-            
+
     def get_command(
-        self, command_id: int,
-        *, guild_id: int = 0
+        self, command_id: int, *, guild_id: int = 0
     ) -> ApplicationCommand | None:
         if self.settings.commands and guild_id in self.commands:
             return self.commands[guild_id].get(command_id)
-            
-    def get_all_commands(
-        self, *,
-        guild_id: int = 0
-    ) -> list[ApplicationCommand]:
+
+    def get_all_commands(self, *, guild_id: int = 0) -> list[ApplicationCommand]:
         return list(self.commands.get(guild_id, {}).values())

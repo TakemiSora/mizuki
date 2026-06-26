@@ -49,49 +49,42 @@ __all__ = (
     "Guild",
 )
 
+
 class UnavailableGuild:
-    __slots__ = (
-        "id",
-        "unavailable"
-    )
+    __slots__ = ("id", "unavailable")
 
     def __init__(self, data: UnavailableGuildPayload):
         self.id = Snowflake(data["id"])
         self.unavailable = data.get("unavailable", False)
 
+
 class StageInstance:
-    __slots__ = (
-        "id",
-        "guild_id",
-        "channel_id",
-        "topic",
-        "guild_scheduled_event_id"
-    )
+    __slots__ = ("id", "guild_id", "channel_id", "topic", "guild_scheduled_event_id")
 
     def __init__(self, data: StageInstancePayload):
         self.id = Snowflake(data["id"])
         self.guild_id = Snowflake(data["guild_id"])
         self.channel_id = Snowflake(data["channel_id"])
         self.topic = data["topic"]
-        self.guild_scheduled_event_id = Snowflake._from_str(data["guild_scheduled_event_id"])
+        self.guild_scheduled_event_id = Snowflake._from_str(
+            data["guild_scheduled_event_id"]
+        )
+
 
 class EntityMetadata:
-    __slots__ = (
-        "location",
-    )
+    __slots__ = ("location",)
 
     def __init__(self, data: EntityMetadataPayload):
         self.location = data.get("location")
 
+
 class RecurrenceRuleNWeekday:
-    __slots__ = (
-        "n",
-        "day"
-    )
+    __slots__ = ("n", "day")
 
     def __init__(self, data: RecurrenceRuleNWeekdayPayload):
         self.n = data["n"]
         self.day = EventRecurrenceRuleWeekday(data["day"])
+
 
 class GuildScheduledEventRecurrenceRule:
     __slots__ = (
@@ -104,19 +97,24 @@ class GuildScheduledEventRecurrenceRule:
         "by_month",
         "by_month_day",
         "by_year_day",
-        "count"
+        "count",
     )
 
     def __init__(self, data: GuildScheduledEventRecurrenceRulePayload):
         self.start = datetime.fromisoformat(data["start"])
         self.end = siso(data["end"])
         self.frequency = EventRecurrenceRuleFrequency(data["frequency"])
-        self.by_weekday = [EventRecurrenceRuleWeekday(e) for e in d] if (d := data["by_weekday"]) else []
-        self.by_n_weekday= scls(RecurrenceRuleNWeekday, data["by_n_weekday"])
+        self.by_weekday = (
+            [EventRecurrenceRuleWeekday(e) for e in d]
+            if (d := data["by_weekday"])
+            else []
+        )
+        self.by_n_weekday = scls(RecurrenceRuleNWeekday, data["by_n_weekday"])
         self.by_month = scls(EventRecurrenceRuleMonth, data["by_month"])
         self.by_month_day = d if (d := data["by_month_day"]) is not None else []
         self.by_year_day = d if (d := data["by_year_day"]) is not None else []
         self.count = data["count"]
+
 
 class GuildScheduledEvent:
     __slots__ = (
@@ -136,7 +134,7 @@ class GuildScheduledEvent:
         "creator",
         "user_count",
         "image",
-        "recurrence_rule"
+        "recurrence_rule",
     )
 
     def __init__(self, data: GuildScheduledEventPayload, *, state: ConnectionState):
@@ -156,7 +154,10 @@ class GuildScheduledEvent:
         self.creator = scls(User, data.get("creator"), state=state)
         self.user_count = data.get("user_count")
         self.image = Asset._from_guild_scheduled_event_cover(self.id, data.get("image"))
-        self.recurrence_rule = scls(GuildScheduledEventRecurrenceRule, data["recurrence_rule"])
+        self.recurrence_rule = scls(
+            GuildScheduledEventRecurrenceRule, data["recurrence_rule"]
+        )
+
 
 class Guild:
     __slots__ = (
@@ -216,12 +217,16 @@ class Guild:
         self.name = data["name"]
         self.icon = Asset._from_guild_avatar(self.id, data.get("icon"))
         self.splash = Asset._from_guild_splash(self.id, data.get("splash"))
-        self.discovery_splash = Asset._from_guild_discovery_splash(self.id, data.get("discovery_splash"))
+        self.discovery_splash = Asset._from_guild_discovery_splash(
+            self.id, data.get("discovery_splash")
+        )
         self.owner_id = Snowflake(data["owner_id"])
         self.afk_channel_id = Snowflake._from_str(data["afk_channel_id"])
         self.afk_timeout = data["afk_timeout"]
         self.verification_level = GuildVerificationLevel(data["verification_level"])
-        self.default_message_notifications = GuildNotificationLevel(data["default_message_notifications"])
+        self.default_message_notifications = GuildNotificationLevel(
+            data["default_message_notifications"]
+        )
         self.explicit_level = GuildExplicitContentLevel(data["explicit_content_filter"])
         self.roles = [Role(r) for r in data["roles"]]
         self.emojis = [Emoji(e, state=state) for e in data["emojis"]]
@@ -239,7 +244,9 @@ class Guild:
         self.premium_tier = GuildPremiumTier(data["premium_tier"])
         self.premium_subscription_count: int = data.get("premium_subscription_count", 0)
         self.preferred_locale = data["preferred_locale"]
-        self.public_updates_channel_id = Snowflake._from_str(data["public_updates_channel_id"])
+        self.public_updates_channel_id = Snowflake._from_str(
+            data["public_updates_channel_id"]
+        )
         self.max_video_channel_users = data.get("max_video_channel_users")
         self.max_stage_video_channel_users = data.get("max_stage_video_channel_users")
         self.approximate_member_count = data.get("approximate_member_count")
@@ -247,17 +254,32 @@ class Guild:
         self.nsfw_level = GuildNSFWLevel(data["nsfw_level"])
         self.stickers = [Sticker(s, state=state) for s in data.get("stickers", [])]
         self.premium_progress_bar_enabled = data["premium_progress_bar_enabled"]
-        self.safety_alerts_channel_id = Snowflake._from_str(data["safety_alerts_channel_id"])
+        self.safety_alerts_channel_id = Snowflake._from_str(
+            data["safety_alerts_channel_id"]
+        )
 
         self.joined_at = siso(data.get("joined_at"))
         self.large = data.get("large", False)
         self.member_count = data.get("member_count")
-        self.members = [Member(m, guild_id=self.id, state=state) for m in data.get("members", [])]
-        self.channels = [parse_channel_payload(c, self.id, state=self._state) for c in data.get("channels", [])]
-        self.threads = [ThreadChannel(c, self.id, state=self._state) for c in data.get("threads", [])]
+        self.members = [
+            Member(m, guild_id=self.id, state=state) for m in data.get("members", [])
+        ]
+        self.channels = [
+            parse_channel_payload(c, self.id, state=self._state)
+            for c in data.get("channels", [])
+        ]
+        self.threads = [
+            ThreadChannel(c, self.id, state=self._state)
+            for c in data.get("threads", [])
+        ]
         self.presences = [Presence(p, state=state) for p in data.get("presences", [])]
-        self.stage_instances = [StageInstance(s) for s in data.get("stage_instances", [])]
-        self.guild_scheduled_events = [GuildScheduledEvent(g, state=state) for g in data.get("guild_scheduled_events", [])]
+        self.stage_instances = [
+            StageInstance(s) for s in data.get("stage_instances", [])
+        ]
+        self.guild_scheduled_events = [
+            GuildScheduledEvent(g, state=state)
+            for g in data.get("guild_scheduled_events", [])
+        ]
 
     def __str__(self) -> str:
         return self.name
@@ -274,13 +296,20 @@ class Guild:
     def created_at(self) -> datetime:
         return self.id.created_at
 
+
 @overload
 def parse_guild_payload(data: GuildPayload, *, state: ConnectionState) -> Guild: ...
 
-@overload
-def parse_guild_payload(data: UnavailableGuildPayload, *, state: ConnectionState = _MISSING) -> UnavailableGuild: ...
 
-def parse_guild_payload(data: GuildPayload | UnavailableGuildPayload, *, state: ConnectionState = _MISSING) -> Guild | UnavailableGuild:
+@overload
+def parse_guild_payload(
+    data: UnavailableGuildPayload, *, state: ConnectionState = _MISSING
+) -> UnavailableGuild: ...
+
+
+def parse_guild_payload(
+    data: GuildPayload | UnavailableGuildPayload, *, state: ConnectionState = _MISSING
+) -> Guild | UnavailableGuild:
     unavailable = data.get("unavailable", False)
     if unavailable:
         return UnavailableGuild(cast(UnavailableGuildPayload, data))

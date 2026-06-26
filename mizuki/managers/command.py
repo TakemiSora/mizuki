@@ -10,7 +10,7 @@ from mizuki.objects.command import (
     ApplicationCommandOption,
     Localization,
     ApplicationCommand,
-    PartialApplicationCommand
+    PartialApplicationCommand,
 )
 from mizuki.objects.permissions import Permissions
 from mizuki.enums.interaction import InteractionContextType, ApplicationIntegrationType
@@ -18,27 +18,32 @@ from mizuki.enums.interaction import InteractionContextType, ApplicationIntegrat
 if TYPE_CHECKING:
     from mizuki.state import ConnectionState
 
+
 class CommandManager(BaseManager):
     """
     Manager used to manage :class:`~mizuki.objects.command.ApplicationCommand`.
     """
 
-    __slots__ = (
-        "_application_id",
-        "_commands_data"
-    )
+    __slots__ = ("_application_id", "_commands_data")
 
-    def __init__(self, state: ConnectionState, storage: CacheStorage, application_id: int, commands_data: dict[str, tuple[int, PartialApplicationCommand]]):
+    def __init__(
+        self,
+        state: ConnectionState,
+        storage: CacheStorage,
+        application_id: int,
+        commands_data: dict[str, tuple[int, PartialApplicationCommand]],
+    ):
         super().__init__(state, storage)
         self._application_id = application_id
         self._commands_data = commands_data
 
     async def _command_request(
-        self, *,
+        self,
+        *,
         method: str,
         command_id: int | None = None,
         guild_id: int | None = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Any:
         return await self._state.http.request(
             Path(
@@ -46,15 +51,13 @@ class CommandManager(BaseManager):
                 "applications/{application_id}{guild_or_not}/commands{command_suffix}",
                 application_id=self._application_id,
                 guild_or_not=f"/guilds/{guild_id}" if guild_id is not None else "",
-                command_suffix=f"/{command_id}" if command_id is not None else ""
+                command_suffix=f"/{command_id}" if command_id is not None else "",
             ),
-            **kwargs
+            **kwargs,
         )
 
     async def fetch_all(
-        self, *,
-        guild_id: int | None = None,
-        with_localizations: bool = True
+        self, *, guild_id: int | None = None, with_localizations: bool = True
     ) -> list[ApplicationCommand]:
         """
         Fetches a list of all application commands from the Discord API.
@@ -75,21 +78,19 @@ class CommandManager(BaseManager):
         :class:`HTTPException`
             A HTTP error occured.
         """
-        return self._cache_storage.update_commands_bulk([
-            ApplicationCommand(c)
-            for c in await self._command_request(
-                method="GET",
-                guild_id=guild_id,
-                params={
-                    "with_localizations": str(with_localizations).lower()
-                }
-            )
-        ], guild_id=guild_id or 0)
+        return self._cache_storage.update_commands_bulk(
+            [
+                ApplicationCommand(c)
+                for c in await self._command_request(
+                    method="GET",
+                    guild_id=guild_id,
+                    params={"with_localizations": str(with_localizations).lower()},
+                )
+            ],
+            guild_id=guild_id or 0,
+        )
 
-    def get_all(
-        self, *,
-        guild_id: int | None = None
-    ) -> list[ApplicationCommand]:
+    def get_all(self, *, guild_id: int | None = None) -> list[ApplicationCommand]:
         """
         Gets a list of ApplicationCommand frok the internal cache. Can be empty if the commands are not fetched atleast once.
 
@@ -101,8 +102,7 @@ class CommandManager(BaseManager):
         return self._cache_storage.get_all_commands(guild_id=guild_id or 0)
 
     async def add(
-        self, command: PartialApplicationCommand,
-        *, guild_id: int | None = None
+        self, command: PartialApplicationCommand, *, guild_id: int | None = None
     ) -> ApplicationCommand:
         """
         Adds a specific command object to the Application.
@@ -124,15 +124,16 @@ class CommandManager(BaseManager):
             A HTTP error occured.
         """
         return self._cache_storage.update_command(
-            ApplicationCommand(await self._command_request(
-                method="POST", json=command._to_dict(),
-                guild_id=guild_id
-            )), guild_id=guild_id or 0
+            ApplicationCommand(
+                await self._command_request(
+                    method="POST", json=command._to_dict(), guild_id=guild_id
+                )
+            ),
+            guild_id=guild_id or 0,
         )
 
     async def fetch(
-        self, command_id: int,
-        *, guild_id: int | None = None
+        self, command_id: int, *, guild_id: int | None = None
     ) -> ApplicationCommand:
         """
         Fetches an application command from the Discord API.
@@ -157,10 +158,12 @@ class CommandManager(BaseManager):
             A HTTP error occured.
         """
         return self._cache_storage.update_command(
-            ApplicationCommand(await self._command_request(
-                method="GET", guild_id=guild_id,
-                command_id=command_id
-            )), guild_id=guild_id or 0
+            ApplicationCommand(
+                await self._command_request(
+                    method="GET", guild_id=guild_id, command_id=command_id
+                )
+            ),
+            guild_id=guild_id or 0,
         )
 
     async def sync_all(self) -> list[ApplicationCommand]:
@@ -184,11 +187,13 @@ class CommandManager(BaseManager):
             if id == 0:
                 global_cmds.append(data[1])
             else:
-                if id not in guild_cmds: guild_cmds[id] = []
+                if id not in guild_cmds:
+                    guild_cmds[id] = []
                 guild_cmds[id].append(data[1])
 
         to_return: list[ApplicationCommand] = []
-        if global_cmds: to_return += await self.sync_bulk(global_cmds)
+        if global_cmds:
+            to_return += await self.sync_bulk(global_cmds)
 
         for guild_id, cmds in guild_cmds.items():
             to_return += await self.sync_bulk(cmds, guild_id=guild_id)
@@ -196,8 +201,7 @@ class CommandManager(BaseManager):
         return to_return
 
     async def sync_bulk(
-        self, commands: list[PartialApplicationCommand],
-        *, guild_id: int | None = None
+        self, commands: list[PartialApplicationCommand], *, guild_id: int | None = None
     ) -> list[ApplicationCommand]:
         """
         Syncs given commands to the Application. This will **override** all commands currently synced.
@@ -218,18 +222,22 @@ class CommandManager(BaseManager):
         :class:`HTTPException`
             A HTTP error occured.
         """
-        return self._cache_storage.update_commands_bulk([
-            ApplicationCommand(c)
-            for c in
-            await self._command_request(
-                method="PUT", guild_id=guild_id,
-                json=[c._to_dict() for c in commands]
-            )
-        ], guild_id=guild_id or 0)
+        return self._cache_storage.update_commands_bulk(
+            [
+                ApplicationCommand(c)
+                for c in await self._command_request(
+                    method="PUT",
+                    guild_id=guild_id,
+                    json=[c._to_dict() for c in commands],
+                )
+            ],
+            guild_id=guild_id or 0,
+        )
 
     @overload
     async def edit(
-        self, command_id: int,
+        self,
+        command_id: int,
         *,
         guild_id: int,
         name: str = _MISSING,
@@ -238,12 +246,13 @@ class CommandManager(BaseManager):
         description_localizations: Localization | None = _MISSING,
         options: list[ApplicationCommandOption] = _MISSING,
         default_member_permissions: Permissions | None = _MISSING,
-        nsfw: bool = _MISSING
+        nsfw: bool = _MISSING,
     ) -> ApplicationCommand: ...
 
     @overload
     async def edit(
-        self, command_id: int,
+        self,
+        command_id: int,
         *,
         name: str = _MISSING,
         name_localizations: Localization | None = _MISSING,
@@ -253,11 +262,12 @@ class CommandManager(BaseManager):
         default_member_permissions: Permissions | None = _MISSING,
         integration_types: list[ApplicationIntegrationType] = _MISSING,
         contexts: list[InteractionContextType] = _MISSING,
-        nsfw: bool = _MISSING
+        nsfw: bool = _MISSING,
     ) -> ApplicationCommand: ...
 
     async def edit(
-        self, command_id: int,
+        self,
+        command_id: int,
         *,
         guild_id: int | None = None,
         name: str = _MISSING,
@@ -268,7 +278,7 @@ class CommandManager(BaseManager):
         default_member_permissions: Permissions | None = _MISSING,
         integration_types: list[ApplicationIntegrationType] = _MISSING,
         contexts: list[InteractionContextType] = _MISSING,
-        nsfw: bool = _MISSING
+        nsfw: bool = _MISSING,
     ) -> ApplicationCommand:
         """
         Edits an application command. All parameters to this method besides ``command_id`` are optional.
@@ -321,12 +331,15 @@ class CommandManager(BaseManager):
         """
 
         payload = assign_val_dict(
-            {}, _MISSING,
+            {},
+            _MISSING,
             name=name,
             name_localizations=mtd(name_localizations),
             description=description,
             description_localizations=mtd(description_localizations),
-            options=[o._to_dict() for o in options] if options is not _MISSING else _MISSING,
+            options=[o._to_dict() for o in options]
+            if options is not _MISSING
+            else _MISSING,
             default_member_permissions=(
                 default_member_permissions.value
                 if isinstance(default_member_permissions, Permissions)
@@ -338,11 +351,9 @@ class CommandManager(BaseManager):
                 else _MISSING
             ),
             contexts=(
-                [c.value for c in contexts]
-                if contexts is not _MISSING
-                else _MISSING
+                [c.value for c in contexts] if contexts is not _MISSING else _MISSING
             ),
-            nsfw=nsfw
+            nsfw=nsfw,
         )
 
         return self._cache_storage.update_command(
@@ -351,15 +362,12 @@ class CommandManager(BaseManager):
                     method="PATCH",
                     command_id=command_id,
                     guild_id=guild_id,
-                    json=payload
+                    json=payload,
                 )
             )
         )
 
-    async def delete(
-        self, command_id: int,
-        *, guild_id: int | None = None
-    ) -> None:
+    async def delete(self, command_id: int, *, guild_id: int | None = None) -> None:
         """
         Deletes an application command.
 
@@ -382,5 +390,9 @@ class CommandManager(BaseManager):
         :class:`HTTPException`
             A HTTP error occured.
         """
-        await self._command_request(method="DELETE", command_id=command_id, guild_id=guild_id)
-        self._cache_storage.remove_command(command_id=command_id, guild_id=guild_id or 0)
+        await self._command_request(
+            method="DELETE", command_id=command_id, guild_id=guild_id
+        )
+        self._cache_storage.remove_command(
+            command_id=command_id, guild_id=guild_id or 0
+        )

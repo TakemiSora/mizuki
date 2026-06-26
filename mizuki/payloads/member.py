@@ -5,6 +5,7 @@ from .avatar_decoration import AvatarDecorationPayload
 from .collectibles import CollectiblePayload
 from .user import UserPayload
 
+
 class PartialMemberPayload(TypedDict, total=False):
     nick: str | None
     avatar: CDNHash | None
@@ -18,7 +19,8 @@ class PartialMemberPayload(TypedDict, total=False):
     communication_disabled_until: ISO8601Timestamp | None
     avatar_decoration_data: AvatarDecorationPayload | None
     collectibles: CollectiblePayload
-    
+
+
 class MemberPayload(PartialMemberPayload):
     user: UserPayload
     deaf: bool

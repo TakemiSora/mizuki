@@ -4,11 +4,13 @@ from ._types import ISO8601Timestamp, Permissions, Snowflake
 from .member import MemberPayload
 from .user import UserPayload
 
+
 class ChannelPermissionOverwritePayload(TypedDict):
     id: Snowflake
     type: Literal[0, 1]
     allow: Permissions
     deny: Permissions
+
 
 class ThreadMetaDataPayload(TypedDict):
     archived: bool
@@ -18,6 +20,7 @@ class ThreadMetaDataPayload(TypedDict):
     invitable: NotRequired[bool]
     create_timestamp: NotRequired[ISO8601Timestamp | None]
 
+
 class ThreadMemberPayload(TypedDict):
     id: NotRequired[Snowflake]
     user_id: NotRequired[Snowflake]
@@ -25,8 +28,10 @@ class ThreadMemberPayload(TypedDict):
     flags: int
     member: NotRequired[MemberPayload]
 
+
 class PartialForumTagPayload(TypedDict):
     name: str
+
 
 class ForumTagPayload(PartialForumTagPayload):
     id: Snowflake
@@ -34,9 +39,11 @@ class ForumTagPayload(PartialForumTagPayload):
     emoji_id: Snowflake | None
     emoji_name: str | None
 
+
 class DefaultReactionPayload(TypedDict):
     emoji_id: Snowflake | None
     emoji_name: str | None
+
 
 class BaseChannelPayload(TypedDict):
     id: Snowflake
@@ -44,12 +51,14 @@ class BaseChannelPayload(TypedDict):
     flags: int
     last_pin_timestamp: NotRequired[ISO8601Timestamp | None]
 
+
 class BasePublicChannelPayload(BaseChannelPayload):
     guild_id: NotRequired[Snowflake]
     name: str
     parent_id: NotRequired[Snowflake | None]
     rate_limit_per_user: NotRequired[int]
     permissions: NotRequired[Permissions]
+
 
 class GuildChannelPayload(BasePublicChannelPayload):
     type: Literal[0, 2, 4, 5, 13, 14, 15, 16]
@@ -68,9 +77,11 @@ class GuildChannelPayload(BasePublicChannelPayload):
     rtc_region: NotRequired[str | None]
     video_quality_mode: NotRequired[int]
 
+
 class PrivateChannelPayload(BaseChannelPayload):
     type: Literal[1]
     recipients: list[UserPayload]
+
 
 class ThreadPayload(BasePublicChannelPayload):
     type: Literal[10, 11, 12]
@@ -81,9 +92,11 @@ class ThreadPayload(BasePublicChannelPayload):
     total_message_sent: int
     applied_tags: NotRequired[list[Snowflake]]
 
+
 class ThreadCreatePayload(ThreadPayload, total=False):
     newly_created: bool
     member: ThreadMemberPayload
+
 
 class ThreadDeletePayload(TypedDict):
     id: Snowflake
@@ -91,21 +104,27 @@ class ThreadDeletePayload(TypedDict):
     parent_id: Snowflake
     type: Literal[10, 11, 12]
 
+
 class ChannelMentionPayload(TypedDict):
     id: Snowflake
     guild_id: Snowflake
     type: Literal[0, 2, 5, 10, 11, 13, 14, 15, 16]
     name: str
-        
+
+
 class PartialGuildChannelPayload(BasePublicChannelPayload):
     type: Literal[0, 2, 4, 5, 13, 14, 15]
     topic: NotRequired[str | None]
     position: int
     nsfw: NotRequired[bool]
 
+
 class PartialThreadPayload(BasePublicChannelPayload):
     type: Literal[10, 11, 12]
     thread_metadata: ThreadMetaDataPayload
-    
+
+
 type ChannelPayload = GuildChannelPayload | PrivateChannelPayload | ThreadPayload
-type PartialChannelPayload = PartialGuildChannelPayload | PrivateChannelPayload | PartialThreadPayload
+type PartialChannelPayload = (
+    PartialGuildChannelPayload | PrivateChannelPayload | PartialThreadPayload
+)

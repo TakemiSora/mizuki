@@ -27,11 +27,10 @@ from mizuki.managers.message import MessageManager
 from mizuki.managers.user import UserManager
 from mizuki.managers.command import CommandManager
 
-__all__ = (
-    "Bot",
-)
+__all__ = ("Bot",)
 
 _log = logging.getLogger(__name__)
+
 
 class Bot:
     """
@@ -88,13 +87,11 @@ class Bot:
         "guilds",
         "commands",
         "user",
-        "_session"
+        "_session",
     )
 
     def __init__(
-        self, *,
-        intents: IntentFlags,
-        cache_settings: CacheSettings | None = None
+        self, *, intents: IntentFlags, cache_settings: CacheSettings | None = None
     ):
         self.intents = intents
         self._listeners: dict[str, list[CoroFunc]] = {}
@@ -122,12 +119,9 @@ class Bot:
 
     async def _verify_token(self) -> User:
         try:
-            return User(await self.http.request(
-                Path(
-                    "GET",
-                    "users/@me"
-                )
-            ), state=self._state)
+            return User(
+                await self.http.request(Path("GET", "users/@me")), state=self._state
+            )
         except Unauthorized:
             raise ImproperToken(401, "Improper token has been passed.")
 
@@ -159,7 +153,7 @@ class Bot:
             managers = self._state.init_managers(
                 cache_storage=self._storage,
                 application_id=self.user.id,
-                commands_data=self._commands_data
+                commands_data=self._commands_data,
             )
             self.users = managers.users
             self.channels = managers.channels
@@ -168,9 +162,7 @@ class Bot:
             self.guilds = managers.guilds
 
             self.gateway = await self._state.init_gateway(
-                bot=self,
-                token=token,
-                intents=self.intents
+                bot=self, token=token, intents=self.intents
             )
             if self._setup_hook is not None:
                 await self._setup_hook()
@@ -224,10 +216,17 @@ class Bot:
             async def can_be_named_anything(message: mizuki.Message) -> None:
                 ...
         """
+
         def decorator(func: CoroFunc) -> CoroFunc:
-            if not inspect.iscoroutinefunction(func): raise TypeError(f"Event listener '{func.__name__}' has to be a coroutine function.")
-            self._listeners.setdefault(event.value if event is not None else func.__name__, []).append(func)
+            if not inspect.iscoroutinefunction(func):
+                raise TypeError(
+                    f"Event listener '{func.__name__}' has to be a coroutine function."
+                )
+            self._listeners.setdefault(
+                event.value if event is not None else func.__name__, []
+            ).append(func)
             return func
+
         return decorator
 
     def setup(self) -> CoroDecorator:
@@ -241,27 +240,34 @@ class Bot:
         :class:`TypeError`
             The decorator was applied to a synchronous function.
         """
+
         def decorator(func: CoroFunc) -> CoroFunc:
-            if not inspect.iscoroutinefunction(func): raise TypeError(f"Setup hook '{func.__name__}' has to be a coroutine function.")
+            if not inspect.iscoroutinefunction(func):
+                raise TypeError(
+                    f"Setup hook '{func.__name__}' has to be a coroutine function."
+                )
             self._setup_hook = func
             return func
+
         return decorator
 
     @overload
     def command(
-        self, *,
+        self,
+        *,
         guild_id: int,
         name: str,
         name_localizations: Localization = _MISSING,
         description: str,
         description_localizations: Localization = _MISSING,
         default_member_permissions: Permissions = _MISSING,
-        nsfw: bool = False
+        nsfw: bool = False,
     ) -> CoroDecorator: ...
 
     @overload
     def command(
-        self, *,
+        self,
+        *,
         name: str,
         name_localizations: Localization = _MISSING,
         description: str,
@@ -269,11 +275,12 @@ class Bot:
         default_member_permissions: Permissions = _MISSING,
         integration_types: list[ApplicationIntegrationType] = _MISSING,
         contexts: list[InteractionContextType] = _MISSING,
-        nsfw: bool = False
+        nsfw: bool = False,
     ) -> CoroDecorator: ...
 
     def command(
-        self, *,
+        self,
+        *,
         guild_id: int | None = None,
         name: str,
         name_localizations: Localization = _MISSING,
@@ -282,7 +289,7 @@ class Bot:
         default_member_permissions: Permissions = _MISSING,
         integration_types: list[ApplicationIntegrationType] = _MISSING,
         contexts: list[InteractionContextType] = _MISSING,
-        nsfw: bool = False
+        nsfw: bool = False,
     ) -> CoroDecorator:
         """
         This function is a decorator.
@@ -301,20 +308,27 @@ class Bot:
         :class:`TypeError`
             The decorator was applied to a synchronous function.
         """
-        def decorator(func: CoroFunc) -> CoroFunc:
-            if not inspect.iscoroutinefunction(func): raise TypeError(f"Command callback for '{name}:{func.__name__}' has to be a coroutine function.")
 
-            self._commands_data[name] = guild_id or 0, PartialApplicationCommand._from_command(
-                func,
-                name=name,
-                name_localizations=name_localizations,
-                description=description,
-                description_localizations=description_localizations,
-                default_member_permissions=default_member_permissions,
-                integration_types=integration_types,
-                contexts=contexts,
-                type=ApplicationCommandType.CHAT_INPUT,
-                nsfw=nsfw
+        def decorator(func: CoroFunc) -> CoroFunc:
+            if not inspect.iscoroutinefunction(func):
+                raise TypeError(
+                    f"Command callback for '{name}:{func.__name__}' has to be a coroutine function."
+                )
+
+            self._commands_data[name] = (
+                guild_id or 0,
+                PartialApplicationCommand._from_command(
+                    func,
+                    name=name,
+                    name_localizations=name_localizations,
+                    description=description,
+                    description_localizations=description_localizations,
+                    default_member_permissions=default_member_permissions,
+                    integration_types=integration_types,
+                    contexts=contexts,
+                    type=ApplicationCommandType.CHAT_INPUT,
+                    nsfw=nsfw,
+                ),
             )
 
             return func

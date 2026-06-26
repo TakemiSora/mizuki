@@ -11,9 +11,15 @@ from .embed import EmbedPayload
 from .file import FileUploadPayload
 from .guild import GuildPayload
 from .member import MemberPayload, PartialMemberPayload
-from .message import AttachmentPayload, MessagePayload, PartialMessagePayload, AllowedMentionsPayload
+from .message import (
+    AttachmentPayload,
+    MessagePayload,
+    PartialMessagePayload,
+    AllowedMentionsPayload,
+)
 from .role import RolePayload
 from .user import UserPayload
+
 
 class ResolvedDataPayload(TypedDict, total=False):
     users: dict[Snowflake, UserPayload]
@@ -23,12 +29,14 @@ class ResolvedDataPayload(TypedDict, total=False):
     messages: dict[Snowflake, PartialMessagePayload]
     attachments: dict[Snowflake, AttachmentPayload]
 
+
 class ApplicationCommandInteractionOptionPayload(TypedDict, total=False):
     name: Required[str]
     type: Required[Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]]
     value: str | int | float | bool
     options: list[ApplicationCommandInteractionOptionPayload]
     focused: bool
+
 
 class InvokedApplicationCommandPayload(TypedDict, total=False):
     id: Required[Snowflake]
@@ -39,8 +47,10 @@ class InvokedApplicationCommandPayload(TypedDict, total=False):
     guild_id: Snowflake
     target_id: Snowflake
 
+
 InteractionData = InvokedApplicationCommandPayload
 AuthorizingIntegrationOwnersDict = dict[Literal[0, 1], Snowflake | Literal[0]]
+
 
 class InteractionPayload(TypedDict, total=False):
     id: Required[Snowflake]
@@ -63,7 +73,8 @@ class InteractionPayload(TypedDict, total=False):
     authorizing_integration_owners: Required[AuthorizingIntegrationOwnersDict]
     context: Literal[0, 1, 2]
     attachment_size_limit: Required[int]
-        
+
+
 class InteractionCallbackDataPayload(TypedDict, total=False):
     tts: bool
     content: str
@@ -73,6 +84,7 @@ class InteractionCallbackDataPayload(TypedDict, total=False):
     components: list[UNIMPLEMENTED]
     attachments: list[FileUploadPayload]
     poll: UNIMPLEMENTED
+
 
 class InteractionWebhookMessagePayload(TypedDict, total=False):
     content: str | None
@@ -84,7 +96,8 @@ class InteractionWebhookMessagePayload(TypedDict, total=False):
     # unimplemented files
     attachments: list[FileUploadPayload] | None
     poll: UNIMPLEMENTED | None
-    
+
+
 class InteractionResponseCallbackPayload(TypedDict, total=False):
     type: Literal[1, 4, 5, 6, 7, 8, 9, 10, 12]
     data: InteractionCallbackDataPayload

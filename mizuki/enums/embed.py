@@ -1,8 +1,7 @@
 from enum import StrEnum
 
-__all__ = (
-    "EmbedType",
-)
+__all__ = ("EmbedType",)
+
 
 class EmbedType(StrEnum):
     rich = "rich"

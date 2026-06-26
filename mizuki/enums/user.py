@@ -1,8 +1,7 @@
 from enum import IntEnum
 
-__all__ = (
-    "PremiumType",
-)
+__all__ = ("PremiumType",)
+
 
 class PremiumType(IntEnum):
     NONE = 0

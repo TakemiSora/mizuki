@@ -58,6 +58,7 @@ __all__ = (
     "Message",
 )
 
+
 class Attachment:
     __slots__ = (
         "id",
@@ -98,18 +99,15 @@ class Attachment:
         self.duration_secs = data.get("duration_secs")
         self.waveform = data.get("waveform")
         self.flags = AttachmentFlags(data.get("flags", 0))
-        self.clip_participants = [User(u, state=state) for u in data.get("clip_participants", [])]
+        self.clip_participants = [
+            User(u, state=state) for u in data.get("clip_participants", [])
+        ]
         self.clip_created_at = siso(data.get("clip_created_at"))
-        self.application = data.get("application") # placeholder
+        self.application = data.get("application")  # placeholder
+
 
 class MessageReference:
-    __slots__ = (
-        "type",
-        "message_id",
-        "channel_id",
-        "guild_id",
-        "fail_if_not_exists"
-    )
+    __slots__ = ("type", "message_id", "channel_id", "guild_id", "fail_if_not_exists")
 
     def __init__(self, data: MessageReferencePayload):
         self.type = MessageReferenceType(data.get("type", 0))
@@ -124,35 +122,35 @@ class MessageReference:
             message_id=self.message_id,
             channel_id=self.channel_id,
             guild_id=self.guild_id,
-            fail_if_not_exists=self.fail_if_not_exists
+            fail_if_not_exists=self.fail_if_not_exists,
         )
 
     @classmethod
     def new(
-        cls, *,
+        cls,
+        *,
         type: MessageReferenceType = MessageReferenceType.DEFAULT,
         message_id: int,
         channel_id: int = _MISSING,
         guild_id: int = _MISSING,
-        fail_if_not_exists: bool = True
+        fail_if_not_exists: bool = True,
     ) -> Self:
         return assign_val(
             cls(MessageReferencePayload(type=type.value)),
             message_id=message_id,
             channel_id=channel_id,
             guild_id=guild_id,
-            fail_if_not_exists=fail_if_not_exists
+            fail_if_not_exists=fail_if_not_exists,
         )
 
+
 class MessageActivity:
-    __slots__ = (
-        "type",
-        "party_id"
-    )
+    __slots__ = ("type", "party_id")
 
     def __init__(self, data: MessageActivityPayload):
         self.type = MessageActivityType(data["type"])
         self.party_id = data.get("party_id")
+
 
 class PartialMessage:
     __slots__ = (
@@ -165,7 +163,7 @@ class PartialMessage:
         "flags",
         "mentions",
         "mention_roles",
-        "type"
+        "type",
     )
 
     def __init__(self, data: PartialMessagePayload, *, state: ConnectionState):
@@ -180,13 +178,13 @@ class PartialMessage:
         self.mention_roles = [Snowflake(s) for s in data["mention_roles"]]
         self.type = MessageType(data["type"])
 
+
 class MessageSnapshot:
-    __slots__ = (
-        "message",
-    )
+    __slots__ = ("message",)
 
     def __init__(self, data: MessageSnapshotPayload, *, state: ConnectionState):
         self.message = PartialMessage(data["message"], state=state)
+
 
 class MessageInteractionMetadata:
     __slots__ = (
@@ -196,73 +194,75 @@ class MessageInteractionMetadata:
         "authorizing_integration_owners",
         "original_response_message_id",
         "target_user",
-        "target_message_id"
+        "target_message_id",
     )
 
-    def __init__(self, data: MessageInteractionMetadataPayload, *, state: ConnectionState):
+    def __init__(
+        self, data: MessageInteractionMetadataPayload, *, state: ConnectionState
+    ):
         self.id = Snowflake(data["id"])
         self.type = InteractionType(data["type"])
         self.user = User(data["user"], state=state)
-        self.authorizing_integration_owners = {ApplicationIntegrationType(int(a)): Snowflake(s) for a, s in data["authorizing_integration_owners"].items()}
-        self.original_response_message_id = Snowflake._from_str(data.get("original_response_message_id"))
+        self.authorizing_integration_owners = {
+            ApplicationIntegrationType(int(a)): Snowflake(s)
+            for a, s in data["authorizing_integration_owners"].items()
+        }
+        self.original_response_message_id = Snowflake._from_str(
+            data.get("original_response_message_id")
+        )
         self.target_user = scls(User, data.get("target_user"), state=state)
         self.target_message_id = Snowflake._from_str(data.get("target_message_id"))
+
 
 class RoleSubscriptionData:
     __slots__ = (
         "role_subscription_listing_id",
         "tier_name",
         "total_months_subscribed",
-        "is_renewal"
+        "is_renewal",
     )
 
     def __init__(self, data: RoleSubscriptionDataPayload):
-        self.role_subscription_listing_id = Snowflake(data["role_subscription_listing_id"])
+        self.role_subscription_listing_id = Snowflake(
+            data["role_subscription_listing_id"]
+        )
         self.tier_name = data["tier_name"]
         self.total_months_subscribed = data["total_months_subscribed"]
         self.is_renewal = data["is_renewal"]
 
+
 class PollMedia:
-    __slots__ = (
-        "text",
-        "emoji"
-    )
+    __slots__ = ("text", "emoji")
 
     def __init__(self, data: PollMediaPayload):
         self.text = data["text"]
         self.emoji = scls(PartialEmoji, data.get("emoji"))
 
+
 class PollAnswer:
-    __slots__ = (
-        "answer_id",
-        "poll_media"
-    )
+    __slots__ = ("answer_id", "poll_media")
 
     def __init__(self, data: PollAnswerPayload):
         self.answer_id = data["answer_id"]
         self.poll_media = PollMedia(data["poll_media"])
 
+
 class PollAnswerCount:
-    __slots__ = (
-        "id",
-        "count",
-        "me_voted"
-    )
+    __slots__ = ("id", "count", "me_voted")
 
     def __init__(self, data: PollAnswerCountPayload):
         self.id = data["id"]
         self.count = data["count"]
         self.me_voted = data["me_voted"]
 
+
 class PollResult:
-    __slots__ = (
-        "is_finalized",
-        "answer_counts"
-    )
+    __slots__ = ("is_finalized", "answer_counts")
 
     def __init__(self, data: PollResultPayload):
         self.is_finalized = data["is_finalized"]
         self.answer_counts = [PollAnswerCount(p) for p in data["answer_counts"]]
+
 
 class Poll:
     __slots__ = (
@@ -271,30 +271,27 @@ class Poll:
         "expiry",
         "allow_multiselect",
         "layout_type",
-        "results"
+        "results",
     )
 
     def __init__(self, data: PollPayload):
         self.question = PollMedia(data["question"])
         self.answers = [PollAnswer(p) for p in data["answers"]]
         self.expiry = siso(data["expiry"])
-        self.allow_multiselect= data["allow_multiselect"]
+        self.allow_multiselect = data["allow_multiselect"]
         self.layout_type = data["layout_type"]
         self.results = scls(PollResult, data.get("results"))
 
+
 class SharedClientTheme:
-    __slots__ = (
-        "colors",
-        "gradient_angle",
-        "base_mix",
-        "base_theme"
-    )
+    __slots__ = ("colors", "gradient_angle", "base_mix", "base_theme")
 
     def __init__(self, data: SharedClientThemePayload):
         self.colors = data["colors"]
         self.gradient_angle = data["gradient_angle"]
         self.base_mix = data["base_mix"]
         self.base_theme = scls(BaseThemeType, data.get("base_theme"))
+
 
 class AllowedMentions:
     __slots__ = ("parse",)
@@ -307,16 +304,17 @@ class AllowedMentions:
 
     @classmethod
     def new(
-        cls, *,
-        roles: bool = True,
-        users: bool = True,
-        everyone: bool = True
+        cls, *, roles: bool = True, users: bool = True, everyone: bool = True
     ) -> Self:
         parse = []
-        if roles: parse.append("roles")
-        if users: parse.append("users")
-        if everyone: parse.append("everyone")
+        if roles:
+            parse.append("roles")
+        if users:
+            parse.append("users")
+        if everyone:
+            parse.append("everyone")
         return cls(AllowedMentionsPayload(parse=parse))
+
 
 class Message(PartialMessage):
     __slots__ = (
@@ -343,7 +341,7 @@ class Message(PartialMessage):
         "position",
         "role_subscription_data",
         "poll",
-        "shared_client_theme"
+        "shared_client_theme",
     )
 
     def __init__(self, data: MessagePayload, *, state: ConnectionState):
@@ -353,31 +351,43 @@ class Message(PartialMessage):
         self.author = User(data["author"], state=state)
         self.tts = data["tts"]
         self.mention_everyone = data["mention_everyone"]
-        self.mention_channels = [ChannelMention(c) for c in data.get("mention_channels", [])]
+        self.mention_channels = [
+            ChannelMention(c) for c in data.get("mention_channels", [])
+        ]
         self.reactions = [Reaction(r) for r in data.get("reactions", [])]
         self.nonce = data.get("nonce")
         self.pinned = data["pinned"]
         self.webhook_id = Snowflake._from_str(data.get("webhook_id"))
         self.activity = scls(MessageActivity, data.get("activity"))
-        self.application = data.get("application") # placehodler
+        self.application = data.get("application")  # placehodler
         self.application_id = Snowflake._from_str(data.get("application_id"))
         self.message_reference = scls(MessageReference, data.get("message_reference"))
-        self.message_snapshots = [MessageSnapshot(m, state=state) for m in data.get("message_snapshots", [])]
-        self.referenced_message = scls(Message, data.get("referenced_message"), state=state)
-        self.interaction_metadata = scls(MessageInteractionMetadata, data.get("interaction_metadata"), state=state)
+        self.message_snapshots = [
+            MessageSnapshot(m, state=state) for m in data.get("message_snapshots", [])
+        ]
+        self.referenced_message = scls(
+            Message, data.get("referenced_message"), state=state
+        )
+        self.interaction_metadata = scls(
+            MessageInteractionMetadata, data.get("interaction_metadata"), state=state
+        )
         self.thread = scls(ThreadChannel, data.get("thread"), state=state)
-        self.components = data.get("components", []) # placeholder
-        self.sticker_items = [PartialSticker(s, state=state) for s in data.get("sticker_items", [])]
+        self.components = data.get("components", [])  # placeholder
+        self.sticker_items = [
+            PartialSticker(s, state=state) for s in data.get("sticker_items", [])
+        ]
         self.position = data.get("position")
-        self.role_subscription_data = scls(RoleSubscriptionData, data.get("role_subscription_data"))
+        self.role_subscription_data = scls(
+            RoleSubscriptionData, data.get("role_subscription_data")
+        )
         self.poll = scls(Poll, data.get("poll"))
-        self.shared_client_theme = scls(SharedClientTheme, data.get("shared_client_theme"))
+        self.shared_client_theme = scls(
+            SharedClientTheme, data.get("shared_client_theme")
+        )
+
 
 class MessagePin:
-    __slots__ = (
-        "pinned_at",
-        "message"
-    )
+    __slots__ = ("pinned_at", "message")
 
     def __init__(self, data: MessagePinPayload, *, state: ConnectionState):
         self.pinned_at = datetime.fromisoformat(data["pinned_at"])

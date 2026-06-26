@@ -6,10 +6,8 @@ from ..payloads.channel import ChannelPermissionOverwritePayload
 from .snowflake import Snowflake
 from ..enums.channel import ChannelPermissionOverwriteType
 
-__all__ = (
-    "Permissions",
-    "ChannelPermissionOverwrite"
-)
+__all__ = ("Permissions", "ChannelPermissionOverwrite")
+
 
 class Permissions(IntFlag):
     CREATE_INSTANT_INVITE = 1 << 0
@@ -65,6 +63,7 @@ class Permissions(IntFlag):
     PIN_MESSAGES = 1 << 51
     BYPASS_SLOWMODE = 1 << 52
 
+
 class ChannelPermissionOverwrite:
     def __init__(self, data: ChannelPermissionOverwritePayload):
         self.id = Snowflake(data["id"])
@@ -77,21 +76,18 @@ class ChannelPermissionOverwrite:
             id=str(self.id),
             type=self.type.value,
             allow=str(self.allow.value),
-            deny=str(self.deny.value)
+            deny=str(self.deny.value),
         )
 
     @classmethod
     def new(
-        cls, *,
+        cls,
+        *,
         id: int,
         type: ChannelPermissionOverwriteType,
         allow: Permissions = Permissions(0),
-        deny: Permissions = Permissions(0)
+        deny: Permissions = Permissions(0),
     ) -> Self:
         return assign_val(
-            cls.__new__(cls),
-            id=Snowflake(id),
-            type=type,
-            allow=allow,
-            deny=deny
+            cls.__new__(cls), id=Snowflake(id), type=type, allow=allow, deny=deny
         )

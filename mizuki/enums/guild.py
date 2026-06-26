@@ -12,41 +12,48 @@ __all__ = (
     "GuildScheduledEventEntityType",
     "EventRecurrenceRuleFrequency",
     "EventRecurrenceRuleMonth",
-    "EventRecurrenceRuleWeekday"
+    "EventRecurrenceRuleWeekday",
 )
-    
+
+
 class GuildVerificationLevel(IntEnum):
     NONE = 0
     LOW = 1
     MEDIUM = 2
     HIGH = 3
     VERY_HIGH = 4
-    
+
+
 class GuildNotificationLevel(IntEnum):
     ALL_MESSAGES = 0
     ONLY_MENTIONS = 1
-    
+
+
 class GuildExplicitContentLevel(IntEnum):
     DISABLED = 0
     MEMBER_WITHOUT_ROLES = 1
     ALL_MEMBERS = 2
 
+
 class GuildMFALevel(IntEnum):
     NONE = 0
     ELEVATED = 1
-    
+
+
 class GuildPremiumTier(IntEnum):
     NONE = 0
     TIER_1 = 1
     TIER_2 = 2
     TIER_3 = 3
-    
+
+
 class GuildNSFWLevel(IntEnum):
     DEFAULT = 0
     EXPLICIT = 1
     SAFE = 2
     AGE_RESTRICTED = 3
-        
+
+
 class GuildFeature(StrEnum):
     ANIMATED_BANNER = "ANIMATED_BANNER"
     ANIMATED_ICON = "ANIMATED_ICON"
@@ -69,7 +76,9 @@ class GuildFeature(StrEnum):
     PREVIEW_ENABLED = "PREVIEW_ENABLED"
     RAID_ALERTS_DISABLED = "RAID_ALERTS_DISABLED"
     ROLE_ICONS = "ROLE_ICONS"
-    ROLE_SUBSCRIPTIONS_AVAILABLE_FOR_PURCHASE = "ROLE_SUBSCRIPTIONS_AVAILABLE_FOR_PURCHASE"
+    ROLE_SUBSCRIPTIONS_AVAILABLE_FOR_PURCHASE = (
+        "ROLE_SUBSCRIPTIONS_AVAILABLE_FOR_PURCHASE"
+    )
     ROLE_SUBSCRIPTIONS_ENABLED = "ROLE_SUBSCRIPTIONS_ENABLED"
     SOUNDBOARD = "SOUNDBOARD"
     TICKETED_EVENTS_ENABLED = "TICKETED_EVENTS_ENABLED"
@@ -81,23 +90,27 @@ class GuildFeature(StrEnum):
     GUILD_TAGS = "GUILD_TAGS"
     ENHANCED_ROLE_COLORS = "ENHANCED_ROLE_COLORS"
 
+
 class GuildScheduledEventStatus(IntEnum):
     SCHEDULED = 1
     ACTIVE = 2
     COMPLETED = 3
     CANCELED = 4
-    
+
+
 class GuildScheduledEventEntityType(IntEnum):
     STAGE_INSTANCE = 1
     VOICE = 2
     EXTERNAL = 3
-    
+
+
 class EventRecurrenceRuleFrequency(IntEnum):
     YEARLY = 0
     MONTHLY = 1
     WEEKLY = 2
     DAILY = 3
-    
+
+
 class EventRecurrenceRuleWeekday(IntEnum):
     MONDAY = 0
     TUESDAY = 1
@@ -105,8 +118,9 @@ class EventRecurrenceRuleWeekday(IntEnum):
     THURSDAY = 3
     FRIDAY = 4
     SATURDAY = 5
-    SUNDAY =  6
-    
+    SUNDAY = 6
+
+
 class EventRecurrenceRuleMonth(IntEnum):
     JANUARY = 1
     FEBRUARY = 2

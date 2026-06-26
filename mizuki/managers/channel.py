@@ -10,20 +10,19 @@ from mizuki.objects.channel import (
     ThreadChannel,
     GuildChannel,
     Channel,
-    parse_channel_payload
+    parse_channel_payload,
 )
 from mizuki.enums.channel import (
     ChannelType,
     ForumLayoutType,
     SortOrderType,
-    VideoQualityMode
+    VideoQualityMode,
 )
 from mizuki.objects.emoji import DefaultReaction
 from mizuki.objects.permissions import ChannelPermissionOverwrite
 
-__all__ = (
-    "ChannelManager",
-)
+__all__ = ("ChannelManager",)
+
 
 class ChannelManager(BaseManager):
     """
@@ -72,13 +71,12 @@ class ChannelManager(BaseManager):
             A HTTP error occured.
         """
         return self._cache_storage.update_channels(
-            parse_channel_payload(await self._state.http.request(
-                Path(
-                    "GET",
-                    "channels/{channel_id}",
-                    channel_id=channel_id
-                )
-            ), state=self._state)
+            parse_channel_payload(
+                await self._state.http.request(
+                    Path("GET", "channels/{channel_id}", channel_id=channel_id)
+                ),
+                state=self._state,
+            )
         )
 
     async def get_or_fetch(self, channel_id: int) -> Channel:
@@ -104,7 +102,8 @@ class ChannelManager(BaseManager):
         return self.get(channel_id) or await self.fetch(channel_id)
 
     async def edit(
-        self, channel_id: int,
+        self,
+        channel_id: int,
         *,
         name: str = _MISSING,
         type: ChannelType = _MISSING,
@@ -129,7 +128,7 @@ class ChannelManager(BaseManager):
         auto_archive_duration: int = _MISSING,
         invitable: bool = _MISSING,
         locked: bool = _MISSING,
-        applied_tags: list[int] = _MISSING
+        applied_tags: list[int] = _MISSING,
     ) -> Channel:
         """
         Modifies a channel.
@@ -229,72 +228,65 @@ class ChannelManager(BaseManager):
             A HTTP error occured.
         """
         return self._cache_storage.update_channels(
-            parse_channel_payload(await self._state.http.request(
-                Path(
-                    "PATCH",
-                    "channels/{channel_id}",
-                    channel_id=channel_id
+            parse_channel_payload(
+                await self._state.http.request(
+                    Path("PATCH", "channels/{channel_id}", channel_id=channel_id),
+                    json=assign_val_dict(
+                        {},
+                        _MISSING,
+                        name=name,
+                        type=(type.value if type is not _MISSING else _MISSING),
+                        position=position,
+                        topic=topic,
+                        nsfw=nsfw,
+                        rate_limit_per_user=rate_limit_per_user,
+                        bitrate=bitrate,
+                        user_limit=user_limit,
+                        permission_overwrites=(
+                            [p._to_dict() for p in permission_overwrites]
+                            if permission_overwrites not in (_MISSING, None)
+                            else permission_overwrites
+                        ),
+                        parent_id=parent_id,
+                        rtc_region=rtc_region,
+                        video_quality_mode=(
+                            video_quality_mode.value
+                            if video_quality_mode not in (_MISSING, None)
+                            else video_quality_mode
+                        ),
+                        default_auto_archive_duration=default_auto_archive_duration,
+                        flags=(flags.value if flags is not _MISSING else _MISSING),
+                        available_tags=(
+                            [t._to_dict() for t in available_tags]
+                            if available_tags is not _MISSING
+                            else _MISSING
+                        ),
+                        default_reaction_emoji=mtd(default_reaction_emoji),
+                        default_thread_rate_limit_per_user=default_thread_rate_limit_per_user,
+                        default_sort_order=(
+                            default_sort_order.value
+                            if default_sort_order not in (_MISSING, None)
+                            else default_sort_order
+                        ),
+                        default_forum_layout=(
+                            default_forum_layout.value
+                            if default_forum_layout is not _MISSING
+                            else default_forum_layout
+                        ),
+                        archived=archived,
+                        auto_archive_duration=auto_archive_duration,
+                        invitable=invitable,
+                        locked=locked,
+                        applied_tags=applied_tags,
+                    ),
                 ),
-                json=assign_val_dict(
-                    {}, _MISSING,
-                    name=name,
-                    type=(
-                        type.value
-                        if type is not _MISSING
-                        else _MISSING
-                    ),
-                    position=position,
-                    topic=topic,
-                    nsfw=nsfw,
-                    rate_limit_per_user=rate_limit_per_user,
-                    bitrate=bitrate,
-                    user_limit=user_limit,
-                    permission_overwrites=(
-                        [p._to_dict() for p in permission_overwrites]
-                        if permission_overwrites not in (_MISSING, None)
-                        else permission_overwrites
-                    ),
-                    parent_id=parent_id,
-                    rtc_region=rtc_region,
-                    video_quality_mode=(
-                        video_quality_mode.value
-                        if video_quality_mode not in (_MISSING, None)
-                        else video_quality_mode
-                    ),
-                    default_auto_archive_duration=default_auto_archive_duration,
-                    flags=(
-                        flags.value
-                        if flags is not _MISSING
-                        else _MISSING
-                    ),
-                    available_tags=(
-                        [t._to_dict() for t in available_tags]
-                        if available_tags is not _MISSING
-                        else _MISSING
-                    ),
-                    default_reaction_emoji=mtd(default_reaction_emoji),
-                    default_thread_rate_limit_per_user=default_thread_rate_limit_per_user,
-                    default_sort_order=(
-                        default_sort_order.value
-                        if default_sort_order not in (_MISSING, None)
-                        else default_sort_order
-                    ),
-                    default_forum_layout=(
-                        default_forum_layout.value
-                        if default_forum_layout is not _MISSING
-                        else default_forum_layout
-                    ),
-                    archived=archived,
-                    auto_archive_duration=auto_archive_duration,
-                    invitable=invitable,
-                    locked=locked,
-                    applied_tags=applied_tags
-                )
-            ), state=self._state)
-    )
+                state=self._state,
+            )
+        )
 
     async def edit_guild_channel(
-        self, channel_id: int,
+        self,
+        channel_id: int,
         *,
         name: str = _MISSING,
         type: ChannelType = _MISSING,
@@ -315,7 +307,7 @@ class ChannelManager(BaseManager):
         default_reaction_emoji: DefaultReaction | None = _MISSING,
         default_thread_rate_limit_per_user: int = _MISSING,
         default_sort_order: SortOrderType | None = _MISSING,
-        default_forum_layout: ForumLayoutType = _MISSING
+        default_forum_layout: ForumLayoutType = _MISSING,
     ) -> GuildChannel:
         """
         Modifies a channel.
@@ -402,41 +394,44 @@ class ChannelManager(BaseManager):
         :class:`HTTPException`
             A HTTP error occured.
         """
-        if (
-            require_tag is not _MISSING
-            or hide_media_download_options is not _MISSING
-        ):
+        if require_tag is not _MISSING or hide_media_download_options is not _MISSING:
             flags = ChannelFlags(0)
-            if require_tag: flags |= ChannelFlags.REQUIRE_TAG
-            if hide_media_download_options: flags |= ChannelFlags.HIDE_MEDIA_DOWNLOAD_OPTIONS
+            if require_tag:
+                flags |= ChannelFlags.REQUIRE_TAG
+            if hide_media_download_options:
+                flags |= ChannelFlags.HIDE_MEDIA_DOWNLOAD_OPTIONS
         else:
             flags = _MISSING
 
-        return cast(GuildChannel, await self.edit(
-            channel_id,
-            name=name,
-            type=type,
-            position=position,
-            topic=topic,
-            nsfw=nsfw,
-            rate_limit_per_user=rate_limit_per_user,
-            bitrate=bitrate,
-            user_limit=user_limit,
-            permission_overwrites=permission_overwrites,
-            parent_id=parent_id,
-            rtc_region=rtc_region,
-            video_quality_mode=video_quality_mode,
-            default_auto_archive_duration=default_auto_archive_duration,
-            flags=flags,
-            available_tags=available_tags,
-            default_reaction_emoji=default_reaction_emoji,
-            default_thread_rate_limit_per_user=default_thread_rate_limit_per_user,
-            default_sort_order=default_sort_order,
-            default_forum_layout=default_forum_layout
-        ))
+        return cast(
+            GuildChannel,
+            await self.edit(
+                channel_id,
+                name=name,
+                type=type,
+                position=position,
+                topic=topic,
+                nsfw=nsfw,
+                rate_limit_per_user=rate_limit_per_user,
+                bitrate=bitrate,
+                user_limit=user_limit,
+                permission_overwrites=permission_overwrites,
+                parent_id=parent_id,
+                rtc_region=rtc_region,
+                video_quality_mode=video_quality_mode,
+                default_auto_archive_duration=default_auto_archive_duration,
+                flags=flags,
+                available_tags=available_tags,
+                default_reaction_emoji=default_reaction_emoji,
+                default_thread_rate_limit_per_user=default_thread_rate_limit_per_user,
+                default_sort_order=default_sort_order,
+                default_forum_layout=default_forum_layout,
+            ),
+        )
 
     async def edit_thread(
-        self, thread_id: int,
+        self,
+        thread_id: int,
         *,
         name: str = _MISSING,
         archived: bool = _MISSING,
@@ -445,7 +440,7 @@ class ChannelManager(BaseManager):
         locked: bool = _MISSING,
         invitable: bool = _MISSING,
         pinned: bool = _MISSING,
-        applied_tags: list[int] = _MISSING
+        applied_tags: list[int] = _MISSING,
     ) -> ThreadChannel:
         """
         Modifies a thread.
@@ -496,29 +491,26 @@ class ChannelManager(BaseManager):
         :class:`HTTPException`
             A HTTP error occured.
         """
-        return cast(ThreadChannel, await self.edit(
-            thread_id,
-            name=name,
-            archived=archived,
-            auto_archive_duration=auto_archive_duration,
-            invitable=invitable,
-            rate_limit_per_user=rate_limit_per_user,
-            locked=locked,
-            flags=(
-                (
-                    ChannelFlags.PINNED
-                    if pinned
-                    else ChannelFlags(0)
-                ) if pinned is not _MISSING
-                else _MISSING
+        return cast(
+            ThreadChannel,
+            await self.edit(
+                thread_id,
+                name=name,
+                archived=archived,
+                auto_archive_duration=auto_archive_duration,
+                invitable=invitable,
+                rate_limit_per_user=rate_limit_per_user,
+                locked=locked,
+                flags=(
+                    (ChannelFlags.PINNED if pinned else ChannelFlags(0))
+                    if pinned is not _MISSING
+                    else _MISSING
+                ),
+                applied_tags=applied_tags,
             ),
-            applied_tags=applied_tags
-        ))
+        )
 
-    async def set_voice_status(
-        self, channel_id: int,
-        *, status: str | None
-    ) -> None:
+    async def set_voice_status(self, channel_id: int, *, status: str | None) -> None:
         """
         Set a voice channel's status.
 
@@ -544,12 +536,8 @@ class ChannelManager(BaseManager):
             A HTTP error occured.
         """
         await self._state.http.request(
-            Path(
-                "PUT",
-                "channels/{channel_id}/voice-status",
-                channel_id=channel_id
-            ),
-            json={"status": status}
+            Path("PUT", "channels/{channel_id}/voice-status", channel_id=channel_id),
+            json={"status": status},
         )
 
     async def delete(self, channel_id: int) -> Channel:
@@ -576,20 +564,18 @@ class ChannelManager(BaseManager):
         :class:`HTTPException`
             A HTTP error occured.
         """
-        channel = parse_channel_payload(await self._state.http.request(
-            Path(
-                "DELETE",
-                "channels/{channel_id}",
-                channel_id=channel_id
-            )
-        ), state=self._state)
+        channel = parse_channel_payload(
+            await self._state.http.request(
+                Path("DELETE", "channels/{channel_id}", channel_id=channel_id)
+            ),
+            state=self._state,
+        )
 
         self._cache_storage.remove_channel(channel_id)
         return channel
 
     async def edit_permissions(
-        self, channel_id: int,
-        *, overwrite: ChannelPermissionOverwrite
+        self, channel_id: int, *, overwrite: ChannelPermissionOverwrite
     ) -> None:
         """
         Edits permissions for a role or a user for a channel.
@@ -618,12 +604,12 @@ class ChannelManager(BaseManager):
                 "PUT",
                 "channels/{channel_id}/permissions/{overwrite_id}",
                 channel_id=channel_id,
-                overwrite_id=overwrite.id
+                overwrite_id=overwrite.id,
             ),
             json=assign_val_dict(
                 {},
                 allow=overwrite.allow.value,
                 deny=overwrite.deny.value,
-                type=overwrite.type.value
-            )
+                type=overwrite.type.value,
+            ),
         )
