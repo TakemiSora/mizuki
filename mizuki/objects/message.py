@@ -1,19 +1,26 @@
 from __future__ import annotations
 from datetime import datetime
-from typing import Self
+from typing import Self, TYPE_CHECKING
 
-from ..enums.interaction import ApplicationIntegrationType
-from ..enums.interaction import InteractionType
-from ..enums.message import (
+from mizuki._utils import _MISSING, assign_val, assign_val_dict, scls, siso
+from mizuki.enums.interaction import ApplicationIntegrationType
+from mizuki.enums.interaction import InteractionType
+from mizuki.enums.message import (
     BaseThemeType,
     MessageActivityType,
     MessageReferenceType,
     MessageType,
 )
-from ..flags import AttachmentFlags, MessageFlags
-from ..payloads.message import (
-    AttachmentPayload,
+from mizuki.flags import AttachmentFlags, MessageFlags
+from mizuki.objects.channel import ChannelMention, ThreadChannel
+from mizuki.objects.embed import Embed
+from mizuki.objects.emoji import PartialEmoji, Reaction
+from mizuki.objects.snowflake import Snowflake
+from mizuki.objects.sticker import PartialSticker
+from mizuki.objects.user import User
+from mizuki.payloads.message import (
     AllowedMentionsPayload,
+    AttachmentPayload,
     MessageActivityPayload,
     MessageInteractionMetadataPayload,
     MessagePayload,
@@ -29,13 +36,9 @@ from ..payloads.message import (
     RoleSubscriptionDataPayload,
     SharedClientThemePayload,
 )
-from .._utils import assign_val, assign_val_dict, scls, siso, _MISSING
-from .channel import ChannelMention, ThreadChannel
-from .embed import Embed
-from .emoji import PartialEmoji, Reaction
-from .snowflake import Snowflake
-from .sticker import PartialSticker
-from .user import User
+
+if TYPE_CHECKING:
+    from mizuki.state import ConnectionState
 
 __all__ = (
     "Attachment",
@@ -153,6 +156,7 @@ class MessageActivity:
 
 class PartialMessage:
     __slots__ = (
+        "_state",
         "content",
         "embeds",
         "attachments",
@@ -164,7 +168,8 @@ class PartialMessage:
         "type"
     )
 
-    def __init__(self, data: PartialMessagePayload):
+    def __init__(self, data: PartialMessagePayload, *, state: ConnectionState):
+        self._state = state
         self.content = data["content"]
         self.embeds = [Embed(e) for e in data["embeds"]]
         self.attachments = [Attachment(a) for a in data["attachments"]]
@@ -180,8 +185,8 @@ class MessageSnapshot:
         "message",
     )
 
-    def __init__(self, data: MessageSnapshotPayload):
-        self.message = PartialMessage(data["message"])
+    def __init__(self, data: MessageSnapshotPayload, *, state: ConnectionState):
+        self.message = PartialMessage(data["message"], state=state)
 
 class MessageInteractionMetadata:
     __slots__ = (
@@ -340,9 +345,9 @@ class Message(PartialMessage):
         "poll",
         "shared_client_theme"
     )
-    
-    def __init__(self, data: MessagePayload):
-        super().__init__(data)
+
+    def __init__(self, data: MessagePayload, *, state: ConnectionState):
+        super().__init__(data, state=state)
         self.id = Snowflake(data["id"])
         self.channel_id = Snowflake(data["channel_id"])
         self.author = User(data["author"])
@@ -357,23 +362,23 @@ class Message(PartialMessage):
         self.application = data.get("application") # placehodler
         self.application_id = Snowflake._from_str(data.get("application_id"))
         self.message_reference = scls(MessageReference, data.get("message_reference"))
-        self.message_snapshots = [MessageSnapshot(m) for m in data.get("message_snapshots", [])]
-        self.referenced_message = scls(Message, data.get("referenced_message"))
+        self.message_snapshots = [MessageSnapshot(m, state=state) for m in data.get("message_snapshots", [])]
+        self.referenced_message = scls(Message, data.get("referenced_message"), state=state)
         self.interaction_metadata = scls(MessageInteractionMetadata, data.get("interaction_metadata"))
-        self.thread = scls(ThreadChannel, data.get("thread"))
+        self.thread = scls(ThreadChannel, data.get("thread"), state=state)
         self.components = data.get("components", []) # placeholder
         self.sticker_items = [PartialSticker(s) for s in data.get("sticker_items", [])]
         self.position = data.get("position")
         self.role_subscription_data = scls(RoleSubscriptionData, data.get("role_subscription_data"))
         self.poll = scls(Poll, data.get("poll"))
         self.shared_client_theme = scls(SharedClientTheme, data.get("shared_client_theme"))
-    
+
 class MessagePin:
     __slots__ = (
         "pinned_at",
         "message"
     )
-    
-    def __init__(self, data: MessagePinPayload):
+
+    def __init__(self, data: MessagePinPayload, *, state: ConnectionState):
         self.pinned_at = datetime.fromisoformat(data["pinned_at"])
-        self.message = Message(data["message"])
+        self.message = Message(data["message"], state=state)

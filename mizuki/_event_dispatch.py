@@ -28,7 +28,6 @@ from mizuki.objects.interaction import (
 
 if TYPE_CHECKING:
     from mizuki.bot import Bot
-    from mizuki.state import ConnectionState
 
     from mizuki.payloads.guild import GuildPayload, UnavailableGuildPayload
     from mizuki.payloads.interaction import InteractionPayload
@@ -44,13 +43,11 @@ _log = logging.getLogger(__name__)
 
 class EventDispatcher:
     __slots__ = (
-        "_state",
         "_dispatch_handlers",
         "bot"
     )
 
-    def __init__(self, bot: Bot, state: ConnectionState):
-        self._state = state
+    def __init__(self, bot: Bot):
         self.bot = bot
         self._dispatch_handlers = {
             # GUILDS
@@ -141,11 +138,11 @@ class EventDispatcher:
             _log.warning("Recieved command %s, but no handler was found for it.", name)
 
     async def _handle_guild_create(self, data: GuildPayload | UnavailableGuildPayload):
-        guild = self.bot._storage.update_guilds(g) if isinstance((g := parse_guild_payload(data, state=self._state)), Guild) else g
+        guild = self.bot._storage.update_guilds(g) if isinstance((g := parse_guild_payload(data, state=self.bot._state)), Guild) else g
         await self._dispatch("on_guild_create", guild)
 
     async def _handle_guild_update(self, data: GuildPayload):
-        guild = self.bot._storage.update_guilds(Guild(data, state=self._state))
+        guild = self.bot._storage.update_guilds(Guild(data, state=self.bot._state))
         await self._dispatch("on_guild_update", guild)
 
     async def _handle_guild_delete(self, data: UnavailableGuildPayload):
@@ -154,25 +151,25 @@ class EventDispatcher:
         await self._dispatch("on_guild_delete", guild, kicked)
 
     async def _handle_channel_create(self, data: GuildChannelPayload | PrivateChannelPayload):
-        channel = self.bot._storage.update_channels(parse_channel_payload(data))
+        channel = self.bot._storage.update_channels(parse_channel_payload(data, state=self.bot._state))
         await self._dispatch("on_channel_create", channel)
 
     async def _handle_channel_update(self, data: GuildChannelPayload | PrivateChannelPayload):
-        channel = self.bot._storage.update_channels(parse_channel_payload(data))
+        channel = self.bot._storage.update_channels(parse_channel_payload(data, state=self.bot._state))
         await self._dispatch("on_channel_update", channel)
 
     async def _handle_channel_delete(self, data: GuildChannelPayload | PrivateChannelPayload):
         channel = self.bot._storage.remove_channel(int(data["id"]))
-        await self._dispatch("on_channel_delete", channel or parse_channel_payload(data))
+        await self._dispatch("on_channel_delete", channel or parse_channel_payload(data, state=self.bot._state))
 
     async def _handle_thread_create(self, data: ThreadCreatePayload):
         newly_created = data.get("newly_created", False)
         thread_member = scls(ThreadMember, data.get("member"))
-        channel = self.bot._storage.update_channels(ThreadChannel(data))
+        channel = self.bot._storage.update_channels(ThreadChannel(data, state=self.bot._state))
         await self._dispatch("on_thread_create", channel, newly_created, thread_member)
 
     async def _handle_thread_update(self, data: ThreadPayload):
-        channel = self.bot._storage.update_channels(ThreadChannel(data))
+        channel = self.bot._storage.update_channels(ThreadChannel(data, state=self.bot._state))
         await self._dispatch("on_thread_update", channel)
 
     async def _handle_thread_delete(self, data: ThreadDeletePayload):
@@ -185,7 +182,7 @@ class EventDispatcher:
 
     async def _handle_interaction_create(self, data: InteractionPayload):
         guild = self.bot.guilds.get(int(g)) if (g := data.get("guild_id")) else None
-        interaction = Interaction(self.bot.http, data, guild=guild)
+        interaction = Interaction(data, guild=guild, state=self.bot._state)
         match interaction.type:
             case InteractionType.APPLICATION_COMMAND:
                 if interaction.data: await self._dispatch_commands(interaction.data.name, interaction)

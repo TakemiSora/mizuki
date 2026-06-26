@@ -77,7 +77,8 @@ class ChannelManager(BaseManager):
                     "GET",
                     "channels/{channel_id}",
                     channel_id=channel_id
-            )))
+                )
+            ), state=self._state)
         )
 
     async def get_or_fetch(self, channel_id: int) -> Channel:
@@ -289,7 +290,7 @@ class ChannelManager(BaseManager):
                     locked=locked,
                     applied_tags=applied_tags
                 )
-            ))
+            ), state=self._state)
     )
 
     async def edit_guild_channel(
@@ -581,7 +582,7 @@ class ChannelManager(BaseManager):
                 "channels/{channel_id}",
                 channel_id=channel_id
             )
-        ))
+        ), state=self._state)
 
         self._cache_storage.remove_channel(channel_id)
         return channel

@@ -76,7 +76,7 @@ class MessageManager(BaseManager):
                     channel_id=channel_id,
                     message_id=message_id
                 )
-            ))
+            ), state=self._state)
         )
 
     async def get_or_fetch(self, channel_id: int, message_id: int) -> Message:
@@ -182,7 +182,7 @@ class MessageManager(BaseManager):
         if len(params) > 1: raise TypeError("'around', 'before', and 'after' parameters are mutually exclusive. Only one should be provided at a time.")
 
         return [
-            self._cache_storage.update_messages(Message(m))
+            self._cache_storage.update_messages(Message(m, state=self._state))
             for m in await self._state.http.request(
                 Path(
                     "GET",
@@ -281,7 +281,7 @@ class MessageManager(BaseManager):
                      sticker_ids=sticker_ids,
                      flags=flags.value if flags is not _MISSING else _MISSING
                 )
-            ))
+            ), state=self._state)
         )
 
     async def reply(
@@ -438,7 +438,7 @@ class MessageManager(BaseManager):
                     message_id=message_id,
                     channel_id=channel_id
                 )
-            ))
+            ), state=self._state)
         )
 
     async def _react_endpoints(
@@ -832,7 +832,7 @@ class MessageManager(BaseManager):
                         else _MISSING
                     )
                 )
-            ))
+            ), state=self._state)
         )
 
     async def delete(

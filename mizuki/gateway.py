@@ -16,7 +16,6 @@ from mizuki._event_dispatch import EventDispatcher
 
 if TYPE_CHECKING:
     from mizuki.bot import Bot
-    from mizuki.state import ConnectionState
 
 _log = logging.getLogger(__name__)
 
@@ -74,12 +73,12 @@ class GatewayClient:
         4014: "Disallowed intents: You sent a disallowed intent for a Gateway Intent. You may have tried to specify an intent that you have not enabled or are not approved for."
     }
 
-    def __init__(self, bot: Bot, state: ConnectionState, session: aiohttp.ClientSession, token: str, intents: IntentFlags):
+    def __init__(self, bot: Bot, session: aiohttp.ClientSession, token: str, intents: IntentFlags):
         self.token = token
         self.intents = intents
         self.latency = 0.0
 
-        self._dispatcher = EventDispatcher(bot, state)
+        self._dispatcher = EventDispatcher(bot)
         self._session = session
         self._ws: aiohttp.ClientWebSocketResponse | None = None
         self._sequence: int | None = None

@@ -253,8 +253,8 @@ class Guild:
         self.large = data.get("large", False)
         self.member_count = data.get("member_count")
         self.members = [Member(m, guild_id=self.id) for m in data.get("members", [])]
-        self.channels = [parse_channel_payload(c, self.id) for c in data.get("channels", [])]
-        self.threads = [ThreadChannel(c, self.id) for c in data.get("threads", [])]
+        self.channels = [parse_channel_payload(c, self.id, state=self._state) for c in data.get("channels", [])]
+        self.threads = [ThreadChannel(c, self.id, state=self._state) for c in data.get("threads", [])]
         self.presences = [Presence(p) for p in data.get("presences", [])]
         self.stage_instances = [StageInstance(s) for s in data.get("stage_instances", [])]
         self.guild_scheduled_events = [GuildScheduledEvent(g) for g in data.get("guild_scheduled_events", [])]
