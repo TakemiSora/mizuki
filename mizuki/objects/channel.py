@@ -221,6 +221,9 @@ class BaseChannel:
 
     def __init__(self, data: BaseChannelPayload, *, state: ConnectionState):
         self._state = state
+        self._update(data)
+
+    def _update(self, data: BaseChannelPayload):
         self.id = Snowflake(data["id"])
         self.last_message_id = Snowflake._from_str(data.get("last_message_id"))
         self.flags = ChannelFlags(data["flags"])
@@ -274,11 +277,15 @@ class BasePublicChannel(BaseChannel):
         *,
         state: ConnectionState,
     ):
-        super().__init__(data, state=state)
-        resolved_guild_id = data.get("guild_id") or str(guild_id)
-        assert resolved_guild_id is not None, (
-            "A PublicChannel object formed without any guild_id."
-        )
+        self._state = state
+        self._update(data, guild_id)
+
+    def _update(self, data: BasePublicChannelPayload, guild_id: int | None) -> None:
+        assert (
+            resolved_guild_id := (data.get("guild_id") or str(guild_id))
+        ) is not None, "A PublicChannel object formed without any guild ID."
+
+        super()._update(data)
         self.guild_id = Snowflake(resolved_guild_id)
         self.name = data["name"]
         self.parent_id = Snowflake._from_str(data.get("parent_id"))
@@ -371,7 +378,12 @@ class GuildChannel(BasePublicChannel):
         *,
         state: ConnectionState,
     ):
-        super().__init__(data, guild_id, state=state)
+        self._state = state
+        self._update(data, guild_id)
+
+    def _update(self, data: GuildChannelPayload, guild_id: int | None):
+        super()._update(data, guild_id)
+
         self.type = ChannelType(data["type"])
         self.topic = data.get("topic")
         self.default_auto_archive_duration = scls(
@@ -445,7 +457,12 @@ class ThreadChannel(BasePublicChannel):
         *,
         state: ConnectionState,
     ):
-        super().__init__(data, guild_id, state=state)
+        self._state = state
+        self._update(data, guild_id)
+
+    def _update(self, data: ThreadPayload, guild_id: int | None):
+        super()._update(data, guild_id)
+
         self.type = ChannelType(data["type"])
         self.owner_id = Snowflake(data["owner_id"])
         self.thread_metadata = ThreadMetaData(data["thread_metadata"])
@@ -469,7 +486,12 @@ class PrivateChannel(BaseChannel):
     __slots__ = ("recipients", "type")
 
     def __init__(self, data: PrivateChannelPayload, *, state: ConnectionState):
-        super().__init__(data, state=state)
+        self._state = state
+        self._update(data, state=state)
+
+    def _update(self, data: PrivateChannelPayload, *, state: ConnectionState):
+        super()._update(data)
+
         self.recipients = [User(u, state=state) for u in data["recipients"]]
         self.type = ChannelType(data["type"])
 
@@ -514,7 +536,12 @@ class PartialGuildChannel(BasePublicChannel):
         *,
         state: ConnectionState,
     ):
-        super().__init__(data, guild_id, state=state)
+        self._state = state
+        self._update(data, guild_id)
+
+    def _update(self, data: PartialGuildChannelPayload, guild_id: int | None):
+        super()._update(data, guild_id)
+
         self.type = ChannelType(data["type"])
         self.topic = data.get("topic")
         self.position = data["position"]
@@ -547,7 +574,12 @@ class PartialThreadChannel(BasePublicChannel):
         *,
         state: ConnectionState,
     ):
-        super().__init__(data, guild_id, state=state)
+        self._state = state
+        self._update(data, guild_id)
+
+    def _update(self, data: PartialThreadPayload, guild_id: int | None):
+        super()._update(data, guild_id)
+
         self.type = ChannelType(data["type"])
         self.thread_metadata = ThreadMetaData(data["thread_metadata"])
 
