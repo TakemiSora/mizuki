@@ -129,7 +129,8 @@ class ChannelManager(BaseManager):
         invitable: bool = _MISSING,
         locked: bool = _MISSING,
         applied_tags: list[int] = _MISSING,
-    ) -> Channel:
+        to_update: GuildChannel | ThreadChannel = _MISSING,
+    ) -> GuildChannel | ThreadChannel:
         """
         Modifies a channel.
 
@@ -227,62 +228,62 @@ class ChannelManager(BaseManager):
         :class:`HTTPException`
             A HTTP error occured.
         """
-        return self._cache_storage.update_channels(
-            parse_channel_payload(
-                await self._state.http.request(
-                    Path("PATCH", "channels/{channel_id}", channel_id=channel_id),
-                    json=assign_val_dict(
-                        {},
-                        _MISSING,
-                        name=name,
-                        type=(type.value if type is not _MISSING else _MISSING),
-                        position=position,
-                        topic=topic,
-                        nsfw=nsfw,
-                        rate_limit_per_user=rate_limit_per_user,
-                        bitrate=bitrate,
-                        user_limit=user_limit,
-                        permission_overwrites=(
-                            [p._to_dict() for p in permission_overwrites]
-                            if permission_overwrites not in (_MISSING, None)
-                            else permission_overwrites
-                        ),
-                        parent_id=parent_id,
-                        rtc_region=rtc_region,
-                        video_quality_mode=(
-                            video_quality_mode.value
-                            if video_quality_mode not in (_MISSING, None)
-                            else video_quality_mode
-                        ),
-                        default_auto_archive_duration=default_auto_archive_duration,
-                        flags=(flags.value if flags is not _MISSING else _MISSING),
-                        available_tags=(
-                            [t._to_dict() for t in available_tags]
-                            if available_tags is not _MISSING
-                            else _MISSING
-                        ),
-                        default_reaction_emoji=mtd(default_reaction_emoji),
-                        default_thread_rate_limit_per_user=default_thread_rate_limit_per_user,
-                        default_sort_order=(
-                            default_sort_order.value
-                            if default_sort_order not in (_MISSING, None)
-                            else default_sort_order
-                        ),
-                        default_forum_layout=(
-                            default_forum_layout.value
-                            if default_forum_layout is not _MISSING
-                            else default_forum_layout
-                        ),
-                        archived=archived,
-                        auto_archive_duration=auto_archive_duration,
-                        invitable=invitable,
-                        locked=locked,
-                        applied_tags=applied_tags,
-                    ),
+        payload = await self._state.http.request(
+            Path("PATCH", "channels/{channel_id}", channel_id=channel_id),
+            json=assign_val_dict(
+                {},
+                _MISSING,
+                name=name,
+                type=(type.value if type is not _MISSING else _MISSING),
+                position=position,
+                topic=topic,
+                nsfw=nsfw,
+                rate_limit_per_user=rate_limit_per_user,
+                bitrate=bitrate,
+                user_limit=user_limit,
+                permission_overwrites=(
+                    [p._to_dict() for p in permission_overwrites]
+                    if permission_overwrites not in (_MISSING, None)
+                    else permission_overwrites
                 ),
-                state=self._state,
-            )
+                parent_id=parent_id,
+                rtc_region=rtc_region,
+                video_quality_mode=(
+                    video_quality_mode.value
+                    if video_quality_mode not in (_MISSING, None)
+                    else video_quality_mode
+                ),
+                default_auto_archive_duration=default_auto_archive_duration,
+                flags=(flags.value if flags is not _MISSING else _MISSING),
+                available_tags=(
+                    [t._to_dict() for t in available_tags]
+                    if available_tags is not _MISSING
+                    else _MISSING
+                ),
+                default_reaction_emoji=mtd(default_reaction_emoji),
+                default_thread_rate_limit_per_user=default_thread_rate_limit_per_user,
+                default_sort_order=(
+                    default_sort_order.value
+                    if default_sort_order not in (_MISSING, None)
+                    else default_sort_order
+                ),
+                default_forum_layout=(
+                    default_forum_layout.value
+                    if default_forum_layout is not _MISSING
+                    else default_forum_layout
+                ),
+                archived=archived,
+                auto_archive_duration=auto_archive_duration,
+                invitable=invitable,
+                locked=locked,
+                applied_tags=applied_tags,
+            ),
         )
+
+        if to_update is not _MISSING:
+            to_update._update(payload, payload["guild_id"])
+            return to_update
+        return parse_channel_payload(payload, state=self._state)
 
     async def edit_guild_channel(
         self,
@@ -308,6 +309,7 @@ class ChannelManager(BaseManager):
         default_thread_rate_limit_per_user: int = _MISSING,
         default_sort_order: SortOrderType | None = _MISSING,
         default_forum_layout: ForumLayoutType = _MISSING,
+        to_update: GuildChannel = _MISSING,
     ) -> GuildChannel:
         """
         Modifies a channel.
@@ -426,6 +428,7 @@ class ChannelManager(BaseManager):
                 default_thread_rate_limit_per_user=default_thread_rate_limit_per_user,
                 default_sort_order=default_sort_order,
                 default_forum_layout=default_forum_layout,
+                to_update=to_update,
             ),
         )
 
@@ -441,6 +444,7 @@ class ChannelManager(BaseManager):
         invitable: bool = _MISSING,
         pinned: bool = _MISSING,
         applied_tags: list[int] = _MISSING,
+        to_update: ThreadChannel = _MISSING,
     ) -> ThreadChannel:
         """
         Modifies a thread.
@@ -507,6 +511,7 @@ class ChannelManager(BaseManager):
                     else _MISSING
                 ),
                 applied_tags=applied_tags,
+                to_update=to_update,
             ),
         )
 
