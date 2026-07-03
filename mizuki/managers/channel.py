@@ -1,4 +1,4 @@
-from typing import cast
+from typing import cast, overload
 
 from mizuki.flags import ChannelFlags
 from mizuki.http import Path
@@ -101,6 +101,7 @@ class ChannelManager(BaseManager):
         """
         return self.get(channel_id) or await self.fetch(channel_id)
 
+    @overload
     async def edit(
         self,
         channel_id: int,
@@ -129,8 +130,70 @@ class ChannelManager(BaseManager):
         invitable: bool = _MISSING,
         locked: bool = _MISSING,
         applied_tags: list[int] = _MISSING,
-        to_update: GuildChannel | ThreadChannel = _MISSING,
-    ) -> GuildChannel | ThreadChannel:
+    ) -> GuildChannel | ThreadChannel: ...
+
+    @overload
+    async def edit[T: GuildChannel | ThreadChannel](
+        self,
+        channel_id: int,
+        *,
+        name: str = _MISSING,
+        type: ChannelType = _MISSING,
+        position: int | None = _MISSING,
+        topic: str | None = _MISSING,
+        nsfw: bool | None = _MISSING,
+        rate_limit_per_user: int | None = _MISSING,
+        bitrate: int | None = _MISSING,
+        user_limit: int | None = _MISSING,
+        permission_overwrites: list[ChannelPermissionOverwrite] | None = _MISSING,
+        parent_id: int | None = _MISSING,
+        rtc_region: str | None = _MISSING,
+        video_quality_mode: VideoQualityMode | None = _MISSING,
+        default_auto_archive_duration: int | None = _MISSING,
+        flags: ChannelFlags = _MISSING,
+        available_tags: list[PartialForumTag] = _MISSING,
+        default_reaction_emoji: DefaultReaction | None = _MISSING,
+        default_thread_rate_limit_per_user: int = _MISSING,
+        default_sort_order: SortOrderType | None = _MISSING,
+        default_forum_layout: ForumLayoutType = _MISSING,
+        archived: bool = _MISSING,
+        auto_archive_duration: int = _MISSING,
+        invitable: bool = _MISSING,
+        locked: bool = _MISSING,
+        applied_tags: list[int] = _MISSING,
+        to_update: T,
+    ) -> T: ...
+
+    async def edit[T: GuildChannel | ThreadChannel](
+        self,
+        channel_id: int,
+        *,
+        name: str = _MISSING,
+        type: ChannelType = _MISSING,
+        position: int | None = _MISSING,
+        topic: str | None = _MISSING,
+        nsfw: bool | None = _MISSING,
+        rate_limit_per_user: int | None = _MISSING,
+        bitrate: int | None = _MISSING,
+        user_limit: int | None = _MISSING,
+        permission_overwrites: list[ChannelPermissionOverwrite] | None = _MISSING,
+        parent_id: int | None = _MISSING,
+        rtc_region: str | None = _MISSING,
+        video_quality_mode: VideoQualityMode | None = _MISSING,
+        default_auto_archive_duration: int | None = _MISSING,
+        flags: ChannelFlags = _MISSING,
+        available_tags: list[PartialForumTag] = _MISSING,
+        default_reaction_emoji: DefaultReaction | None = _MISSING,
+        default_thread_rate_limit_per_user: int = _MISSING,
+        default_sort_order: SortOrderType | None = _MISSING,
+        default_forum_layout: ForumLayoutType = _MISSING,
+        archived: bool = _MISSING,
+        auto_archive_duration: int = _MISSING,
+        invitable: bool = _MISSING,
+        locked: bool = _MISSING,
+        applied_tags: list[int] = _MISSING,
+        to_update: T = _MISSING,
+    ) -> T:
         """
         Modifies a channel.
 
@@ -282,8 +345,10 @@ class ChannelManager(BaseManager):
 
         if to_update is not _MISSING:
             to_update._update(payload, payload["guild_id"])
-            return to_update
-        return parse_channel_payload(payload, state=self._state)
+            return self._cache_storage.update_channels(to_update)
+        return self._cache_storage.update_channels(
+            parse_channel_payload(payload, state=self._state)
+        )
 
     async def edit_guild_channel(
         self,
@@ -405,31 +470,28 @@ class ChannelManager(BaseManager):
         else:
             flags = _MISSING
 
-        return cast(
-            GuildChannel,
-            await self.edit(
-                channel_id,
-                name=name,
-                type=type,
-                position=position,
-                topic=topic,
-                nsfw=nsfw,
-                rate_limit_per_user=rate_limit_per_user,
-                bitrate=bitrate,
-                user_limit=user_limit,
-                permission_overwrites=permission_overwrites,
-                parent_id=parent_id,
-                rtc_region=rtc_region,
-                video_quality_mode=video_quality_mode,
-                default_auto_archive_duration=default_auto_archive_duration,
-                flags=flags,
-                available_tags=available_tags,
-                default_reaction_emoji=default_reaction_emoji,
-                default_thread_rate_limit_per_user=default_thread_rate_limit_per_user,
-                default_sort_order=default_sort_order,
-                default_forum_layout=default_forum_layout,
-                to_update=to_update,
-            ),
+        return await self.edit(
+            channel_id,
+            name=name,
+            type=type,
+            position=position,
+            topic=topic,
+            nsfw=nsfw,
+            rate_limit_per_user=rate_limit_per_user,
+            bitrate=bitrate,
+            user_limit=user_limit,
+            permission_overwrites=permission_overwrites,
+            parent_id=parent_id,
+            rtc_region=rtc_region,
+            video_quality_mode=video_quality_mode,
+            default_auto_archive_duration=default_auto_archive_duration,
+            flags=flags,
+            available_tags=available_tags,
+            default_reaction_emoji=default_reaction_emoji,
+            default_thread_rate_limit_per_user=default_thread_rate_limit_per_user,
+            default_sort_order=default_sort_order,
+            default_forum_layout=default_forum_layout,
+            to_update=to_update,
         )
 
     async def edit_thread(
