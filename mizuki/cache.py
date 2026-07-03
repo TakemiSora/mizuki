@@ -1,11 +1,14 @@
 import asyncio
+
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+from typing import cast
+
 from mizuki.objects.user import User
 from mizuki.objects.message import Message
 from mizuki.objects.channel import Channel
 from mizuki.objects.command import ApplicationCommand
 from mizuki.objects.guild import Guild
-from dataclasses import dataclass
-from datetime import datetime, timedelta
 
 type Cachable = User | Message | Channel | Guild | ApplicationCommand
 
@@ -156,7 +159,7 @@ class CacheStorage:
         self.guilds: dict[int, CacheEntry[Guild]] = {}
 
         self.commands: dict[int, dict[int, ApplicationCommand]] = {}
-        # Guild ID (Global 0) ^         ^ Command ID
+        # Guild ID (Global 0) ^        ^ Command ID
 
     def start_cleanup_tasks(self) -> None:
         self._users_cleanup_task = asyncio.create_task(self._cleanup_cache(self.users))
@@ -198,12 +201,15 @@ class CacheStorage:
             message,
         )
 
-    def update_channels(self, channel: Channel) -> Channel:
-        return self._add_to_cache(
-            self.settings.channels,
-            self.settings.max_channels_store,
-            self.channels,
-            channel,
+    def update_channels[C: Channel](self, channel: C) -> C:
+        return cast(
+            C,
+            self._add_to_cache(
+                self.settings.channels,
+                self.settings.max_channels_store,
+                self.channels,
+                channel,
+            ),
         )
 
     def update_guilds(self, guild: Guild) -> Guild:
