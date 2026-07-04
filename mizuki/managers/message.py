@@ -518,6 +518,7 @@ class MessageManager(BaseManager):
         *,
         channel_id: int,
         message_id: int,
+        user_id: int = _MISSING,
         emoji_id: int = _MISSING,
         emoji_name: str,
     ) -> None:
@@ -532,54 +533,8 @@ class MessageManager(BaseManager):
         message_id : :class:`int`
             The ID of the target message.
 
-        emoji_id : :class:`int`, optional
-            The ID of the custom emoji. Omit when reacting with a unicode emoji.
-
-        emoji_name : :class:`str`
-            The unicode emoji or the name of the custom emoji.
-
-        Raises
-        ------
-        :class:`NotFound`
-            The message you tried to remove reaction from or the emoji you tried to remove reaction of wasn't found.
-
-        :class:`Forbidden`
-            You are not allowed to remove reaction/see the message. You may be missing a specific permission.
-
-        :class:`HTTPException`
-            A HTTP error occurred.
-        """
-        await self._react_endpoints(
-            "DELETE",
-            channel_id=channel_id,
-            message_id=message_id,
-            emoji_id=emoji_id,
-            emoji_name=emoji_name,
-            user="@me",
-        )
-
-    async def remove_user_reaction(
-        self,
-        user_id: int,
-        *,
-        channel_id: int,
-        message_id: int,
-        emoji_id: int = _MISSING,
-        emoji_name: str,
-    ) -> None:
-        """
-        Removes a specific user's reaction from a message.
-
-        Parameters
-        ----------
-        user_id : :class:`int`
-            The ID of the user to delete reaction of.
-
-        channel_id : :class:`int`
-            The ID of the channel the target message is in.
-
-        message_id : :class:`int`
-            The ID of the target message.
+        user_id : :class:`int`, optional
+            The ID of the target user. Defaults to the client user.
 
         emoji_id : :class:`int`, optional
             The ID of the custom emoji. Omit when reacting with a unicode emoji.
@@ -604,10 +559,10 @@ class MessageManager(BaseManager):
             message_id=message_id,
             emoji_id=emoji_id,
             emoji_name=emoji_name,
-            user=user_id,
+            user=user_id or "@me",
         )
 
-    async def get_reactions(
+    async def fetch_reactions(
         self,
         *,
         channel_id: int,
@@ -713,7 +668,7 @@ class MessageManager(BaseManager):
             emoji_name=emoji_name,
         )
 
-    async def delete_all_reactions(self, *, channel_id: int, message_id: int) -> None:
+    async def remove_all_reactions(self, *, channel_id: int, message_id: int) -> None:
         """
         Removes all reactions from a message. This method requires :attr:`MANAGE_MESSAGES <mizuki.objects.permissions.Permissions.MANAGE_MESSAGES>`.
 
