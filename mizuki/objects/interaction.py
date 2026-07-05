@@ -1,42 +1,44 @@
 from __future__ import annotations
-from typing import cast, Any, Literal
+from typing import Any, Literal, cast, TYPE_CHECKING
 
-from ..file import File
-
-from ..enums.command import ApplicationCommandType, CommandOptionType
-from ..enums.interaction import (
+from mizuki._utils import _MISSING, assign_val_dict, mtd, scls
+from mizuki.enums.command import ApplicationCommandType, CommandOptionType
+from mizuki.enums.interaction import (
     ApplicationIntegrationType,
     InteractionCallbackType,
     InteractionContextType,
     InteractionType,
 )
-from ..errors import (
-    UnknownInteractionType,
+from mizuki.errors import (
     InteractionNotResponded,
-    InteractionResponded
+    InteractionResponded,
+    UnknownInteractionType,
 )
-from ..http import HTTPClient, Path
-from ..payloads.interaction import (
+from mizuki.file import File
+from mizuki.flags import MessageFlags
+from mizuki.http import Path
+from mizuki.objects.channel import parse_channel_payload
+from mizuki.objects.embed import Embed
+from mizuki.objects.guild import Guild
+from mizuki.objects.member import Member, PartialMember, ResolvedMember
+from mizuki.objects.message import AllowedMentions, Attachment, Message, PartialMessage
+from mizuki.objects.permissions import Permissions
+from mizuki.objects.role import Role
+from mizuki.objects.snowflake import Snowflake
+from mizuki.objects.user import User
+from mizuki.payloads.interaction import (
     ApplicationCommandInteractionOptionPayload,
     InteractionCallbackDataPayload,
-    InteractionWebhookMessagePayload,
     InteractionData,
     InteractionPayload,
     InteractionResponseCallbackPayload,
+    InteractionWebhookMessagePayload,
     InvokedApplicationCommandPayload,
     ResolvedDataPayload,
 )
-from ..flags import MessageFlags
-from .._utils import mtd, scls, _MISSING, assign_val_dict
-from .channel import parse_channel_payload
-from .embed import Embed
-from .guild import Guild
-from .member import Member, PartialMember, ResolvedMember
-from .message import Attachment, Message, PartialMessage, AllowedMentions
-from .permissions import Permissions
-from .role import Role
-from .snowflake import Snowflake
-from .user import User
+
+if TYPE_CHECKING:
+    from mizuki.state import ConnectionState
 
 __all__ = (
     "ResolvedData",
@@ -44,113 +46,117 @@ __all__ = (
     "Interaction",
 )
 
-class ResolvedData:
-    __slots__ = (
-        "users",
-        "members",
-        "roles",
-        "channels",
-        "messages",
-        "attachments"
-    )
 
-    def __init__(self, data: ResolvedDataPayload, *, guild_id: int | None):
+class ResolvedData:
+    __slots__ = ("users", "members", "roles", "channels", "messages", "attachments")
+
+    def __init__(
+        self, data: ResolvedDataPayload, *, guild_id: int | None, state: ConnectionState
+    ):
         self.users = {
-            int(id): User(payload)
+            int(id): User(payload, state=state)
             for id, payload in data.get("users", {}).items()
         }
 
-        self.members = {
-            int(id): ResolvedMember._from_partial_member(
-                PartialMember(payload, guild_id=guild_id, user_id=int(id)),
-                user=self.users[int(id)]
-            )
-            for id, payload in data.get("members", {}).items()
-        } if guild_id is not None else {}
+        self.members = (
+            {
+                int(id): ResolvedMember._from_partial_member(
+                    PartialMember(
+                        payload, guild_id=guild_id, user_id=int(id), state=state
+                    ),
+                    user=self.users[int(id)],
+                )
+                for id, payload in data.get("members", {}).items()
+            }
+            if guild_id is not None
+            else {}
+        )
 
         self.roles = {
-            int(id): Role(payload)
-            for id, payload in data.get("roles", {}).items()
+            int(id): Role(payload) for id, payload in data.get("roles", {}).items()
         }
 
         self.channels = {
-            int(id): parse_channel_payload(payload, partial=True)
+            int(id): parse_channel_payload(payload, partial=True, state=state)
             for id, payload in data.get("channels", {}).items()
         }
 
         self.messages = {
-            int(id): PartialMessage(payload)
+            int(id): PartialMessage(payload, state=state)
             for id, payload in data.get("messages", {}).items()
         }
 
         self.attachments = {
-            int(id): Attachment(payload)
+            int(id): Attachment(payload, state=state)
             for id, payload in data.get("attachments", {}).items()
         }
-        
+
+
 class InvokedApplicationCommandOption:
-    __slots__ = (
-        "name",
-        "type",
-        "value",
-        "options",
-        "focused"
-    )
-    
+    __slots__ = ("name", "type", "value", "options", "focused")
+
     def __init__(self, data: ApplicationCommandInteractionOptionPayload):
         self.name = data["name"]
         self.type = CommandOptionType(data["type"])
         self.value = data.get("value")
-        self.options = [InvokedApplicationCommandOption(o) for o in data.get("options", [])]
+        self.options = [
+            InvokedApplicationCommandOption(o) for o in data.get("options", [])
+        ]
         self.focused = data.get("focused", False)
-  
-class InvokedApplicationCommand:
-    __slots__ = (
-        "id",
-        "name",
-        "type",
-        "resolved",
-        "options",
-        "guild_id",
-        "target_id"
-    )
 
-    def __init__(self, data: InvokedApplicationCommandPayload):
+
+class InvokedApplicationCommand:
+    __slots__ = ("id", "name", "type", "resolved", "options", "guild_id", "target_id")
+
+    def __init__(
+        self, data: InvokedApplicationCommandPayload, *, state: ConnectionState
+    ):
         self.id = Snowflake(data["id"])
         self.name = data["name"]
         self.type = ApplicationCommandType(data["type"])
-        self.options = [InvokedApplicationCommandOption(o) for o in data.get("options", [])]
+        self.options = [
+            InvokedApplicationCommandOption(o) for o in data.get("options", [])
+        ]
         self.guild_id = Snowflake._from_str(data.get("guild_id"))
-        self.resolved = scls(ResolvedData, data.get("resolved"), guild_id=self.guild_id)
+        self.resolved = scls(
+            ResolvedData, data.get("resolved"), guild_id=self.guild_id, state=state
+        )
         self.target_id = Snowflake._from_str(data.get("target_id"))
-        
-def parse_interaction_data(type: InteractionType, data: InteractionData) -> InvokedApplicationCommand: #moretypes later
+
+
+def parse_interaction_data(
+    type: InteractionType, data: InteractionData, *, state: ConnectionState
+) -> InvokedApplicationCommand:  # moretypes later
     match type:
         case (
             InteractionType.APPLICATION_COMMAND
             | InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE
         ):
-            return InvokedApplicationCommand(cast(InvokedApplicationCommandPayload, data))
+            return InvokedApplicationCommand(
+                cast(InvokedApplicationCommandPayload, data), state=state
+            )
         case _:
             raise UnknownInteractionType(f"Received unknown interaction type '{type}'")
-            
+
+
 class ResponseHandler:
     __slots__ = (
-        "_http",
+        "_state",
         "interaction_id",
         "interaction_token",
         "application_id",
-        "acknowledged"
+        "acknowledged",
     )
-    
+
     def __init__(
         self,
-        http: HTTPClient,
         interaction_id: int,
         interaction_token: str,
-        application_id: Snowflake
+        application_id: Snowflake,
+        *,
+        state: ConnectionState,
     ):
-        self._http = http
+        self._state = state
         self.interaction_id = interaction_id
         self.interaction_token = interaction_token
         self.application_id = application_id
@@ -160,26 +166,24 @@ class ResponseHandler:
         self,
         type: InteractionCallbackType,
         data: InteractionCallbackDataPayload,
-        files: list[File] = _MISSING
+        files: list[File] = _MISSING,
     ):
-        await self._http.request(
+        await self._state.http.request(
             Path(
                 "POST",
                 "interactions/{interaction_id}/{interaction_token}/callback",
-                interaction_id = self.interaction_id,
-                interaction_token = self.interaction_token
+                interaction_id=self.interaction_id,
+                interaction_token=self.interaction_token,
             ),
-            json = InteractionResponseCallbackPayload(
-                type = type.value,
-                data = data
-            ),
-            files=files
+            json=InteractionResponseCallbackPayload(type=type.value, data=data),
+            files=files,
         )
 
     async def send_response(
         self,
         content: str = _MISSING,
-        *, tts: bool = False,
+        *,
+        tts: bool = False,
         embeds: list[Embed] = _MISSING,
         allowed_mentions: AllowedMentions = AllowedMentions.new(),
         files: list[File] = _MISSING,
@@ -188,17 +192,22 @@ class ResponseHandler:
         suppress_embeds: bool = False,
         suppress_notifications: bool = False,
         is_components_v2: bool = False,
-        is_voice_message: bool = False
+        is_voice_message: bool = False,
     ):
         if self.acknowledged:
             raise InteractionResponded()
 
         if any((content, embeds, files)):
-            if ephemeral: flags |= MessageFlags.EPHEMERAL
-            if suppress_embeds: flags |= MessageFlags.SUPPRESS_EMBEDS
-            if suppress_notifications: flags |= MessageFlags.SUPPRESS_NOTIFICATIONS
-            if is_components_v2: flags |= MessageFlags.IS_COMPONENTS_V2
-            if is_voice_message: flags |= MessageFlags.IS_VOICE_MESSAGE
+            if ephemeral:
+                flags |= MessageFlags.EPHEMERAL
+            if suppress_embeds:
+                flags |= MessageFlags.SUPPRESS_EMBEDS
+            if suppress_notifications:
+                flags |= MessageFlags.SUPPRESS_NOTIFICATIONS
+            if is_components_v2:
+                flags |= MessageFlags.IS_COMPONENTS_V2
+            if is_voice_message:
+                flags |= MessageFlags.IS_VOICE_MESSAGE
 
             await self._post(
                 type=InteractionCallbackType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -207,7 +216,8 @@ class ResponseHandler:
                     InteractionCallbackDataPayload(
                         tts=tts,
                         allowed_mentions=allowed_mentions._to_dict(),
-                    ), _MISSING,
+                    ),
+                    _MISSING,
                     content=content,
                     embeds=(
                         [embed._to_dict() for embed in embeds]
@@ -219,7 +229,7 @@ class ResponseHandler:
                         if files is not _MISSING
                         else _MISSING
                     ),
-                    flags=flags.value
+                    flags=flags.value,
                 ),
             )
             self.acknowledged = True
@@ -227,25 +237,23 @@ class ResponseHandler:
 
         raise ValueError("No sendable field was passed to the response")
 
-    async def defer(
-        self, *,
-        ephemeral: bool = False
-    ):
+    async def defer(self, *, ephemeral: bool = False):
         if self.acknowledged:
             raise InteractionResponded()
 
         await self._post(
             InteractionCallbackType.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE,
             InteractionCallbackDataPayload(
-                flags = MessageFlags(MessageFlags.EPHEMERAL if ephemeral else 0)
-            )
+                flags=MessageFlags(MessageFlags.EPHEMERAL if ephemeral else 0)
+            ),
         )
         self.acknowledged = True
 
     async def send_followup(
         self,
         content: str = _MISSING,
-        *, tts: bool = False,
+        *,
+        tts: bool = False,
         embeds: list[Embed] = _MISSING,
         allowed_mentions: AllowedMentions = AllowedMentions.new(),
         files: list[File] = _MISSING,
@@ -257,75 +265,89 @@ class ResponseHandler:
     ) -> Message:
         if not self.acknowledged:
             raise InteractionNotResponded()
-        
-        if any((content, embeds, files)):
-            if ephemeral: flags |= MessageFlags.EPHEMERAL
-            if suppress_embeds: flags |= MessageFlags.SUPPRESS_EMBEDS
-            if suppress_notifications: flags |= MessageFlags.SUPPRESS_NOTIFICATIONS
-            if is_components_v2: flags |= MessageFlags.IS_COMPONENTS_V2
 
-            return Message(await self._http.request(
-                Path(
-                    "POST",
-                    "webhooks/{webhook_id}/{webhook_token}",
-                    webhook_id = self.application_id,
-                    webhook_token = self.interaction_token
+        if any((content, embeds, files)):
+            if ephemeral:
+                flags |= MessageFlags.EPHEMERAL
+            if suppress_embeds:
+                flags |= MessageFlags.SUPPRESS_EMBEDS
+            if suppress_notifications:
+                flags |= MessageFlags.SUPPRESS_NOTIFICATIONS
+            if is_components_v2:
+                flags |= MessageFlags.IS_COMPONENTS_V2
+
+            return Message(
+                await self._state.http.request(
+                    Path(
+                        "POST",
+                        "webhooks/{webhook_id}/{webhook_token}",
+                        webhook_id=self.application_id,
+                        webhook_token=self.interaction_token,
+                    ),
+                    files=files,
+                    json=assign_val_dict(
+                        InteractionWebhookMessagePayload(
+                            tts=tts, allowed_mentions=allowed_mentions._to_dict()
+                        ),
+                        _MISSING,
+                        content=content,
+                        embeds=(
+                            [embed._to_dict() for embed in embeds]
+                            if embeds is not _MISSING
+                            else _MISSING
+                        ),
+                        attachments=(
+                            [
+                                file._to_attachment_dict(i)
+                                for i, file in enumerate(files)
+                            ]
+                            if files is not _MISSING
+                            else _MISSING
+                        ),
+                        flags=flags.value,
+                    ),
                 ),
-                files=files,
-                json=assign_val_dict(
-                    InteractionWebhookMessagePayload(
-                        tts=tts,
-                        allowed_mentions=allowed_mentions._to_dict()
-                    ), _MISSING,
-                    content=content,
-                    embeds=(
-                        [embed._to_dict() for embed in embeds]
-                        if embeds is not _MISSING
-                        else _MISSING
-                    ),
-                    attachments=(
-                        [file._to_attachment_dict(i) for i, file in enumerate(files)]
-                        if files is not _MISSING
-                        else _MISSING
-                    ),
-                    flags=flags.value
-                )
-            ))
+                state=self._state,
+            )
 
         raise ValueError("No sendable field was passed to the response")
 
     async def _webhook_messages_request(
-        self, *,
+        self,
+        *,
         method: str,
         message: int | str = "@original",
         files: list[File] = _MISSING,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Any:
-        return await self._http.request(
+        return await self._state.http.request(
             Path(
                 method,
                 "webhooks/{webhook_id}/{webhook_token}/messages/{message}",
-                webhook_id = self.application_id,
-                webhook_token = self.interaction_token,
-                message = str(message)
+                webhook_id=self.application_id,
+                webhook_token=self.interaction_token,
+                message=str(message),
             ),
             files=files,
-            **kwargs
+            **kwargs,
         )
 
     async def fetch_original_response(self) -> Message:
-        return Message(await self._webhook_messages_request(method="GET"))
-    
+        return Message(
+            await self._webhook_messages_request(method="GET"), state=self._state
+        )
+
     async def edit_original_response(
         self,
         content: str | None = _MISSING,
-        *, embeds: list[Embed] = _MISSING,
+        *,
+        embeds: list[Embed] = _MISSING,
         flags: MessageFlags = _MISSING,
         allowed_mentions: AllowedMentions = _MISSING,
         files: list[File] = _MISSING,
         suppress_embeds: bool = _MISSING,
         is_components_v2: Literal[True] = _MISSING,
-        override_files: bool = True
+        override_files: bool = True,
     ) -> Message:
         if all(
             x is _MISSING
@@ -336,44 +358,50 @@ class ResponseHandler:
                 allowed_mentions,
                 files,
                 suppress_embeds,
-                is_components_v2
+                is_components_v2,
             ]
         ):
             raise ValueError("No editable fields were passed in editing response.")
-        
+
         if suppress_embeds is not _MISSING or is_components_v2 is not _MISSING:
             flags = MessageFlags(0)
-            if suppress_embeds: flags |= MessageFlags.SUPPRESS_EMBEDS
-            if is_components_v2: flags |= MessageFlags.IS_COMPONENTS_V2
-            
-        return Message(await self._webhook_messages_request(
-            method="PATCH",
-            files=files,
-            json=assign_val_dict(
-                InteractionWebhookMessagePayload(),
-                _MISSING,
-                content=content,
-                embeds=(
-                    [embed._to_dict() for embed in embeds]
-                    if embeds is not _MISSING
-                    else _MISSING
+            if suppress_embeds:
+                flags |= MessageFlags.SUPPRESS_EMBEDS
+            if is_components_v2:
+                flags |= MessageFlags.IS_COMPONENTS_V2
+
+        return Message(
+            await self._webhook_messages_request(
+                method="PATCH",
+                files=files,
+                json=assign_val_dict(
+                    InteractionWebhookMessagePayload(),
+                    _MISSING,
+                    content=content,
+                    embeds=(
+                        [embed._to_dict() for embed in embeds]
+                        if embeds is not _MISSING
+                        else _MISSING
+                    ),
+                    allowed_mentions=mtd(allowed_mentions),
+                    attachments=(
+                        [file._to_attachment_dict(i) for i, file in enumerate(files)]
+                        if override_files and files is not _MISSING
+                        else _MISSING
+                    ),
+                    flags=flags.value if flags is not _MISSING else _MISSING,
                 ),
-                allowed_mentions=mtd(allowed_mentions),
-                attachments=(
-                    [file._to_attachment_dict(i) for i, file in enumerate(files)]
-                    if override_files and files is not _MISSING
-                    else _MISSING
-                ),
-                flags=flags.value if flags is not _MISSING else _MISSING
-            )
-        ))
+            ),
+            state=self._state,
+        )
 
     async def delete_original_response(self):
         await self._webhook_messages_request(method="DELETE")
 
+
 class Interaction:
     __slots__ = (
-        "_http",
+        "_state",
         "response",
         "id",
         "application_id",
@@ -393,29 +421,50 @@ class Interaction:
         "guild_locale",
         "authorizing_integration_owners",
         "context",
-        "attachment_size_limit"
+        "attachment_size_limit",
     )
 
-    def __init__(self, http: HTTPClient, data: InteractionPayload, *, guild: Guild | None = None):
-        self._http = http
+    def __init__(
+        self,
+        data: InteractionPayload,
+        *,
+        guild: Guild | None = None,
+        state: ConnectionState,
+    ):
+        self._state = state
         self.id = Snowflake(data["id"])
         self.application_id = Snowflake(data["application_id"])
         self.type = InteractionType(data["type"])
-        self.data = parse_interaction_data(self.type, i) if (i := data.get("data")) is not None else None
+        self.data = (
+            parse_interaction_data(self.type, i, state=state)
+            if (i := data.get("data")) is not None
+            else None
+        )
         self.guild = guild
         self.guild_id = Snowflake._from_str(data.get("guild_id"))
-        self.channel = parse_channel_payload(c, partial=True) if (c := data.get("channel")) is not None else None
+        self.channel = (
+            parse_channel_payload(c, partial=True, state=state)
+            if (c := data.get("channel")) is not None
+            else None
+        )
         self.channel_id = Snowflake._from_str(data.get("channel_id"))
-        self.member = scls(Member, data.get("member"), guild_id=self.guild_id)
-        self.user = scls(User, data.get("user"))
+        self.member = scls(
+            Member, data.get("member"), guild_id=self.guild_id, state=state
+        )
+        self.user = scls(User, data.get("user"), state=state)
         self.token = data["token"]
         self.version = data["version"]
-        self.message = scls(Message, data.get("message"))
+        self.message = scls(Message, data.get("message"), state=state)
         self.app_permissions = Permissions(int(data["app_permissions"]))
         self.locale = data.get("locale")
         self.guild_locale = data.get("guild_locale")
-        self.authorizing_integration_owners = {ApplicationIntegrationType(int(a)): (Snowflake(id) if id != "0" else 0) for a, id in data.get("authorizing_integration_owners", {}).items()}
+        self.authorizing_integration_owners = {
+            ApplicationIntegrationType(int(a)): (Snowflake(id) if id != "0" else 0)
+            for a, id in data.get("authorizing_integration_owners", {}).items()
+        }
         self.context = scls(InteractionContextType, data.get("context"))
         self.attachment_size_limit = data["attachment_size_limit"]
-        
-        self.response = ResponseHandler(http, self.id, self.token, self.application_id)
+
+        self.response = ResponseHandler(
+            self.id, self.token, self.application_id, state=state
+        )

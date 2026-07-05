@@ -1,10 +1,9 @@
 import pathlib
 from typing import Any
-from ._utils import _MISSING, assign_val_dict
+from mizuki._utils import _MISSING, assign_val_dict
 
-__all__ = (
-    "File",
-)
+__all__ = ("File",)
+
 
 class File:
     """
@@ -25,13 +24,7 @@ class File:
         Whether to spoiler the media to send. Only works for media files.
     """
 
-    __slots__ = (
-        "path",
-        "description",
-        "filename",
-        "spoiler",
-        "url"
-    )
+    __slots__ = ("path", "description", "filename", "spoiler", "url")
 
     path: pathlib.Path
     "The :class:`pathlib.Path` object for the file provided."
@@ -49,21 +42,22 @@ class File:
     "The attachment:// format URL for this file object."
 
     def __init__(
-        self, path: str,
-        *, filename: str = _MISSING,
+        self,
+        path: str,
+        *,
+        filename: str = _MISSING,
         spoiler: bool = False,
-        description: str | None = None
+        description: str | None = None,
     ):
         self.path = pathlib.Path(path)
         self.spoiler = spoiler
         self.description = description
-        self.filename = ("SPOILER_" if spoiler else "") + (filename if filename else self.path.name)
+        self.filename = ("SPOILER_" if spoiler else "") + (
+            filename if filename else self.path.name
+        )
         self.url = f"attachment://{self.filename}"
 
     def _to_attachment_dict(self, id: int) -> dict[str, Any]:
         return assign_val_dict(
-            {},
-            id=id,
-            filename=self.filename,
-            description=self.description
+            {}, id=id, filename=self.filename, description=self.description
         )

@@ -5,18 +5,21 @@ __all__ = (
     "MessageActivityType",
     "MessageType",
     "BaseThemeType",
-    "ReactionType"
+    "ReactionType",
 )
+
 
 class MessageReferenceType(IntEnum):
     DEFAULT = 0
     FORWARD = 1
+
 
 class MessageActivityType(IntEnum):
     JOIN = 1
     SPECTATE = 2
     LISTEN = 3
     JOIN_REQUEST = 5
+
 
 class MessageType(IntEnum):
     DEFAULT = 0
@@ -56,14 +59,16 @@ class MessageType(IntEnum):
     GUILD_INCIDENT_REPORT_FALSE_ALARM = 39
     PURCHASE_NOTIFICATION = 44
     POLL_RESULT = 46
-    
+
+
 class BaseThemeType(IntEnum):
     UNSET = 0
     DARK = 1
     LIGHT = 2
     DARKER = 3
     MIDNIGHT = 4
-    
+
+
 class ReactionType(IntEnum):
     NORMAL = 0
     BURST = 1

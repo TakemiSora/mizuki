@@ -5,7 +5,7 @@ from mizuki.payloads.role import (
     RoleColorsPayload,
     RoleTagsPayload,
     PartialRolePayload,
-    RolePayload
+    RolePayload,
 )
 from mizuki.objects.asset import Asset
 from mizuki.objects.permissions import Permissions
@@ -17,17 +17,15 @@ __all__ = (
     "Role",
 )
 
+
 class RoleColors:
-    __slots__ = (
-        "primary",
-        "secondary",
-        "tertiary"
-    )
+    __slots__ = ("primary", "secondary", "tertiary")
 
     def __init__(self, data: RoleColorsPayload):
         self.primary = data["primary_color"]
         self.secondary = data["secondary_color"]
         self.tertiary = data["tertiary_color"]
+
 
 class RoleTags:
     __slots__ = (
@@ -36,26 +34,22 @@ class RoleTags:
         "premium_subscriber",
         "subscription_listing_id",
         "available_for_purchase",
-        "guild_connections"
+        "guild_connections",
     )
 
     def __init__(self, data: RoleTagsPayload):
         self.bot_id = Snowflake._from_str(data.get("bot_id"))
         self.integration_id = Snowflake._from_str(data.get("integration_id"))
         self.premium_subscriber = "premium_subscriber" in data
-        self.subscription_listing_id = Snowflake._from_str(data.get("subscription_listing_id"))
+        self.subscription_listing_id = Snowflake._from_str(
+            data.get("subscription_listing_id")
+        )
         self.available_for_purchase = "available_for_purchase" in data
         self.guild_connections = "guild_connections" in data
 
+
 class PartialRole:
-    __slots__ = (
-        "id",
-        "name",
-        "colors",
-        "icon",
-        "unicode_emoji",
-        "position"
-    )
+    __slots__ = ("id", "name", "colors", "icon", "unicode_emoji", "position")
 
     def __init__(self, data: PartialRolePayload):
         self.id = Snowflake(data["id"])
@@ -77,15 +71,9 @@ class PartialRole:
     def created_at(self) -> datetime:
         return self.id.created_at
 
+
 class Role(PartialRole):
-    __slots__ = (
-        "hoist",
-        "permissions",
-        "managed",
-        "mentionable",
-        "tags",
-        "flags"
-    )
+    __slots__ = ("hoist", "permissions", "managed", "mentionable", "tags", "flags")
 
     def __init__(self, data: RolePayload):
         super().__init__(data)

@@ -8,10 +8,17 @@ from contextlib import ExitStack
 from urllib.parse import quote
 
 from mizuki.file import File
-from mizuki.errors import NotFound, HTTPException, Forbidden, Unauthorized, _RateLimitedRetry
+from mizuki.errors import (
+    NotFound,
+    HTTPException,
+    Forbidden,
+    Unauthorized,
+    _RateLimitedRetry,
+)
 from mizuki._utils import _MISSING
 
-_log  = logging.getLogger(__name__)
+_log = logging.getLogger(__name__)
+
 
 class Path:
     """
@@ -59,17 +66,24 @@ class Path:
 
     __slots__ = (
         "method",
+        "_raw_url",
         "url",
         "channel_id",
         "guild_id",
         "webhook_id",
-        "webhook_token"
+        "webhook_token",
     )
 
     def __init__(self, method: str, url: str, **parameters: Any):
         self.method = method
+        self._raw_url = url
         if parameters:
-            self.url = url.format_map({key: quote(val, safe = "") if isinstance(val, str) else val for key, val in parameters.items()})
+            self.url = url.format_map(
+                {
+                    key: quote(val, safe="") if isinstance(val, str) else val
+                    for key, val in parameters.items()
+                }
+            )
         else:
             self.url = url
 
@@ -79,16 +93,28 @@ class Path:
         self.webhook_token = parameters.get("webhook_token")
 
     @property
-    def _route_key(self) -> str:
-        return f"{self.method}:{self.url}+{"+".join(str(val) for val in [self.channel_id, self.guild_id, self.webhook_id, self.webhook_token])}"
+    def _bucket_key(self) -> str:
+        major = (
+            self.channel_id
+            or self.guild_id
+            or (
+                (
+                    f"{self.webhook_id}+{self.webhook_token}"
+                    if self.webhook_token
+                    else self.webhook_id
+                )
+                if self.webhook_id
+                else None
+            )
+            or ""
+        )
+        return f"{self.method}:{self._raw_url}+{major}"
+
 
 class RateLimitBucket:
     ":meta private:"
-    __slots__ = (
-        "remaining",
-        "reset_after",
-        "lock"
-    )
+
+    __slots__ = ("remaining", "reset_after", "lock")
 
     def __init__(self, remaining: int, reset_after: float):
         self.remaining = remaining
@@ -101,16 +127,13 @@ class RateLimitBucket:
         self.remaining = int(headers.get("X-RateLimit-Remaining", 1))
         self.reset_after = float(headers.get("X-RateLimit-Reset-After", 0.1))
 
+
 class HTTPClient:
     """
     The Client that is used to interact with the Discord REST API. This should **not** be constructed by the user.
     """
-    __slots__ = (
-        "_session",
-        "_global_ratelimit",
-        "_buckets_keys",
-        "_buckets"
-    )
+
+    __slots__ = ("_session", "_global_ratelimit", "_buckets_keys", "_buckets")
 
     def __init__(self):
         self._session: aiohttp.ClientSession | None = None
@@ -125,63 +148,89 @@ class HTTPClient:
 
         _log.debug("Attempting to make request %s: %s", path.method, path.url)
 
-        bucket_id = self._buckets_keys.get(path._route_key)
+        bucket_id = self._buckets_keys.get(path._bucket_key)
         bucket = self._buckets.get(bucket_id) if bucket_id else None
 
         try:
-            async with (bucket.lock if bucket else asyncio.Lock()):
-                assert self._session is not None, "Cannot call session without intializing first."
+            async with bucket.lock if bucket else asyncio.Lock():
+                assert self._session is not None, (
+                    "Cannot call session without intializing first."
+                )
 
-                async with self._session.request(path.method, path.url, **kwargs) as resp:
+                async with self._session.request(
+                    path.method, path.url, **kwargs
+                ) as resp:
                     new_bucket_id = resp.headers.get("X-RateLimit-Bucket")
 
                     if new_bucket_id is not None:
                         if new_bucket_id not in self._buckets:
                             self._buckets[new_bucket_id] = RateLimitBucket(1, 0)
                         self._buckets[new_bucket_id].update_bucket(resp)
-                        self._buckets_keys[path._route_key] = new_bucket_id
+                        self._buckets_keys[path._bucket_key] = new_bucket_id
 
                     if resp.status == 429:
                         data = await resp.json()
                         retry_after = float(data["retry_after"])
                         limit_scope = resp.headers.get("X-RateLimit-Scope")
 
-                        raise _RateLimitedRetry(data, retry_after, limit_scope, new_bucket_id or bucket_id)
+                        raise _RateLimitedRetry(
+                            data, retry_after, limit_scope, new_bucket_id or bucket_id
+                        )
 
                     if resp.status >= 400:
                         data = await resp.json()
                         message = data.get("message", "")
                         match resp.status:
-                            case 401: raise Unauthorized(resp.status, message)
-                            case 403: raise Forbidden(resp.status, message)
-                            case 404: raise NotFound(resp.status, message)
-                            case _: raise HTTPException(resp.status, message)
+                            case 401:
+                                raise Unauthorized(resp.status, message)
+                            case 403:
+                                raise Forbidden(resp.status, message)
+                            case 404:
+                                raise NotFound(resp.status, message)
+                            case _:
+                                raise HTTPException(resp.status, message)
 
                     if new_bucket_id:
                         bucket = self._buckets.get(new_bucket_id)
                         if bucket and bucket.remaining == 0:
-                            _log.debug("Pre-emptively waiting for bucket reset on BucketID = %s on URL = %s. Continuing in %.2f seconds.", new_bucket_id, path.url, bucket.reset_after)
+                            _log.debug(
+                                "Pre-emptively waiting for bucket reset on BucketID = %s on URL = %s. Continuing in %.2f seconds.",
+                                new_bucket_id,
+                                path.url,
+                                bucket.reset_after,
+                            )
                             await asyncio.sleep(bucket.reset_after)
 
-                    if "application/json" in resp.headers.get("Content-Type", ""): return await resp.json()
+                    if "application/json" in resp.headers.get("Content-Type", ""):
+                        return await resp.json()
 
         except _RateLimitedRetry as e:
             if e.limit_scope == "global":
                 self._global_ratelimit.clear()
-                _log.warning("Hit the global ratelimit for the REST API. Continuing in %.2f seconds", e.retry_after)
+                _log.warning(
+                    "Hit the global ratelimit for the REST API. Continuing in %.2f seconds",
+                    e.retry_after,
+                )
                 await asyncio.sleep(e.retry_after)
                 self._global_ratelimit.set()
             else:
-                _log.warning("Hit the ratelimit when accessing BucketID = %s on URL = %s. Continuing in %.2f seconds.", e.bucket_id, path.url, e.retry_after)
+                _log.warning(
+                    "Hit the ratelimit when accessing BucketID = %s on URL = %s. Continuing in %.2f seconds.",
+                    e.bucket_id,
+                    path.url,
+                    e.retry_after,
+                )
                 await asyncio.sleep(e.retry_after)
 
             return await self._request(path, **kwargs)
 
     async def request(
-        self, path: Path, *,
+        self,
+        path: Path,
+        *,
         files: list[File] = _MISSING,
         json: Any = _MISSING,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Any:
         """
         Used to make a HTTP request to the Discord API.
@@ -222,22 +271,11 @@ class HTTPClient:
 
                 for i, file in enumerate(files):
                     file_bytes = stack.enter_context(open(file.path, "rb"))
-                    data.add_field(
-                        f"files[{i}]",
-                        file_bytes,
-                        filename=file.filename
-                    )
+                    data.add_field(f"files[{i}]", file_bytes, filename=file.filename)
 
-                data.add_field(
-                    "payload_json",
-                    dumps(json)
-                )
+                data.add_field("payload_json", dumps(json))
 
             elif json and not files:
-                 request_data["json"] = json
+                request_data["json"] = json
 
-            return await self._request(
-                path,
-                **request_data,
-                **kwargs
-            )
+            return await self._request(path, **request_data, **kwargs)

@@ -1,18 +1,22 @@
 from typing import Literal, Required, TypedDict
 
-from ._types import CDNHash, Snowflake, UnixTime
-from .user import UserPayload
-from .emoji import ActivityEmojiPayload
+from mizuki.payloads._types import CDNHash, Snowflake, UnixTime
+from mizuki.payloads.user import UserPayload
+from mizuki.payloads.emoji import ActivityEmojiPayload
+
 
 class TimestampsPayload(TypedDict, total=False):
     start: UnixTime
     end: UnixTime
 
+
 class ActivityPartyPayload(TypedDict, total=False):
     id: str
     size: list[int]
 
+
 ActivityImage = str | CDNHash
+
 
 class ActivityAssetsPayload(TypedDict, total=False):
     large_image: ActivityImage
@@ -23,14 +27,17 @@ class ActivityAssetsPayload(TypedDict, total=False):
     small_url: str
     invite_cover_image: ActivityImage
 
+
 class ActivitySecretsPayload(TypedDict, total=False):
     join: str
     spectate: str
     match: str
 
+
 class ActivityButtonPayload(TypedDict):
     label: str
     url: str
+
 
 class ActivityPayload(TypedDict, total=False):
     name: Required[str]
@@ -51,6 +58,7 @@ class ActivityPayload(TypedDict, total=False):
     instance: bool
     flags: int
     buttons: list[ActivityButtonPayload]
+
 
 class PresencePayload(TypedDict):
     user: UserPayload

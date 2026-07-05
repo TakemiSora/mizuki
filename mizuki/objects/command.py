@@ -2,15 +2,27 @@ from __future__ import annotations
 
 import inspect
 import types
-from typing import get_origin, get_args, cast
+from typing import get_origin, get_args
 
 from typing import Any, Literal, Self, overload
 
-from .._utils import _MISSING, assign_val, assign_val_dict, mtd, scls, sint, CoroFunc
-from ..enums.channel import ChannelType
-from ..enums.command import ApplicationCommandType, CommandHandler, CommandOptionType
-from ..enums.interaction import ApplicationIntegrationType, InteractionContextType
-from ..payloads.command import (
+from mizuki._utils import (
+    _MISSING,
+    assign_val,
+    assign_val_dict,
+    mtd,
+    scls,
+    sint,
+    CoroFunc,
+)
+from mizuki.enums.channel import ChannelType
+from mizuki.enums.command import (
+    ApplicationCommandType,
+    CommandHandler,
+    CommandOptionType,
+)
+from mizuki.enums.interaction import ApplicationIntegrationType, InteractionContextType
+from mizuki.payloads.command import (
     ApplicationCommandPayload,
     BaseApplicationCommandPayload,
     CommandChoicePayload,
@@ -18,12 +30,12 @@ from ..payloads.command import (
     LocalizationPayload,
     PartialApplicationCommandPayload,
 )
-from .permissions import Permissions
-from .snowflake import Snowflake
+from mizuki.objects.permissions import Permissions
+from mizuki.objects.snowflake import Snowflake
 
-from .user import User
-from .channel import PartialGuildChannel, PartialThreadChannel
-from .role import Role
+from mizuki.objects.user import User
+from mizuki.objects.channel import PartialGuildChannel, PartialThreadChannel
+from mizuki.objects.role import Role
 
 __all__ = (
     "Mentionable",
@@ -31,19 +43,47 @@ __all__ = (
     "ApplicationCommandOption",
     "ApplicationCommandChoice",
     "PartialApplicationCommand",
-    "ApplicationCommand"
+    "ApplicationCommand",
 )
+
 
 class Mentionable: ...
 
+
 class Localization:
     __slots__ = (
-        "id", "da", "de", "en_gb", "en_us",
-        "es_es", "es_419", "fr", "hr", "it",
-        "lt", "hu", "nl", "no", "pl", "pt_br",
-        "ro", "fi", "sv_se", "vi", "tr", "cs",
-        "el", "bg", "ru", "uk", "hi", "th",
-        "zh_cn", "ja", "zh_tw", "ko",
+        "id",
+        "da",
+        "de",
+        "en_gb",
+        "en_us",
+        "es_es",
+        "es_419",
+        "fr",
+        "hr",
+        "it",
+        "lt",
+        "hu",
+        "nl",
+        "no",
+        "pl",
+        "pt_br",
+        "ro",
+        "fi",
+        "sv_se",
+        "vi",
+        "tr",
+        "cs",
+        "el",
+        "bg",
+        "ru",
+        "uk",
+        "hi",
+        "th",
+        "zh_cn",
+        "ja",
+        "zh_tw",
+        "ko",
     )
 
     def __init__(self, data: LocalizationPayload) -> None:
@@ -83,12 +123,9 @@ class Localization:
     def _to_dict(self) -> LocalizationPayload:
         return LocalizationPayload(**{k: getattr(self, k) for k in self.__slots__})
 
+
 class ApplicationCommandChoice:
-    __slots__ = (
-        "name",
-        "name_localizations",
-        "value"
-    )
+    __slots__ = ("name", "name_localizations", "value")
 
     def __init__(self, data: CommandChoicePayload):
         self.name = data["name"]
@@ -97,27 +134,23 @@ class ApplicationCommandChoice:
 
     @classmethod
     def new(
-        cls, *,
+        cls,
+        *,
         name: str,
         name_localizations: Localization = _MISSING,
-        value: str | int | float
+        value: str | int | float,
     ) -> Self:
         return assign_val(
-            cls(CommandChoicePayload(
-                name=name,
-                value=value
-            )),
-            name_localizations=name_localizations
+            cls(CommandChoicePayload(name=name, value=value)),
+            name_localizations=name_localizations,
         )
-    
+
     def _to_dict(self) -> CommandChoicePayload:
         return assign_val_dict(
-            CommandChoicePayload(
-                name=self.name,
-                value=self.value
-            ),
-            name_localizations=mtd(self.name_localizations)
+            CommandChoicePayload(name=self.name, value=self.value),
+            name_localizations=mtd(self.name_localizations),
         )
+
 
 class ApplicationCommandOption:
     _SLASH_COMMAND_OPTION_TYPE_MAP: dict[Any, CommandOptionType] = {
@@ -129,7 +162,7 @@ class ApplicationCommandOption:
         Role: CommandOptionType.ROLE,
         PartialGuildChannel: CommandOptionType.CHANNEL,
         PartialThreadChannel: CommandOptionType.CHANNEL,
-        Mentionable: CommandOptionType.MENTIONABLE
+        Mentionable: CommandOptionType.MENTIONABLE,
     }
 
     _VALID_TYPES = list(_SLASH_COMMAND_OPTION_TYPE_MAP)
@@ -156,11 +189,17 @@ class ApplicationCommandOption:
         self.name = data["name"]
         self.name_localizations = scls(Localization, data.get("name_localizations"))
         self.description = data["description"]
-        self.description_localizations = scls(Localization, data.get("description_localizations"))
+        self.description_localizations = scls(
+            Localization, data.get("description_localizations")
+        )
         self.required = data.get("required", False)
         self.choices = [ApplicationCommandChoice(a) for a in data.get("choices", [])]
         self.options = [ApplicationCommandOption(a) for a in data.get("options", [])]
-        self.channel_types = [ChannelType(c) for c in d] if (d := data.get("channel_types")) is not None else None
+        self.channel_types = (
+            [ChannelType(c) for c in d]
+            if (d := data.get("channel_types")) is not None
+            else None
+        )
         self.min_value = data.get("min_value")
         self.max_value = data.get("max_value")
         self.min_length = data.get("min_length")
@@ -170,19 +209,23 @@ class ApplicationCommandOption:
     @overload
     @classmethod
     def new(
-        cls, *,
-        type: Literal[CommandOptionType.SUB_COMMAND, CommandOptionType.SUB_COMMAND_GROUP],
+        cls,
+        *,
+        type: Literal[
+            CommandOptionType.SUB_COMMAND, CommandOptionType.SUB_COMMAND_GROUP
+        ],
         name: str,
         name_localizations: Localization = _MISSING,
         description: str,
         description_localizations: Localization = _MISSING,
-        options: list[ApplicationCommandOption] = _MISSING
+        options: list[ApplicationCommandOption] = _MISSING,
     ) -> Self: ...
 
     @overload
     @classmethod
     def new(
-        cls, *,
+        cls,
+        *,
         type: Literal[CommandOptionType.STRING],
         name: str,
         name_localizations: Localization = _MISSING,
@@ -192,13 +235,14 @@ class ApplicationCommandOption:
         choices: list[ApplicationCommandChoice] = _MISSING,
         min_length: int = _MISSING,
         max_length: int = _MISSING,
-        autocomplete: bool = _MISSING
+        autocomplete: bool = _MISSING,
     ) -> Self: ...
 
     @overload
     @classmethod
     def new(
-        cls, *,
+        cls,
+        *,
         type: Literal[CommandOptionType.INTEGER],
         name: str,
         name_localizations: Localization = _MISSING,
@@ -208,31 +252,33 @@ class ApplicationCommandOption:
         choices: list[ApplicationCommandChoice] = _MISSING,
         min_value: int = _MISSING,
         max_value: int = _MISSING,
-        autocomplete: bool = _MISSING
+        autocomplete: bool = _MISSING,
     ) -> Self: ...
 
     @overload
     @classmethod
     def new(
-        cls, *,
+        cls,
+        *,
         type: Literal[
             CommandOptionType.BOOLEAN,
             CommandOptionType.USER,
             CommandOptionType.ROLE,
             CommandOptionType.MENTIONABLE,
-            CommandOptionType.ATTACHMENT
+            CommandOptionType.ATTACHMENT,
         ],
         name: str,
         name_localizations: Localization = _MISSING,
         description: str,
         description_localizations: Localization = _MISSING,
-        required: bool = False
+        required: bool = False,
     ) -> Self: ...
 
     @overload
     @classmethod
     def new(
-        cls, *,
+        cls,
+        *,
         type: Literal[CommandOptionType.CHANNEL],
         name: str,
         name_localizations: Localization = _MISSING,
@@ -245,7 +291,8 @@ class ApplicationCommandOption:
     @overload
     @classmethod
     def new(
-        cls, *,
+        cls,
+        *,
         type: Literal[CommandOptionType.NUMBER],
         name: str,
         name_localizations: Localization = _MISSING,
@@ -255,12 +302,13 @@ class ApplicationCommandOption:
         choices: list[ApplicationCommandChoice] = _MISSING,
         min_value: float = _MISSING,
         max_value: float = _MISSING,
-        autocomplete: bool = _MISSING
+        autocomplete: bool = _MISSING,
     ) -> Self: ...
 
     @classmethod
     def new(
-        cls, *,
+        cls,
+        *,
         type: CommandOptionType,
         name: str,
         name_localizations: Localization = _MISSING,
@@ -274,15 +322,17 @@ class ApplicationCommandOption:
         max_value: int | float = _MISSING,
         min_length: int = _MISSING,
         max_length: int = _MISSING,
-        autocomplete: bool = _MISSING
+        autocomplete: bool = _MISSING,
     ) -> Self:
         return assign_val(
-            cls(CommandOptionPayload(
-                type=type.value,
-                name=name,
-                description=description,
-                required=required,
-            )),
+            cls(
+                CommandOptionPayload(
+                    type=type.value,
+                    name=name,
+                    description=description,
+                    required=required,
+                )
+            ),
             name_localizations=name_localizations,
             description_localizations=description_localizations,
             choices=choices,
@@ -292,7 +342,7 @@ class ApplicationCommandOption:
             max_value=max_value,
             min_length=min_length,
             max_length=max_length,
-            autocomplete=autocomplete
+            autocomplete=autocomplete,
         )
 
     @classmethod
@@ -305,24 +355,28 @@ class ApplicationCommandOption:
                 # exclude NoneType as user may use it for default such as str | None = None
 
                 if len(union) > 1:
-                    raise TypeError(f"Parameter type must be a concrete type or an optional type (T | None). Provided: {annotation}")
+                    raise TypeError(
+                        f"Parameter type must be a concrete type or an optional type (T | None). Provided: {annotation}"
+                    )
 
                 param_type = union[0]
             case None:
                 param_type = annotation
             case _:
                 raise TypeError(f"Parameter type must be one of: {cls._VALID_TYPES}")
-        
+
         option_type = cls._SLASH_COMMAND_OPTION_TYPE_MAP.get(param_type)
         if option_type is None:
             raise TypeError(f"Parameter type must be one of: {cls._VALID_TYPES}")
-        
-        return cls(CommandOptionPayload(
-            type=option_type.value,
-            name=param.name,
-            description="...",
-            required=param.default is inspect.Parameter.empty,
-        ))
+
+        return cls(
+            CommandOptionPayload(
+                type=option_type.value,
+                name=param.name,
+                description="...",
+                required=param.default is inspect.Parameter.empty,
+            )
+        )
 
     def _to_dict(self) -> CommandOptionPayload:
         return assign_val_dict(
@@ -336,13 +390,16 @@ class ApplicationCommandOption:
             description_localizations=mtd(self.description_localizations),
             choices=[c._to_dict() for c in self.choices] if self.choices else None,
             options=[o._to_dict() for o in self.options] if self.options else None,
-            channel_types=[ct.value for ct in self.channel_types] if self.channel_types else None,
+            channel_types=[ct.value for ct in self.channel_types]
+            if self.channel_types
+            else None,
             min_value=self.min_value,
             max_value=self.max_value,
             min_length=self.min_length,
             max_length=self.max_length,
-            autocomplete=self.autocomplete
+            autocomplete=self.autocomplete,
         )
+
 
 class BaseApplicationCommand:
     __slots__ = (
@@ -360,28 +417,38 @@ class BaseApplicationCommand:
         self.type = ApplicationCommandType(data.get("type", 1))
         self.name = data["name"]
         self.name_localizations = scls(Localization, data.get("name_localizations"))
-        self.description_localizations = scls(Localization, data.get("description_localizations"))
+        self.description_localizations = scls(
+            Localization, data.get("description_localizations")
+        )
         self.options = [ApplicationCommandOption(a) for a in data.get("options", [])]
         self.nsfw = data.get("nsfw", False)
-        self.integration_types = [ApplicationIntegrationType(a) for a in data.get("integration_types", [])]
-        self.contexts = [InteractionContextType(i) for i in d] if (d := data.get("contexts")) is not None else None
+        self.integration_types = [
+            ApplicationIntegrationType(a) for a in data.get("integration_types", [])
+        ]
+        self.contexts = (
+            [InteractionContextType(i) for i in d]
+            if (d := data.get("contexts")) is not None
+            else None
+        )
+
 
 class PartialApplicationCommand(BaseApplicationCommand):
-    __slots__ = (
-        "description",
-        "default_member_permissions",
-        "_callback"
-    )
-    
-    def __init__(self, data: PartialApplicationCommandPayload, callback: CoroFunc | None):
+    __slots__ = ("description", "default_member_permissions", "_callback")
+
+    def __init__(
+        self, data: PartialApplicationCommandPayload, callback: CoroFunc | None
+    ):
         super().__init__(data)
         self.description = data.get("description")
-        self.default_member_permissions = scls(Permissions, sint(data.get("default_member_permissions")))
+        self.default_member_permissions = scls(
+            Permissions, sint(data.get("default_member_permissions"))
+        )
         self._callback = callback
 
     @classmethod
     def new(
-        cls, *,
+        cls,
+        *,
         name: str,
         name_localizations: Localization = _MISSING,
         description: str = _MISSING,
@@ -392,13 +459,10 @@ class PartialApplicationCommand(BaseApplicationCommand):
         contexts: list[InteractionContextType] = _MISSING,
         type: ApplicationCommandType = ApplicationCommandType.CHAT_INPUT,
         nsfw: bool = False,
-        callback: CoroFunc = _MISSING
+        callback: CoroFunc = _MISSING,
     ) -> Self:
         return assign_val(
-            cls(PartialApplicationCommandPayload(
-                name=name,
-                type=type.value
-            ), callback),
+            cls(PartialApplicationCommandPayload(name=name, type=type.value), callback),
             name_localizations=name_localizations,
             description=description,
             description_localizations=description_localizations,
@@ -411,7 +475,8 @@ class PartialApplicationCommand(BaseApplicationCommand):
 
     @classmethod
     def _from_command(
-        cls, func: CoroFunc,
+        cls,
+        func: CoroFunc,
         *,
         name: str,
         name_localizations: Localization = _MISSING,
@@ -421,21 +486,25 @@ class PartialApplicationCommand(BaseApplicationCommand):
         integration_types: list[ApplicationIntegrationType] = _MISSING,
         contexts: list[InteractionContextType] = _MISSING,
         type: ApplicationCommandType = ApplicationCommandType.CHAT_INPUT,
-        nsfw: bool = False
+        nsfw: bool = False,
     ) -> Self:
         parameters = list(inspect.signature(func).parameters.values())
         options: list[ApplicationCommandOption] = []
-        command_options: dict[str, ApplicationCommandOption] = getattr(func, "__command_options__", {})
+        command_options: dict[str, ApplicationCommandOption] = getattr(
+            func, "__command_options__", {}
+        )
 
         for param in parameters[1:]:
             if param.annotation is inspect.Parameter.empty:
-                raise ValueError(f"No type hint for slash command '{name}', function={func.__name__}: '{param.name}'")
-            
+                raise ValueError(
+                    f"No type hint for slash command '{name}', function={func.__name__}: '{param.name}'"
+                )
+
             if param.name in command_options:
                 options.append(command_options[param.name])
             else:
                 options.append(ApplicationCommandOption._from_function_param(param))
-        
+
         return cls.new(
             name=name,
             name_localizations=name_localizations,
@@ -447,24 +516,27 @@ class PartialApplicationCommand(BaseApplicationCommand):
             contexts=contexts,
             type=type,
             nsfw=nsfw,
-            callback=func
+            callback=func,
         )
 
     def _to_dict(self) -> PartialApplicationCommandPayload:
         return assign_val_dict(
             PartialApplicationCommandPayload(
-                name=self.name,
-                type=self.type.value,
-                nsfw=self.nsfw
+                name=self.name, type=self.type.value, nsfw=self.nsfw
             ),
             name_localizations=mtd(self.name_localizations),
             description=self.description,
             description_localizations=mtd(self.description_localizations),
             options=[o._to_dict() for o in self.options] if self.options else None,
-            default_member_permissions=self.default_member_permissions.value if self.default_member_permissions else None,
-            integration_types=[i.value for i in self.integration_types] if self.integration_types else None,
+            default_member_permissions=self.default_member_permissions.value
+            if self.default_member_permissions
+            else None,
+            integration_types=[i.value for i in self.integration_types]
+            if self.integration_types
+            else None,
             contexts=[c.value for c in self.contexts] if self.contexts else None,
         )
+
 
 class ApplicationCommand(BaseApplicationCommand):
     __slots__ = (
@@ -475,7 +547,7 @@ class ApplicationCommand(BaseApplicationCommand):
         "handler",
         "guild_id",
     )
-    
+
     def __init__(self, data: ApplicationCommandPayload):
         super().__init__(data)
         self.id = Snowflake(data["id"])

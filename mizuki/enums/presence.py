@@ -6,6 +6,7 @@ __all__ = (
     "PresenceStatusType",
 )
 
+
 class ActivityType(IntEnum):
     Playing = 0
     Streaming = 1
@@ -14,10 +15,12 @@ class ActivityType(IntEnum):
     Custom = 4
     Competing = 5
 
+
 class StatusDisplayType(IntEnum):
     Name = 0
     State = 1
     Details = 2
+
 
 class PresenceStatusType(StrEnum):
     idle = "idle"

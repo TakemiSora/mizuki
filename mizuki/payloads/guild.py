@@ -1,16 +1,18 @@
 from typing import NotRequired, TypedDict, Literal
-from .emoji import EmojiPayload
-from .role import RolePayload
-from .sticker import StickerPayload
-from ._types import UNIMPLEMENTED, ISO8601Timestamp, Snowflake, CDNHash
-from .member import MemberPayload
-from .channel import GuildChannelPayload, ThreadPayload
-from .user import UserPayload
-from .presence import PresencePayload
+from mizuki.payloads.emoji import EmojiPayload
+from mizuki.payloads.role import RolePayload
+from mizuki.payloads.sticker import StickerPayload
+from mizuki.payloads._types import UNIMPLEMENTED, ISO8601Timestamp, Snowflake, CDNHash
+from mizuki.payloads.member import MemberPayload
+from mizuki.payloads.channel import GuildChannelPayload, ThreadPayload
+from mizuki.payloads.user import UserPayload
+from mizuki.payloads.presence import PresencePayload
+
 
 class UnavailableGuildPayload(TypedDict):
     id: Snowflake
     unavailable: NotRequired[Literal[True]]
+
 
 class StageInstancePayload(TypedDict):
     id: Snowflake
@@ -18,16 +20,20 @@ class StageInstancePayload(TypedDict):
     channel_id: Snowflake
     topic: str
     guild_scheduled_event_id: Snowflake | None
-    
+
+
 class EntityMetadataPayload(TypedDict, total=False):
     location: str
+
 
 RecurrenceRuleWeekday = Literal[0, 1, 2, 3, 4, 5, 6]
 RecurrenceRuleMonth = Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 
+
 class RecurrenceRuleNWeekdayPayload(TypedDict):
     n: int
     day: RecurrenceRuleWeekday
+
 
 class GuildScheduledEventRecurrenceRulePayload(TypedDict):
     start: ISO8601Timestamp
@@ -40,7 +46,8 @@ class GuildScheduledEventRecurrenceRulePayload(TypedDict):
     by_month_day: list[int] | None
     by_year_day: list[int] | None
     count: int | None
-    
+
+
 class GuildScheduledEventPayload(TypedDict):
     id: Snowflake
     guild_id: Snowflake
@@ -59,6 +66,7 @@ class GuildScheduledEventPayload(TypedDict):
     user_count: NotRequired[int]
     image: NotRequired[CDNHash | None]
     recurrence_rule: GuildScheduledEventRecurrenceRulePayload | None
+
 
 class GuildPayload(TypedDict):
     id: Snowflake

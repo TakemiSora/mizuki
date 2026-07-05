@@ -5,8 +5,9 @@ __all__ = (
     "ChannelPermissionOverwriteType",
     "VideoQualityMode",
     "SortOrderType",
-    "ForumLayoutType"
+    "ForumLayoutType",
 )
+
 
 class ChannelType(IntEnum):
     GUILD_TEXT = 0
@@ -23,17 +24,21 @@ class ChannelType(IntEnum):
     GUILD_FORUM = 15
     GUILD_MEDIA = 16
 
+
 class ChannelPermissionOverwriteType(IntEnum):
     ROLE = 0
     MEMBER = 1
+
 
 class VideoQualityMode(IntEnum):
     AUTO = 1
     FULL = 2
 
+
 class SortOrderType(IntEnum):
     LATEST_ACTIVITY = 0
     CREATION_DATE = 1
+
 
 class ForumLayoutType(IntEnum):
     NOT_SET = 0
