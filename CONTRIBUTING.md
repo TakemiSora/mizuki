@@ -13,4 +13,17 @@ The following is a set of guidelines, not hard rules and may not need to be foll
 
 - All contributions to the code must be formatted with [Ruff](https://docs.astral.sh/ruff/).
 
+## Commit Messages
+
+- Commit messages should be formatted in:
+
+```
+[FEAT/CHANGES/FIX, ...] Short summary of the changes
+
+- Things Changed 1
+- Things Changed 2
+```
+
+The points can be omitted if the summary is sufficiently explanatory
+
 For any questions regarding the library and contributing, you can ask me at [the discord server](https://discord.gg/mxQxxxpBsB).
