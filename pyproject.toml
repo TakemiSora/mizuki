@@ -12,20 +12,15 @@ authors = [
     { name = "Sora" }
 ]
 
-[project.optional-dependencies]
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+]
 docs = [
     "shibuya>=2026.5.19",
     "sphinx>=9.1.0",
     "sphinx-copybutton>=0.5.2",
     "sphinx-design>=0.7.0",
     "sphinx-iconify>=0.3.0",
-]
-
-[tool.ruff.lint]
-ignore = ["E701"]
-
-[dependency-groups]
-dev = [
-    "pytest>=9.1.1",
-    "pytest-asyncio>=1.4.0",
 ]
