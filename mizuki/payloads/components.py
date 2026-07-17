@@ -68,8 +68,8 @@ type RoleSelectPayload = ObjectSelectPayload[Literal[6]]
 type MentionableSelectPayload = ObjectSelectPayload[Literal[7]]
 
 
-class ChannelSelectPayload(ObjectSelectPayload[Literal[8]]):
-    channel_types: Literal[0, 1, 2, 4, 5, 10, 11, 12, 13, 14, 15, 16]
+class ChannelSelectPayload(ObjectSelectPayload[Literal[8]], total=False):
+    channel_types: list[Literal[0, 1, 2, 4, 5, 10, 11, 12, 13, 14, 15, 16]]
 
 
 type ActionRowChildComponentPayload = (

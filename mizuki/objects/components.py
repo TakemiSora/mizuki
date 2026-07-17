@@ -1,24 +1,35 @@
 from __future__ import annotations
-from typing import Literal, Self, overload
+from typing import Literal, Self, overload, TYPE_CHECKING
 
 from mizuki._utils import JSONPayload, assign_val, assign_val_dict, mtd, scls, _MISSING
-from mizuki.enums.components import ButtonStyle, ComponentType, DefaultSelectValueType
+from mizuki.enums.channel import ChannelType
+from mizuki.enums.components import (
+    ButtonStyle,
+    ComponentType,
+    DefaultSelectValueType,
+    TextInputStyle,
+)
 from mizuki.objects.emoji import PartialEmoji
 from mizuki.objects.snowflake import Snowflake
-from mizuki.payloads.components import (
-    ActionRowChildComponentPayload,
-    BaseComponentPayload,
-    BaseSelectPayload,
-    ButtonPayload,
-    ActionRowPayload,
-    ComponentTypeLiteral,
-    DefaultSelectValuePayload,
-    ObjectSelectPayload,
-    SelectTypeLiteral,
-    StringOptionPayload,
-    StringSelectPayload,
-    ObjectSelectTypeLiteral,
-)
+
+if TYPE_CHECKING:
+    from mizuki.payloads.components import (
+        ActionRowChildComponentPayload,
+        BaseComponentPayload,
+        BaseSelectPayload,
+        ButtonPayload,
+        ActionRowPayload,
+        ChannelSelectPayload,
+        ComponentTypeLiteral,
+        DefaultSelectValuePayload,
+        ObjectSelectPayload,
+        SelectTypeLiteral,
+        StringOptionPayload,
+        StringSelectPayload,
+        ObjectSelectTypeLiteral,
+        TextDisplayPayload,
+        TextInputPayload,
+    )
 
 __all__ = (
     "Button",
@@ -29,6 +40,8 @@ __all__ = (
     "RoleSelect",
     "MentionableSelect",
     "ActionRow",
+    "TextInput",
+    "TextDisplay",
     "Component",
 )
 
@@ -465,7 +478,7 @@ class ObjectSelect[
         max_values : :class:`int`, optional
             The maximum amount of values the user can select.
 
-        default_values : list[:class:`int` | :class:`DefaultSelectOption <mizuki.objects.components.DefaultSelectOption>`]
+        default_values : list[:class:`int` | :class:`DefaultSelectValue <mizuki.objects.components.DefaultSelectValue>`]
             The options that are selected by default on this select.
 
         required : :class:`bool`, optional
@@ -481,7 +494,7 @@ class ObjectSelect[
             if default_values:
                 if default_type is None:
                     raise ValueError(
-                        "Cannot auto convert integer IDs to DefaultSelectOption in MentionableSelect."
+                        "Cannot auto convert integer IDs to DefaultSelectValue in MentionableSelect."
                     )
 
                 default_values = [
@@ -525,8 +538,100 @@ class MentionableSelect(ObjectSelect[Literal[7], DefaultSelectValue]):
     _DEFAULT_OPTION_TYPE = None
 
 
+class ChannelSelect(ObjectSelect):  # we're overriding the .new() anyways
+    __slots__ = ("channel_types",)
+
+    def __init__(self, data: ChannelSelectPayload):
+        super().__init__(data)
+
+        self.channel_types = [ChannelType(d) for d in data.get("channel_types", [])]
+
+    def _to_dict(self) -> JSONPayload:
+        return assign_val_dict(
+            {
+                "type": self.type.value,
+                "custom_id": self.custom_id,
+            },
+            id=self.id,
+            placeholder=self.placeholder,
+            min_values=self.min_values,
+            max_values=self.max_values,
+            default_values=[d._to_dict() for d in self.default_values],
+            channel_types=[t.value for t in self.channel_types],
+            required=self.required if self.required is not True else None,
+            disabled=self.disabled or None,
+        )
+
+    @classmethod
+    def new(
+        cls,
+        *,
+        custom_id: str,
+        id: int = _MISSING,
+        placeholder: str = _MISSING,
+        min_values: int = _MISSING,
+        max_values: int = _MISSING,
+        default_values: list[int | DefaultSelectValue] = _MISSING,
+        channel_types: list[ChannelType] = _MISSING,
+        required: bool = True,
+        disabled: bool = False,
+    ) -> ChannelSelect:
+        """
+        Creates a new Select instance.
+
+        Parameters
+        ----------
+        custom_id : :class:`str`
+            The custom ID of the Select.
+
+        id : :class:`int`, optional
+            Optional Unique identifier for the Select.
+
+        placeholder : :class:`str`, optional
+            The placeholder string shown on the Select.
+
+        min_values : :class:`int`, optional
+            The minimum amount of values the user has to select.
+
+        max_values : :class:`int`, optional
+            The maximum amount of values the user can select.
+
+        default_values : list[:class:`int` | :class:`DefaultSelectValue <mizuki.objects.components.DefaultSelectValue>`]
+            The options that are selected by default on this select.
+
+        channel_types : list[:class:`ChannelType <mizuki.enums.channel.ChannelType>`]
+            The list of channel types that can be selected in this select.
+
+        required : :class:`bool`, optional
+            Whether this Select is required in modals.
+
+        disabled : :class:`bool`, optional
+            Whether this Select is disabled in messages.
+        """
+        return assign_val(
+            cls({"type": 8, "custom_id": custom_id}),
+            id=id,
+            placeholder=placeholder,
+            min_values=min_values,
+            max_values=max_values,
+            default_values=(
+                [
+                    DefaultSelectValue.new(i, type=DefaultSelectValueType.CHANNEL)
+                    if isinstance(i, int)
+                    else i
+                    for i in default_values
+                ]
+                if default_values
+                else []
+            ),
+            channel_types=channel_types,
+            required=required,
+            disabled=disabled,
+        )
+
+
 type ActionRowChildComponent = (
-    Button | StringSelect | UserSelect | RoleSelect | MentionableSelect
+    Button | StringSelect | UserSelect | RoleSelect | MentionableSelect | ChannelSelect
 )
 
 ACTIONROW_CHILD_MAP: dict[ComponentType, type[ActionRowChildComponent]] = {
@@ -535,6 +640,7 @@ ACTIONROW_CHILD_MAP: dict[ComponentType, type[ActionRowChildComponent]] = {
     ComponentType.USER_SELECT: UserSelect,
     ComponentType.ROLE_SELECT: RoleSelect,
     ComponentType.MENTIONABLE_SELECT: MentionableSelect,
+    ComponentType.CHANNEL_SELECT: ChannelSelect,
 }
 
 
@@ -572,5 +678,136 @@ class ActionRow(BaseComponent):
             cls({"type": 1, "components": []}), id=id, components=components
         )
 
+    def add(
+        self,
+        components: list[ActionRowChildComponent] | ActionRowChildComponent,
+    ) -> ActionRow:
+        if isinstance(components, list):
+            self.components += components
+        else:
+            self.components.append(components)
 
-type Component = ActionRow | Button | StringSelect | UserSelect | RoleSelect | MentionableSelect
+        return self
+
+
+class TextInput(BaseComponent):
+    __slots__ = (
+        "custom_id",
+        "style",
+        "min_length",
+        "max_length",
+        "required",
+        "value",
+        "placeholder",
+    )
+
+    def __init__(self, data: TextInputPayload):
+        super().__init__(data)
+
+        self.custom_id = data["custom_id"]
+        self.style = TextInputStyle(data["style"])
+        self.min_length = data.get("min_length")
+        self.max_length = data.get("max_length")
+        self.required = data.get("required", True)
+        self.value = data.get("value")
+        self.placeholder = data.get("placeholder")
+
+    def _to_dict(self) -> JSONPayload:
+        return assign_val_dict(
+            {"type": 4, "custom_id": self.custom_id, "style": self.style.value},
+            id=id,
+            min_length=self.min_length,
+            max_length=self.max_length,
+            required=(self.required if self.required is not True else None),
+            value=self.value,
+            placeholder=self.placeholder,
+        )
+
+    @classmethod
+    def new(
+        cls,
+        *,
+        custom_id: str,
+        id: int = _MISSING,
+        style: TextInputStyle = TextInputStyle.SHORT,
+        min_length: int = _MISSING,
+        max_length: int = _MISSING,
+        value: str = _MISSING,
+        placeholder: str = _MISSING,
+    ) -> TextInput:
+        """ "
+        Returns a TextInput instance.
+
+        Parameters
+        ----------
+        custom_id : :class:`str`
+            The custom ID of the TextInput.
+
+        id : :class:`int`, optional
+            Optional unique identifier for the TextInput.
+
+        style : :class:`TextInputStyle <mizuki.enums.components.TextInputStyle>`, optional
+            The style of the TextInput.
+
+        min_length : :class:`int`, optional
+            The minimum length that the user can input.
+
+        max_length : :class:`int`, optional
+            The maximum length that the user csn input.
+
+        value : :class:`str`, optional
+            The default value of the TextInput.
+
+        placeholder : :class:`str`, optional
+            The placeholder string for the TextInput.
+        """
+        return assign_val(
+            cls(
+                {"type": 4, "custom_id": custom_id, "style": style.value},
+            ),
+            id=id,
+            min_length=min_length,
+            max_length=max_length,
+            value=value,
+            placeholder=placeholder,
+        )
+
+
+class TextDisplay(BaseComponent):
+    __slots__ = ("content",)
+
+    def __init__(self, data: TextDisplayPayload):
+        super().__init__(data)
+
+        self.content = data["content"]
+
+    def _to_dict(self) -> JSONPayload:
+        return assign_val_dict({"type": 10, "content": self.content}, id=id)
+
+    @classmethod
+    def new(cls, content: str, *, id: int = _MISSING) -> TextDisplay:
+        """
+        Returns a TextDisplay instance.
+
+        Parameters
+        ----------
+        content : :class:`str`
+            The content of the TextDisplay.
+
+        id : :class:`int`, optional
+            Optional unique identifier for the TextDisplay.
+        """
+        return assign_val(cls({"type": 10, "content": content}), id=id)
+
+
+type Component = (
+    ActionRow
+    | Button
+    | StringSelect
+    | TextInput
+    | UserSelect
+    | RoleSelect
+    | MentionableSelect
+    | ChannelSelect
+    | TextDisplay
+)

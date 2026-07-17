@@ -1,6 +1,6 @@
 from enum import IntEnum, StrEnum
 
-__all__ = ("ComponentType", "ButtonStyle", "DefaultSelectValueType")
+__all__ = ("ComponentType", "ButtonStyle", "DefaultSelectValueType", "TextInputStyle")
 
 
 class ComponentType(IntEnum):
@@ -39,3 +39,8 @@ class DefaultSelectValueType(StrEnum):
     ROLE = "role"
     USER = "user"
     CHANNEL = "channel"
+
+
+class TextInputStyle(IntEnum):
+    SHORT = 0
+    PARAGRAPH = 1
