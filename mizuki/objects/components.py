@@ -573,4 +573,4 @@ class ActionRow(BaseComponent):
         )
 
 
-type Component = ActionRow | Button | StringSelect
+type Component = ActionRow | Button | StringSelect | UserSelect | RoleSelect | MentionableSelect
