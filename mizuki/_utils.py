@@ -14,6 +14,7 @@ _MISSING: Any = Missing()
 
 type CoroFunc = Callable[..., Coroutine[Any, Any, Any]]
 type CoroDecorator = Callable[[CoroFunc], CoroFunc]
+type JSONPayload = Any
 
 
 class SupportsToDict[T](Protocol):

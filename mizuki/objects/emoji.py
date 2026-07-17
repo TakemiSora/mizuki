@@ -2,7 +2,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Self, TYPE_CHECKING
 
-from mizuki._utils import _MISSING, assign_val, scls
+from mizuki._utils import _MISSING, JSONPayload, assign_val_dict, scls
 from mizuki.objects.asset import Asset
 from mizuki.objects.snowflake import Snowflake
 from mizuki.objects.user import User
@@ -45,6 +45,17 @@ class PartialEmoji:
         self.name = data["name"]
         self.asset = (
             Asset._from_custom_emoji(self.id, self.animated) if self.id else None
+        )
+
+    def _to_dict(self) -> JSONPayload:
+        return assign_val_dict({"animated": self.animated}, id=self.id, name=self.name)
+
+    @classmethod
+    def new(cls, name: str = _MISSING, id: int = _MISSING, animated: bool = False):
+        return cls(
+            PartialEmojiPayload(
+                id=str(id) if id else None, name=name or None, animated=animated
+            )
         )
 
     @property
@@ -137,7 +148,9 @@ class DefaultReaction:
         emoji_name : :class:`str`, optional
             The unicode emoji.
         """
-        return assign_val(cls.__new__(cls), emoji_id=emoji_id, emoji_name=emoji_name)
+        return cls(
+            DefaultReactionPayload(emoji_id=str(emoji_id), emoji_name=emoji_name)
+        )
 
 
 class ReactionCountDetail:

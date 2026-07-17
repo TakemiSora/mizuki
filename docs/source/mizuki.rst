@@ -8,6 +8,7 @@ API Reference
    mizuki.channel
    mizuki.client
    mizuki.command
+   mizuki.components
    mizuki.embed
    mizuki.errors
    mizuki.flags
