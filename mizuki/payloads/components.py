@@ -3,14 +3,17 @@ from typing import Literal, NotRequired, Required, TypedDict
 from mizuki.payloads._types import Snowflake
 from mizuki.payloads.emoji import PartialEmojiPayload
 
+type ComponentTypeLiteral = Literal[
+    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17, 18, 19, 21, 22, 23
+]
 
-class BaseComponentPayload(TypedDict):
-    type: Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17, 18, 19, 21, 22, 23]
+
+class BaseComponentPayload[T: ComponentTypeLiteral](TypedDict):
+    type: T
     id: NotRequired[int]
 
 
-class ButtonPayload(BaseComponentPayload, total=False):
-    type: Required[Literal[2]]
+class ButtonPayload(BaseComponentPayload[Literal[2]], total=False):
     style: Required[Literal[1, 2, 3, 4, 5, 6]]
     label: str
     emoji: PartialEmojiPayload
@@ -20,9 +23,11 @@ class ButtonPayload(BaseComponentPayload, total=False):
     disabled: bool
 
 
-class BaseSelectPayload(BaseComponentPayload, total=False):
-    type: Required[Literal[3, 5, 6, 7, 8]]
-    custom_id: str
+type SelectTypeLiteral = Literal[3, 5, 6, 7, 8]
+
+
+class BaseSelectPayload[T: SelectTypeLiteral](BaseComponentPayload[T], total=False):
+    custom_id: Required[str]
     placeholder: str
     min_values: int
     max_values: int
@@ -38,38 +43,36 @@ class StringOptionPayload(TypedDict, total=False):
     default: bool
 
 
-class StringSelectPayload(BaseSelectPayload):
-    type: Literal[3]
+class StringSelectPayload(BaseSelectPayload[Literal[3]]):
     options: list[StringOptionPayload]
 
 
-class DefaultSelectOptionPayload(TypedDict):
+class DefaultSelectValuePayload(TypedDict):
     id: Snowflake
     type: Literal["role", "user", "channel"]
 
 
-class ObjectSelectPayload(BaseSelectPayload):
-    default_options: list[DefaultSelectOptionPayload]
+type ObjectSelectTypeLiteral = Literal[5, 6, 7, 8]
 
 
-class UserSelectPayload(ObjectSelectPayload):
-    type: Literal[5]
+class ObjectSelectPayload[T: ObjectSelectTypeLiteral](
+    BaseSelectPayload[T], total=False
+):
+    default_values: list[DefaultSelectValuePayload]
 
 
-class RoleSelectPayload(ObjectSelectPayload):
-    type: Literal[6]
+type UserSelectPayload = ObjectSelectPayload[Literal[5]]
+
+type RoleSelectPayload = ObjectSelectPayload[Literal[6]]
+
+type MentionableSelectPayload = ObjectSelectPayload[Literal[7]]
 
 
-class MentionableSelectPayload(ObjectSelectPayload):
-    type: Literal[7]
-
-
-class ChannelSelectPayload(ObjectSelectPayload):
-    type: Literal[8]
+class ChannelSelectPayload(ObjectSelectPayload[Literal[8]]):
     channel_types: Literal[0, 1, 2, 4, 5, 10, 11, 12, 13, 14, 15, 16]
 
 
-type ActionRowChildComponent = (
+type ActionRowChildComponentPayload = (
     ButtonPayload
     | StringSelectPayload
     | UserSelectPayload
@@ -79,13 +82,11 @@ type ActionRowChildComponent = (
 )
 
 
-class ActionRowPayload(BaseComponentPayload):
-    type: Literal[1]
-    components: list[ActionRowChildComponent]
+class ActionRowPayload(BaseComponentPayload[Literal[1]]):
+    components: list[ActionRowChildComponentPayload]
 
 
-class TextInputPayload(BaseComponentPayload, total=False):
-    type: Required[Literal[4]]
+class TextInputPayload(BaseComponentPayload[Literal[4]], total=False):
     custom_id: Required[str]
     style: Required[Literal[0, 1]]
     min_length: int
@@ -107,13 +108,11 @@ class UnfurledMediaItem(TypedDict, total=False):
     attachment_id: Snowflake
 
 
-class TextDisplayPayload(BaseComponentPayload):
-    type: Literal[10]
+class TextDisplayPayload(BaseComponentPayload[Literal[10]]):
     content: str
 
 
-class ThumbnailPayload(BaseComponentPayload):
-    type: Literal[11]
+class ThumbnailPayload(BaseComponentPayload[Literal[11]]):
     media: UnfurledMediaItem
     description: str
     spoiler: bool
@@ -124,8 +123,7 @@ type SectionChildComponent = TextDisplayPayload
 type SectionAccessoryComponent = ButtonPayload | ThumbnailPayload
 
 
-class SectionPayload(BaseComponentPayload):
-    type: Literal[9]
+class SectionPayload(BaseComponentPayload[Literal[9]]):
     components: list[SectionChildComponent]
     accessory: SectionAccessoryComponent
 
@@ -136,21 +134,18 @@ class MediaGalleryItemPayload(TypedDict, total=False):
     spoiler: bool
 
 
-class MediaGalleryPayload(BaseComponentPayload):
-    type: Literal[12]
+class MediaGalleryPayload(BaseComponentPayload[Literal[12]]):
     items: list[MediaGalleryItemPayload]
 
 
-class FileComponentPayload(BaseComponentPayload, total=False):
-    type: Required[Literal[13]]
+class FileComponentPayload(BaseComponentPayload[Literal[13]], total=False):
     file: Required[UnfurledMediaItem]
     spoiler: bool
     name: str
     size: int
 
 
-class SeparatorPayload(BaseComponentPayload, total=False):
-    type: Required[Literal[14]]
+class SeparatorPayload(BaseComponentPayload[Literal[14]], total=False):
     divider: bool
     spacing: Literal[1, 2]
 
@@ -165,15 +160,13 @@ type ContainerChildComponent = (
 )
 
 
-class ContainerPayload(BaseComponentPayload, total=False):
-    type: Required[Literal[17]]
+class ContainerPayload(BaseComponentPayload[Literal[17]], total=False):
     components: list[ContainerChildComponent]
     accent_color: int | None
     spoiler: bool
 
 
-class FileUploadPayload(BaseComponentPayload, total=False):
-    type: Required[Literal[19]]
+class FileUploadPayload(BaseComponentPayload[Literal[19]], total=False):
     custom_id: Required[str]
     min_values: int
     max_values: int
@@ -187,8 +180,7 @@ class RadioGroupOptionPayload(TypedDict):
     default: NotRequired[bool]
 
 
-class RadioGroupPayload(BaseComponentPayload):
-    type: Literal[21]
+class RadioGroupPayload(BaseComponentPayload[Literal[21]]):
     custom_id: str
     options: list[RadioGroupOptionPayload]
     required: NotRequired[bool]
@@ -201,8 +193,7 @@ class CheckboxGroupOptionPayload(TypedDict):
     default: NotRequired[bool]
 
 
-class CheckboxGroupPayload(BaseComponentPayload):
-    type: Literal[22]
+class CheckboxGroupPayload(BaseComponentPayload[Literal[22]]):
     custom_id: str
     options: list[CheckboxGroupOptionPayload]
     min_values: NotRequired[int]
@@ -210,8 +201,7 @@ class CheckboxGroupPayload(BaseComponentPayload):
     required: bool
 
 
-class CheckboxPayload(BaseComponentPayload):
-    type: Literal[23]
+class CheckboxPayload(BaseComponentPayload[Literal[23]]):
     custom_id: str
     default: NotRequired[bool]
 
@@ -226,8 +216,31 @@ type LabelChildComponent = (
 )
 
 
-class LabelPayload(BaseComponentPayload):
-    type: Literal[18]
+class LabelPayload(BaseComponentPayload[Literal[18]]):
     label: str
     description: NotRequired[str]
     component: LabelChildComponent
+
+
+type ComponentPayload = (
+    ActionRowPayload
+    | ButtonPayload
+    | StringSelectPayload
+    | TextInputPayload
+    | UserSelectPayload
+    | RoleSelectPayload
+    | MentionableSelectPayload
+    | ChannelSelectPayload
+    | SectionPayload
+    | TextDisplayPayload
+    | ThumbnailPayload
+    | MediaGalleryPayload
+    | FileComponentPayload
+    | SeparatorPayload
+    | ContainerPayload
+    | LabelPayload
+    | FileUploadPayload
+    | RadioGroupPayload
+    | CheckboxGroupPayload
+    | CheckboxPayload
+)
