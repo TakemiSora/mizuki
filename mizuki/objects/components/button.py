@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import overload, Literal
 
-from mizuki.objects.components._types import BaseComponent
+from mizuki.objects.components.common import BaseComponent
 from mizuki.objects.emoji import PartialEmoji
 from mizuki.objects.snowflake import Snowflake
 from mizuki.enums import ButtonStyle

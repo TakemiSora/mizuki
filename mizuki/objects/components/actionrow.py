@@ -1,23 +1,21 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
-from mizuki._utils import JSONPayload, assign_val, assign_val_dict, _MISSING
-from mizuki.objects.components._types import BaseComponent
-from mizuki.objects.components.button import Button
-from mizuki.objects.components.stringselect import StringSelect
-from mizuki.objects.components.objectselect import (
-    UserSelect,
-    RoleSelect,
-    MentionableSelect,
-    ChannelSelect,
-)
+from mizuki._utils import _MISSING, JSONPayload, assign_val, assign_val_dict
 from mizuki.enums.components import ComponentType
+from mizuki.objects.components.button import Button
+from mizuki.objects.components.common import BaseComponent, component_parser_gen
+from mizuki.objects.components.objectselect import (
+    ChannelSelect,
+    MentionableSelect,
+    RoleSelect,
+    UserSelect,
+)
+from mizuki.objects.components.stringselect import StringSelect
 
 if TYPE_CHECKING:
-    from mizuki.payloads.components import (
-        ActionRowChildComponentPayload,
-        ActionRowPayload,
-    )
+    from mizuki.payloads.components import ActionRowPayload
 
 __all__ = ("ActionRow",)
 
@@ -34,18 +32,7 @@ ACTIONROW_CHILD_MAP: dict[ComponentType, type[ActionRowChildComponent]] = {
     ComponentType.CHANNEL_SELECT: ChannelSelect,
 }
 
-
-def parse_action_row_child(
-    data: ActionRowChildComponentPayload,
-) -> ActionRowChildComponent:
-    component_type = ComponentType(data["type"])
-
-    try:
-        return ACTIONROW_CHILD_MAP[component_type](data)  # type: ignore # This is resolved to be the correct match
-    except KeyError:
-        raise TypeError(
-            f"Component of type {component_type.value} cannot be inserted into an ActionRow."
-        )
+parse_action_row_child = component_parser_gen(ACTIONROW_CHILD_MAP, "ActionRow")
 
 
 class ActionRow(BaseComponent):
@@ -64,18 +51,11 @@ class ActionRow(BaseComponent):
         )
 
     @classmethod
-    def new(cls, components: list[ActionRowChildComponent], *, id: int = _MISSING):
+    def new(cls, *components: ActionRowChildComponent, id: int = _MISSING) -> ActionRow:
         return assign_val(
-            cls({"type": 1, "components": []}), id=id, components=components
+            cls({"type": 1, "components": []}), id=id, components=list(components)
         )
 
-    def add(
-        self,
-        components: list[ActionRowChildComponent] | ActionRowChildComponent,
-    ) -> ActionRow:
-        if isinstance(components, list):
-            self.components += components
-        else:
-            self.components.append(components)
-
+    def add(self, *components: ActionRowChildComponent) -> ActionRow:
+        self.components += list(components)
         return self

@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Self, Literal
 
 from mizuki._utils import JSONPayload, assign_val, assign_val_dict, _MISSING
-from mizuki.objects.components._types import BaseSelect
+from mizuki.objects.components.common import BaseSelect
 from mizuki.objects.snowflake import Snowflake
 from mizuki.enums.components import DefaultSelectValueType
 from mizuki.enums.channel import ChannelType

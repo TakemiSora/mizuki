@@ -14,6 +14,7 @@ __all__ = (
     "MessageFlags",
     "ActivityFlags",
     "InviteFlags",
+    "UnfurledMediaItemFlags",
 )
 
 
@@ -160,3 +161,7 @@ class ActivityFlags(IntFlag):
 
 class InviteFlags(IntFlag):
     IS_GUEST_INVITE = 1 << 0
+
+
+class UnfurledMediaItemFlags(IntFlag):
+    IS_ANIMATED = 1 << 0

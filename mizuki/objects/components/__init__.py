@@ -14,5 +14,11 @@ type Component = (
     | RoleSelect
     | MentionableSelect
     | ChannelSelect
+    | Section
     | TextDisplay
+    | Thumbnail
+    | MediaGallery
+    | FileComponent
+    | Separator
+    | Container
 )

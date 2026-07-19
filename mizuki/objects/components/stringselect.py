@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 
 from mizuki._utils import JSONPayload, assign_val, assign_val_dict, mtd, scls, _MISSING
 
-from mizuki.objects.components._types import BaseSelect
+from mizuki.objects.components.common import BaseSelect
 from mizuki.objects.emoji import PartialEmoji
 
 if TYPE_CHECKING:

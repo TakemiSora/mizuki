@@ -1,5 +1,7 @@
+from collections.abc import Callable
 from typing import TYPE_CHECKING
 from mizuki.enums.components import ComponentType
+from mizuki.payloads.components import ComponentPayload
 
 if TYPE_CHECKING:
     from mizuki.payloads.components import (
@@ -8,6 +10,7 @@ if TYPE_CHECKING:
         SelectTypeLiteral,
         BaseSelectPayload,
     )
+    from mizuki.objects.components import Component
 
 
 class BaseComponent:
@@ -64,3 +67,19 @@ class BaseSelect(BaseComponent):
         self.max_values = data.get("max_values")
         self.required = data.get("required", True)
         self.disabled = data.get("disabled", False)
+
+
+def component_parser_gen[ReturnType: Component](
+    component_map: dict[ComponentType, type[ReturnType]], item: str
+) -> Callable[[ComponentPayload], ReturnType]:
+    def parser(data: ComponentPayload) -> ReturnType:
+        component_type = ComponentType(data["type"])
+
+        try:
+            return component_map[component_type](data)  # type: ignore # This is resolved correctly.
+        except KeyError:
+            raise ValueError(
+                f"Component of type {component_type.value} cannot be inserted into {item}."
+            )
+
+    return parser

@@ -96,7 +96,7 @@ class TextInputPayload(BaseComponentPayload[Literal[4]], total=False):
     placeholder: str
 
 
-class UnfurledMediaItem(TypedDict, total=False):
+class UnfurledMediaItemPayload(TypedDict, total=False):
     url: Required[str]
     proxy_url: str
     height: int | None
@@ -104,7 +104,7 @@ class UnfurledMediaItem(TypedDict, total=False):
     placeholder: str
     placeholder_version: int
     content_type: str
-    flags: int
+    flags: Literal[0, 1]
     attachment_id: Snowflake
 
 
@@ -112,24 +112,24 @@ class TextDisplayPayload(BaseComponentPayload[Literal[10]]):
     content: str
 
 
-class ThumbnailPayload(BaseComponentPayload[Literal[11]]):
-    media: UnfurledMediaItem
-    description: str
+class ThumbnailPayload(BaseComponentPayload[Literal[11]], total=False):
+    media: Required[UnfurledMediaItemPayload]
+    description: str | None
     spoiler: bool
 
 
 # Currently limited to only these, until discord adds more support
-type SectionChildComponent = TextDisplayPayload
-type SectionAccessoryComponent = ButtonPayload | ThumbnailPayload
+type SectionChildComponentPayload = TextDisplayPayload
+type SectionAccessoryComponentPayload = ButtonPayload | ThumbnailPayload
 
 
 class SectionPayload(BaseComponentPayload[Literal[9]]):
-    components: list[SectionChildComponent]
-    accessory: SectionAccessoryComponent
+    components: list[SectionChildComponentPayload]
+    accessory: SectionAccessoryComponentPayload
 
 
 class MediaGalleryItemPayload(TypedDict, total=False):
-    media: Required[UnfurledMediaItem]
+    media: Required[UnfurledMediaItemPayload]
     description: str
     spoiler: bool
 
@@ -139,7 +139,7 @@ class MediaGalleryPayload(BaseComponentPayload[Literal[12]]):
 
 
 class FileComponentPayload(BaseComponentPayload[Literal[13]], total=False):
-    file: Required[UnfurledMediaItem]
+    file: Required[UnfurledMediaItemPayload]
     spoiler: bool
     name: str
     size: int
@@ -150,7 +150,7 @@ class SeparatorPayload(BaseComponentPayload[Literal[14]], total=False):
     spacing: Literal[1, 2]
 
 
-type ContainerChildComponent = (
+type ContainerChildComponentPayload = (
     ActionRowPayload
     | TextDisplayPayload
     | SectionPayload
@@ -161,7 +161,7 @@ type ContainerChildComponent = (
 
 
 class ContainerPayload(BaseComponentPayload[Literal[17]], total=False):
-    components: list[ContainerChildComponent]
+    components: Required[list[ContainerChildComponentPayload]]
     accent_color: int | None
     spoiler: bool
 

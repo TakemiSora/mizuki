@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from mizuki._utils import JSONPayload, assign_val, assign_val_dict, _MISSING
-from mizuki.objects.components._types import BaseComponent
+from mizuki.objects.components.common import BaseComponent
 from mizuki.enums.components import TextInputStyle
 
 if TYPE_CHECKING:
