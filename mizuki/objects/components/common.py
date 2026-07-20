@@ -1,16 +1,17 @@
 from collections.abc import Callable
 from typing import TYPE_CHECKING
+
 from mizuki.enums.components import ComponentType
 from mizuki.payloads.components import ComponentPayload
 
 if TYPE_CHECKING:
-    from mizuki.payloads.components import (
-        ComponentTypeLiteral,
-        BaseComponentPayload,
-        SelectTypeLiteral,
-        BaseSelectPayload,
-    )
     from mizuki.objects.components import Component
+    from mizuki.payloads.components import (
+        BaseComponentPayload,
+        BaseSelectPayload,
+        ComponentTypeLiteral,
+        SelectTypeLiteral,
+    )
 
 
 class BaseComponent:

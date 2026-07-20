@@ -7,6 +7,7 @@ Objects
 .. automodule:: mizuki.objects.components
     :members:
     :show-inheritance:
+    :imported-members:
         
 Enums
 -----

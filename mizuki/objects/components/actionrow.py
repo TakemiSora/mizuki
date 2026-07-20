@@ -36,6 +36,13 @@ parse_action_row_child = component_parser_gen(ACTIONROW_CHILD_MAP, "ActionRow")
 
 
 class ActionRow(BaseComponent):
+    """
+    Represents an ActionRow component.
+    """
+
+    components: list[ActionRowChildComponent]
+    "The components of the ActionRow."
+
     __slots__ = ("components",)
 
     def __init__(self, data: ActionRowPayload):
@@ -52,10 +59,28 @@ class ActionRow(BaseComponent):
 
     @classmethod
     def new(cls, *components: ActionRowChildComponent, id: int = _MISSING) -> ActionRow:
+        """
+        Returns an instance of an ActionRow.
+
+        Paramaters
+        ----------
+        *components : :type:`ActionRowChildComponent`
+            The component(s) to add to the ActionRow.
+
+        id : :class:`int`, optional
+            Optional unique identifier for the ActionRow.
+        """
         return assign_val(
             cls({"type": 1, "components": []}), id=id, components=list(components)
         )
 
-    def add(self, *components: ActionRowChildComponent) -> ActionRow:
+    def add(self, *components: ActionRowChildComponent) -> None:
+        """
+        Add components to the ActionRow.
+
+        Parameters
+        ----------
+        *components : :type:`ActionRowChildComponent`
+            The component(s) to add to the ActionRow.
+        """
         self.components += list(components)
-        return self

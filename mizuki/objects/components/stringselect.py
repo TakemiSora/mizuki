@@ -1,8 +1,8 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
-from mizuki._utils import JSONPayload, assign_val, assign_val_dict, mtd, scls, _MISSING
-
+from mizuki._utils import _MISSING, JSONPayload, assign_val, assign_val_dict, mtd, scls
 from mizuki.objects.components.common import BaseSelect
 from mizuki.objects.emoji import PartialEmoji
 
@@ -135,7 +135,7 @@ class StringSelect(BaseSelect):
 
         Parameters
         ----------
-        options : list[:class:`StringOption <mizuki.objects.components.StringOption>`]
+        options : list[:class:`StringOption`]
             The options for the StringSelect.
 
         custom_id : :class:`str`

@@ -1,18 +1,19 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Self, Literal
 
-from mizuki._utils import JSONPayload, assign_val, assign_val_dict, _MISSING
+from typing import TYPE_CHECKING, Literal, Self
+
+from mizuki._utils import _MISSING, JSONPayload, assign_val, assign_val_dict
+from mizuki.enums.channel import ChannelType
+from mizuki.enums.components import DefaultSelectValueType
 from mizuki.objects.components.common import BaseSelect
 from mizuki.objects.snowflake import Snowflake
-from mizuki.enums.components import DefaultSelectValueType
-from mizuki.enums.channel import ChannelType
 
 if TYPE_CHECKING:
     from mizuki.payloads.components import (
-        DefaultSelectValuePayload,
-        ObjectSelectTypeLiteral,
-        ObjectSelectPayload,
         ChannelSelectPayload,
+        DefaultSelectValuePayload,
+        ObjectSelectPayload,
+        ObjectSelectTypeLiteral,
     )
 
 __all__ = (
@@ -27,6 +28,12 @@ __all__ = (
 class DefaultSelectValue:
     __slots__ = ("id", "type")
 
+    id: Snowflake
+    "The ID of the object."
+
+    type: DefaultSelectValueType
+    "The type of object the ID refers to."
+
     def __init__(self, data: DefaultSelectValuePayload):
         self.id = Snowflake(data["id"])
         self.type = DefaultSelectValueType(data["type"])
@@ -36,6 +43,17 @@ class DefaultSelectValue:
 
     @classmethod
     def new(cls, id: int, *, type: DefaultSelectValueType) -> DefaultSelectValue:
+        """
+        Returns an instance of a DefaultSelectValue.
+
+        Parameters
+        ----------
+        id : :class:`int`
+            The ID of the target object.
+
+        type : :class:`DefaultSelectValue`
+            The type of object the ID refers to.
+        """
         return assign_val(cls.__new__(cls), id=Snowflake(id), type=type)
 
 
@@ -44,6 +62,9 @@ class ObjectSelect[
     DefaultOptionParam: int | DefaultSelectValue,
 ](BaseSelect):
     __slots__ = ("default_values",)
+
+    default_values: list[DefaultSelectValue]
+    "The default values selected in the select component."
 
     def __init__(self, data: ObjectSelectPayload[T]):
         super().__init__(data)
@@ -100,8 +121,8 @@ class ObjectSelect[
         max_values : :class:`int`, optional
             The maximum amount of values the user can select.
 
-        default_values : list[:class:`int` | :class:`DefaultSelectValue <mizuki.objects.components.DefaultSelectValue>`]
-            The options that are selected by default on this select.
+        default_values : list[:class:`int` | :class:`DefaultSelectValue`]
+            The options that are selected by default on this select. You must provide DefaultSelectValue for MentionableSelect.
 
         required : :class:`bool`, optional
             Whether this Select is required in modals.
@@ -146,22 +167,41 @@ class ObjectSelect[
 
 
 class UserSelect(ObjectSelect[Literal[5], int | DefaultSelectValue]):
+    """
+    Represents an UserSelect component.
+    """
+
     _TYPE = 5
     _DEFAULT_OPTION_TYPE = DefaultSelectValueType.USER
 
 
 class RoleSelect(ObjectSelect[Literal[6], int | DefaultSelectValue]):
+    """
+    Represents a RoleSelect component.
+    """
+
     _TYPE = 6
     _DEFAULT_OPTION_TYPE = DefaultSelectValueType.ROLE
 
 
 class MentionableSelect(ObjectSelect[Literal[7], DefaultSelectValue]):
+    """
+    Represents a MentionableSelect component.
+    """
+
     _TYPE = 7
     _DEFAULT_OPTION_TYPE = None
 
 
 class ChannelSelect(ObjectSelect):  # we're overriding the .new() anyways
+    """
+    Represents a ChannelSelect component.
+    """
+
     __slots__ = ("channel_types",)
+
+    channel_types: list[ChannelType]
+    "The list of type of channels that can be selected in this component."
 
     def __init__(self, data: ChannelSelectPayload):
         super().__init__(data)
@@ -218,10 +258,10 @@ class ChannelSelect(ObjectSelect):  # we're overriding the .new() anyways
         max_values : :class:`int`, optional
             The maximum amount of values the user can select.
 
-        default_values : list[:class:`int` | :class:`DefaultSelectValue <mizuki.objects.components.DefaultSelectValue>`]
+        default_values : list[:class:`int` | :class:`DefaultSelectValue`]
             The options that are selected by default on this select.
 
-        channel_types : list[:class:`ChannelType <mizuki.enums.channel.ChannelType>`]
+        channel_types : list[:class:`ChannelType`]
             The list of channel types that can be selected in this select.
 
         required : :class:`bool`, optional

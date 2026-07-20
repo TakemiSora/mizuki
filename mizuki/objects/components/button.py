@@ -1,12 +1,13 @@
 from __future__ import annotations
-from typing import overload, Literal
 
+from typing import Literal, overload
+
+from mizuki._utils import _MISSING, JSONPayload, assign_val, assign_val_dict, mtd, scls
+from mizuki.enums.components import ButtonStyle
 from mizuki.objects.components.common import BaseComponent
 from mizuki.objects.emoji import PartialEmoji
 from mizuki.objects.snowflake import Snowflake
-from mizuki.enums import ButtonStyle
 from mizuki.payloads.components import ButtonPayload
-from mizuki._utils import scls, assign_val_dict, assign_val, JSONPayload, mtd, _MISSING
 
 __all__ = ("Button",)
 

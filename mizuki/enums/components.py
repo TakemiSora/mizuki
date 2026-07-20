@@ -1,6 +1,12 @@
 from enum import IntEnum, StrEnum
 
-__all__ = ("ComponentType", "ButtonStyle", "DefaultSelectValueType", "TextInputStyle", "SeparatorSpacing")
+__all__ = (
+    "ComponentType",
+    "ButtonStyle",
+    "DefaultSelectValueType",
+    "TextInputStyle",
+    "SeparatorSpacing",
+)
 
 
 class ComponentType(IntEnum):
