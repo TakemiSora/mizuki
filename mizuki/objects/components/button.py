@@ -4,15 +4,21 @@ from typing import Literal, overload
 
 from mizuki._utils import _MISSING, JSONPayload, assign_val, assign_val_dict, mtd, scls
 from mizuki.enums.components import ButtonStyle
-from mizuki.objects.components.common import BaseComponent
+from mizuki.objects.components.common import BaseComponent, BaseComponentResponse
 from mizuki.objects.emoji import PartialEmoji
 from mizuki.objects.snowflake import Snowflake
 from mizuki.payloads.components import ButtonPayload
 
-__all__ = ("Button",)
+__all__ = ("ButtonResponse", "Button")
 
 
-class Button(BaseComponent):
+class ButtonResponse(BaseComponentResponse):
+    """
+    Represents a response for a button component.
+    """
+
+
+class Button(BaseComponent[ButtonResponse]):
     """
     Represents a Button Component.
     """

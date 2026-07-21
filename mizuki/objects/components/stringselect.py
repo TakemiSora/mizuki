@@ -3,13 +3,17 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from mizuki._utils import _MISSING, JSONPayload, assign_val, assign_val_dict, mtd, scls
-from mizuki.objects.components.common import BaseSelect
+from mizuki.objects.components.common import BaseComponentResponse, BaseSelect
 from mizuki.objects.emoji import PartialEmoji
 
 if TYPE_CHECKING:
-    from mizuki.payloads.components import StringOptionPayload, StringSelectPayload
+    from mizuki.payloads.components import (
+        StringOptionPayload,
+        StringSelectPayload,
+        StringSelectResponsePayload,
+    )
 
-__all__ = ("StringOption", "StringSelect")
+__all__ = ("StringOption", "StringSelectResponse", "StringSelect")
 
 
 class StringOption:
@@ -87,7 +91,23 @@ class StringOption:
         )
 
 
-class StringSelect(BaseSelect):
+class StringSelectResponse(BaseComponentResponse):
+    """
+    Represents a response from a StringSelect component.
+    """
+
+    __slots__ = ("values",)
+
+    values: list[str]
+    "The strings selected in this response."
+
+    def __init__(self, data: StringSelectResponsePayload):
+        super().__init__(data)
+
+        self.values = data["values"]
+
+
+class StringSelect(BaseSelect[StringSelectResponse]):
     """
     Represents a StringSelect component.
     """

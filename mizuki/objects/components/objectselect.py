@@ -5,22 +5,29 @@ from typing import TYPE_CHECKING, Literal, Self
 from mizuki._utils import _MISSING, JSONPayload, assign_val, assign_val_dict
 from mizuki.enums.channel import ChannelType
 from mizuki.enums.components import DefaultSelectValueType
-from mizuki.objects.components.common import BaseSelect
+from mizuki.objects.components.common import BaseComponentResponse, BaseSelect
+from mizuki.objects.interaction import ResolvedData
 from mizuki.objects.snowflake import Snowflake
 
 if TYPE_CHECKING:
+    from mizuki.state import ConnectionState
     from mizuki.payloads.components import (
         ChannelSelectPayload,
         DefaultSelectValuePayload,
         ObjectSelectPayload,
+        ObjectSelectResponsePayload,
         ObjectSelectTypeLiteral,
     )
 
 __all__ = (
     "DefaultSelectValue",
+    "UserSelectResponse",
     "UserSelect",
+    "RoleSelectResponse",
     "RoleSelect",
+    "MentionableSelectResponse",
     "MentionableSelect",
+    "ChannelSelectResponse",
     "ChannelSelect",
 )
 
@@ -57,10 +64,33 @@ class DefaultSelectValue:
         return assign_val(cls.__new__(cls), id=Snowflake(id), type=type)
 
 
+class ObjectSelectResponse[T: ObjectSelectTypeLiteral](BaseComponentResponse):
+    __slots__ = ("resolved", "values")
+
+    resolved: ResolvedData
+    "The resolved data for this response."
+
+    values: list[Snowflake]
+    "The list of IDs of objects selected."
+
+    def __init__(
+        self,
+        data: ObjectSelectResponsePayload[T],
+        *,
+        guild_id: int | None = None,
+        state: ConnectionState,
+    ):
+        super().__init__(data)
+
+        self.resolved = ResolvedData(data["resolved"], guild_id=guild_id, state=state)
+        self.values = [Snowflake(i) for i in data["values"]]
+
+
 class ObjectSelect[
     T: ObjectSelectTypeLiteral,
     DefaultOptionParam: int | DefaultSelectValue,
-](BaseSelect):
+    CallbackResponse: ObjectSelectResponse[ObjectSelectTypeLiteral],
+](BaseSelect[CallbackResponse]):
     __slots__ = ("default_values",)
 
     default_values: list[DefaultSelectValue]
@@ -166,7 +196,15 @@ class ObjectSelect[
         raise NotImplementedError("'ObjectSelect' does not implement construction.")
 
 
-class UserSelect(ObjectSelect[Literal[5], int | DefaultSelectValue]):
+class UserSelectResponse(ObjectSelectResponse[Literal[5]]):
+    """
+    Represents a response from an UserSelect component.
+    """
+
+
+class UserSelect(
+    ObjectSelect[Literal[5], int | DefaultSelectValue, UserSelectResponse]
+):
     """
     Represents an UserSelect component.
     """
@@ -175,7 +213,15 @@ class UserSelect(ObjectSelect[Literal[5], int | DefaultSelectValue]):
     _DEFAULT_OPTION_TYPE = DefaultSelectValueType.USER
 
 
-class RoleSelect(ObjectSelect[Literal[6], int | DefaultSelectValue]):
+class RoleSelectResponse(ObjectSelectResponse[Literal[6]]):
+    """
+    Represents a response from a RoleSelect component.
+    """
+
+
+class RoleSelect(
+    ObjectSelect[Literal[6], int | DefaultSelectValue, RoleSelectResponse]
+):
     """
     Represents a RoleSelect component.
     """
@@ -184,7 +230,15 @@ class RoleSelect(ObjectSelect[Literal[6], int | DefaultSelectValue]):
     _DEFAULT_OPTION_TYPE = DefaultSelectValueType.ROLE
 
 
-class MentionableSelect(ObjectSelect[Literal[7], DefaultSelectValue]):
+class MentionableSelectResponse(ObjectSelectResponse[Literal[7]]):
+    """
+    Represents a response from a MentionableSelect component.
+    """
+
+
+class MentionableSelect(
+    ObjectSelect[Literal[7], DefaultSelectValue, MentionableSelectResponse]
+):
     """
     Represents a MentionableSelect component.
     """
@@ -193,7 +247,15 @@ class MentionableSelect(ObjectSelect[Literal[7], DefaultSelectValue]):
     _DEFAULT_OPTION_TYPE = None
 
 
-class ChannelSelect(ObjectSelect):  # we're overriding the .new() anyways
+class ChannelSelectResponse(ObjectSelectResponse[Literal[8]]):
+    """
+    Represents a response from a ChannelSelect component.
+    """
+
+
+class ChannelSelect(
+    ObjectSelect[Literal[8], int | DefaultSelectValue, ChannelSelectResponse]
+):  # we're overriding the .new() anyways
     """
     Represents a ChannelSelect component.
     """

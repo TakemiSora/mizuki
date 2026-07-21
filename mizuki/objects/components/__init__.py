@@ -22,3 +22,12 @@ type Component = (
     | Separator
     | Container
 )
+
+type ComponentResponse = (
+    ButtonResponse
+    | StringSelectResponse
+    | UserSelectResponse
+    | RoleSelectResponse
+    | MentionableSelectResponse
+    | ChannelSelectResponse
+)

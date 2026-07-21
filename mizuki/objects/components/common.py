@@ -1,21 +1,45 @@
-from collections.abc import Callable
-from typing import TYPE_CHECKING
+from collections.abc import Callable, Awaitable
+import inspect
+from typing import TYPE_CHECKING, Any, Self
 
 from mizuki.enums.components import ComponentType
-from mizuki.payloads.components import ComponentPayload
 
 if TYPE_CHECKING:
     from mizuki.objects.components import Component
+    from mizuki.objects.interaction import Interaction
     from mizuki.payloads.components import (
-        BaseComponentPayload,
-        BaseSelectPayload,
         ComponentTypeLiteral,
+        InteractiveComponentTypeLiteral,
+        ComponentPayload,
+        BaseComponentPayload,
+        BaseComponentResponsePayload,
+        BaseSelectPayload,
         SelectTypeLiteral,
     )
 
 
-class BaseComponent:
-    __slots__ = ("id", "type")
+class BaseComponentResponse:
+    __slots__ = ("custom_id", "id", "component_type")
+
+    custom_id: str
+    "The custom ID of the component."
+
+    id: int | None
+    "Optional unique identifier for the component."
+
+    component_type: ComponentType
+    "The type of the component."
+
+    def __init__[T: InteractiveComponentTypeLiteral](
+        self, data: BaseComponentResponsePayload[T]
+    ):
+        self.custom_id = data["custom_id"]
+        self.id = data.get("id")
+        self.component_type = ComponentType(data["component_type"])
+
+
+class BaseComponent[CallbackResponse: BaseComponentResponse]:
+    __slots__ = ("id", "type", "_callback")
 
     type: ComponentType
     "The type of the component."
@@ -30,8 +54,20 @@ class BaseComponent:
     def _to_dict(self):
         raise NotImplementedError()
 
+    def set_callback(
+        self, callback: Callable[[Interaction, CallbackResponse], Awaitable[Any]]
+    ) -> Self:
+        if not inspect.iscoroutinefunction(callback):
+            raise TypeError("Component Callback methods must be couroutines.")
 
-class BaseSelect(BaseComponent):
+        self._callback = callback
+
+        return self
+
+
+class BaseSelect[CallbackResponse: BaseComponentResponse](
+    BaseComponent[CallbackResponse]
+):
     __slots__ = (
         "custom_id",
         "placeholder",
