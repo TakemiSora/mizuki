@@ -144,7 +144,7 @@ class Bot:
                 self._storage.start_cleanup_tasks()
 
             self.http = self._state.init_http(token)
-            self._session = self.http._session
+            self._session = self._state.session
 
             _log.debug("Attempting to verify token (length=%s)", len(token))
             self.user = await self._verify_token()

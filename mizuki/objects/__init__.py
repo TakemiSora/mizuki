@@ -3,6 +3,7 @@ from .avatar_decoration import *
 from .channel import *
 from .collectibles import *
 from .command import *
+from .components import *
 from .embed import *
 from .emoji import *
 from .guild import *
@@ -14,5 +15,6 @@ from .permissions import *
 from .presence import *
 from .primary_guild import *
 from .role import *
+from .resolveddata import *
 from .sticker import *
 from .user import *

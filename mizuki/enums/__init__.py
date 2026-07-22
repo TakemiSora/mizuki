@@ -1,5 +1,6 @@
 from .channel import *
 from .command import *
+from .components import *
 from .embed import *
 from .event_dispatch import *
 from .guild import *

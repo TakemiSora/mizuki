@@ -1,7 +1,8 @@
 from __future__ import annotations
+from collections.abc import Coroutine, Callable
 import aiohttp
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from mizuki.flags import IntentFlags
 from mizuki.http import HTTPClient
@@ -12,14 +13,20 @@ if TYPE_CHECKING:
     from mizuki.bot import Bot
     from mizuki.cache import CacheStorage
     from mizuki.objects.command import PartialApplicationCommand
+    from mizuki.objects.interaction import Interaction
 
 
 class ConnectionState:
-    __slots__ = ("http", "gateway", "managers", "session")
+    __slots__ = ("http", "gateway", "managers", "session", "components_data")
+
+    def __init__(self):
+        self.components_data: dict[
+            str, Callable[[Interaction, Any], Coroutine[Any, Any, Any]]
+        ] = {}
 
     def init_http(self, token: str) -> HTTPClient:
-        self.http = HTTPClient()
-        self.session = self.http._session = aiohttp.ClientSession(
+        self.http = HTTPClient(self)
+        self.session = aiohttp.ClientSession(
             "https://discord.com/api/v10/", headers={"Authorization": f"Bot {token}"}
         )
         return self.http
