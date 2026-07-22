@@ -258,7 +258,7 @@ class HTTPClient:
             The components to register for interaction handling.
 
         json : dict[:class:`str`, :class:`Any <typing.Any>`], optional
-            The JSON payload for the request, is added under ``p rayload_json`` in the FormData if files is also provided.
+            The JSON payload for the request, is added under ``payload_json`` in the FormData if files is also provided.
 
         **kwargs : :class:`Any <typing.Any>`
             The keyword arguments for the request. These are passed directly to :meth:`aiohttp.ClientSession.request()` method.
