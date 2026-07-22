@@ -1,5 +1,5 @@
-from collections.abc import Callable, Coroutine
 import inspect
+from collections.abc import Callable, Coroutine
 from typing import TYPE_CHECKING, Any, Self
 
 from mizuki.enums.components import ComponentType
@@ -8,12 +8,12 @@ if TYPE_CHECKING:
     from mizuki.objects.components import Component
     from mizuki.objects.interaction import Interaction
     from mizuki.payloads.components import (
-        ComponentTypeLiteral,
-        InteractiveComponentTypeLiteral,
-        ComponentPayload,
         BaseComponentPayload,
         BaseComponentResponsePayload,
         BaseSelectPayload,
+        ComponentPayload,
+        ComponentTypeLiteral,
+        InteractiveComponentTypeLiteral,
         SelectTypeLiteral,
     )
 
@@ -39,6 +39,10 @@ class BaseComponentResponse:
 
 
 class BaseComponent[CallbackResponse: BaseComponentResponse]:
+    type ComponentCallback = Callable[
+        [Interaction, CallbackResponse], Coroutine[Any, Any, Any]
+    ]
+
     __slots__ = ("id", "type", "_callback")
 
     type: ComponentType
@@ -54,10 +58,20 @@ class BaseComponent[CallbackResponse: BaseComponentResponse]:
     def _to_dict(self):
         raise NotImplementedError()
 
-    def set_callback(
-        self,
-        callback: Callable[[Interaction, CallbackResponse], Coroutine[Any, Any, Any]],
-    ) -> Self:
+    def set_callback(self, callback: ComponentCallback) -> Self:
+        """
+        Sets the callback for this component.
+
+        Parameters
+        ----------
+        callback : :type:`ComponentCallback`
+            The callback to register for this component
+
+        Raises
+        ------
+        `TypeError`
+            The callback provided wasn't a coroutine function.
+        """
         if not inspect.iscoroutinefunction(callback):
             raise TypeError("Component Callback methods must be couroutines.")
 
