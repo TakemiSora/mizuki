@@ -2,7 +2,7 @@ import aiohttp
 import asyncio
 import logging
 
-from typing import Any
+from typing import Any, TYPE_CHECKING
 from json import dumps
 from contextlib import ExitStack
 from urllib.parse import quote
@@ -16,6 +16,10 @@ from mizuki.errors import (
     _RateLimitedRetry,
 )
 from mizuki._utils import _MISSING
+
+if TYPE_CHECKING:
+    from mizuki.state import ConnectionState
+    from mizuki.objects.components import Component
 
 _log = logging.getLogger(__name__)
 
@@ -133,15 +137,25 @@ class HTTPClient:
     The Client that is used to interact with the Discord REST API. This should **not** be constructed by the user.
     """
 
-    __slots__ = ("_session", "_global_ratelimit", "_buckets_keys", "_buckets")
+    __slots__ = ("_state", "_global_ratelimit", "_buckets_keys", "_buckets")
 
-    def __init__(self):
-        self._session: aiohttp.ClientSession | None = None
+    def __init__(self, state: ConnectionState):
+        self._state = state
 
         self._global_ratelimit = asyncio.Event()
         self._global_ratelimit.set()
         self._buckets_keys: dict[str, str] = {}
         self._buckets: dict[str, RateLimitBucket] = {}
+
+    def _register_component(self, components: list[Component]):
+        for component in components:
+            if (custom_id := getattr(component, "custom_id", None)) and (
+                callback := getattr(component, "_callback", None)
+            ):
+                self._state.components_data[custom_id] = callback
+
+            if child_components := getattr(component, "components", ()):
+                self._register_component(child_components)
 
     async def _request(self, path: Path, **kwargs: Any) -> Any:
         await self._global_ratelimit.wait()
@@ -153,11 +167,7 @@ class HTTPClient:
 
         try:
             async with bucket.lock if bucket else asyncio.Lock():
-                assert self._session is not None, (
-                    "Cannot call session without intializing first."
-                )
-
-                async with self._session.request(
+                async with self._state.session.request(
                     path.method, path.url, **kwargs
                 ) as resp:
                     new_bucket_id = resp.headers.get("X-RateLimit-Bucket")
@@ -229,6 +239,7 @@ class HTTPClient:
         path: Path,
         *,
         files: list[File] = _MISSING,
+        components: list[Component] = _MISSING,
         json: Any = _MISSING,
         **kwargs: Any,
     ) -> Any:
@@ -243,8 +254,11 @@ class HTTPClient:
         files : list[:class:`File` <mizuki.file.File>`], optional
             The files to upload with the request. Providing this field makes the request use ``multipart/form-data``.
 
+        components : list[:class:`Component <mizuki.objects.components.Component>`]
+            The components to register for interaction handling.
+
         json : dict[:class:`str`, :class:`Any <typing.Any>`], optional
-            The JSON payload for the request, is added under ``payload_json`` in the FormData if files is also provided.
+            The JSON payload for the request, is added under ``p rayload_json`` in the FormData if files is also provided.
 
         **kwargs : :class:`Any <typing.Any>`
             The keyword arguments for the request. These are passed directly to :meth:`aiohttp.ClientSession.request()` method.
@@ -278,4 +292,6 @@ class HTTPClient:
             elif json and not files:
                 request_data["json"] = json
 
-            return await self._request(path, **request_data, **kwargs)
+            resp_data = await self._request(path, **request_data, **kwargs)
+            self._register_component(components or [])
+            return resp_data

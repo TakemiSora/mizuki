@@ -6,7 +6,7 @@ from mizuki._utils import _MISSING, JSONPayload, assign_val, assign_val_dict
 from mizuki.enums.channel import ChannelType
 from mizuki.enums.components import DefaultSelectValueType
 from mizuki.objects.components.common import BaseComponentResponse, BaseSelect
-from mizuki.objects.interaction import ResolvedData
+from mizuki.objects.resolveddata import ResolvedData
 from mizuki.objects.snowflake import Snowflake
 
 if TYPE_CHECKING:

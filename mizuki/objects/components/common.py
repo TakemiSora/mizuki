@@ -1,4 +1,4 @@
-from collections.abc import Callable, Awaitable
+from collections.abc import Callable, Coroutine
 import inspect
 from typing import TYPE_CHECKING, Any, Self
 
@@ -55,7 +55,8 @@ class BaseComponent[CallbackResponse: BaseComponentResponse]:
         raise NotImplementedError()
 
     def set_callback(
-        self, callback: Callable[[Interaction, CallbackResponse], Awaitable[Any]]
+        self,
+        callback: Callable[[Interaction, CallbackResponse], Coroutine[Any, Any, Any]],
     ) -> Self:
         if not inspect.iscoroutinefunction(callback):
             raise TypeError("Component Callback methods must be couroutines.")

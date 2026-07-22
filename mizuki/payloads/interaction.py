@@ -7,6 +7,7 @@ from mizuki.payloads.channel import (
     PartialThreadPayload,
     PrivateChannelPayload,
 )
+from mizuki.payloads.components import ComponentResponsePayload
 from mizuki.payloads.embed import EmbedPayload
 from mizuki.payloads.file import FileUploadPayload
 from mizuki.payloads.guild import GuildPayload
@@ -48,15 +49,19 @@ class InvokedApplicationCommandPayload(TypedDict, total=False):
     target_id: Snowflake
 
 
-InteractionData = InvokedApplicationCommandPayload
-AuthorizingIntegrationOwnersDict = dict[Literal[0, 1], Snowflake | Literal[0]]
+type InteractionDataPayload = (
+    InvokedApplicationCommandPayload | ComponentResponsePayload
+)
+type AuthorizingIntegrationOwnersDict = dict[Literal[0, 1], Snowflake | Literal[0]]
 
 
 class InteractionPayload(TypedDict, total=False):
     id: Required[Snowflake]
     application_id: Required[Snowflake]
     type: Required[Literal[1, 2, 3, 4, 5]]
-    data: InteractionData
+    data: Required[
+        InteractionDataPayload
+    ]  # We won't be recieving PING (1) type interactions
     guild: GuildPayload
     guild_id: Snowflake
     channel: PartialGuildChannelPayload | PartialThreadPayload | PrivateChannelPayload

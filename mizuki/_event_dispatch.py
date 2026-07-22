@@ -11,9 +11,11 @@ from mizuki.enums.command import CommandOptionType
 from mizuki.enums.interaction import InteractionType
 from mizuki.objects.command import ApplicationCommandOption
 from mizuki.objects.channel import ThreadChannel, ThreadMember, parse_channel_payload
+from mizuki.objects.components.common import BaseComponentResponse
 from mizuki.objects.guild import Guild, UnavailableGuild, parse_guild_payload
 from mizuki.objects.interaction import (
     Interaction,
+    InvokedApplicationCommand,
     InvokedApplicationCommandOption,
     ResolvedData,
 )
@@ -35,7 +37,7 @@ _log = logging.getLogger(__name__)
 
 
 class EventDispatcher:
-    __slots__ = ("_dispatch_handlers", "bot")
+    __slots__ = ("_dispatch_handlers", "_interaction_dispatchers", "bot")
 
     def __init__(self, bot: Bot):
         self.bot = bot
@@ -52,6 +54,11 @@ class EventDispatcher:
             "THREAD_DELETE": self._handle_thread_delete,
             "INTERACTION_CREATE": self._handle_interaction_create,
             "READY": self._handle_ready,
+        }
+
+        self._interaction_dispatchers = {
+            InteractionType.APPLICATION_COMMAND: self._dispatch_commands,
+            InteractionType.MESSAGE_COMPONENT: self._dispatch_components,
         }
 
     def _on_task_done(self, task: asyncio.Task, data: str):
@@ -125,14 +132,12 @@ class EventDispatcher:
             #   Attempts to fjnd correct CallbackParameterName, if not defaults to DisplayParameterName
         return kwargs
 
-    async def _dispatch_commands(self, name: str, interaction: Interaction):
-        command_data = self.bot._commands_data.get(name)
+    async def _dispatch_commands(self, interaction: Interaction):
+        assert isinstance(interaction.data, InvokedApplicationCommand)
+
+        command_data = self.bot._commands_data.get(interaction.data.name)
         callback = command_data[1]._callback if command_data else None
         if callback and command_data:
-            assert (
-                interaction.type is InteractionType.APPLICATION_COMMAND
-                and interaction.data is not None
-            )
             kwargs = (
                 self._parse_options(
                     getattr(callback, "__command_options__", {}),
@@ -142,15 +147,49 @@ class EventDispatcher:
                 if interaction.data.resolved
                 else {}
             )
-            task = asyncio.create_task(callback(interaction, **kwargs))
-            task.add_done_callback(
+
+            asyncio.create_task(callback(interaction, **kwargs)).add_done_callback(
                 lambda t: self._on_task_done(
-                    t, f"Handler Function {callback.__name__} for command '{name}'"
+                    t,
+                    f"Handler Function {callback.__name__} for command '{interaction.data.name}'",  # type: ignore # This is resolved
                 )
             )
-            _log.debug("Command %s (func=%s) dispatched.", name, callback.__name__)
+            _log.debug(
+                "Command %s (func=%s) dispatched.",
+                interaction.data.name,
+                callback.__name__,
+            )
         else:
-            _log.warning("Recieved command %s, but no handler was found for it.", name)
+            _log.warning(
+                "Recieved command %s, but no handler was found for it.",
+                interaction.data.name,
+            )
+
+    async def _dispatch_components(self, interaction: Interaction):
+        assert isinstance(interaction.data, BaseComponentResponse)
+
+        component_type_val = interaction.data.component_type.value
+
+        try:
+            callback = self.bot._state.components_data[interaction.data.custom_id]
+
+            asyncio.create_task(
+                callback(interaction, interaction.data)
+            ).add_done_callback(
+                lambda t: self._on_task_done(
+                    t,
+                    f"Component Interaction Callback (ComponentType={component_type_val}, Func={callback.__name__})",
+                )
+            )
+
+            _log.debug(
+                f"Dispatched component callback (ComponentType={component_type_val}, Func={callback.__name__})"
+            )
+        except KeyError:
+            _log.warning(
+                "Recieved component interaction (ComponentType=%s), but no callback was found for it.",
+                component_type_val,
+            )
 
     async def _handle_guild_create(self, data: GuildPayload | UnavailableGuildPayload):
         guild = (
@@ -221,10 +260,9 @@ class EventDispatcher:
     async def _handle_interaction_create(self, data: InteractionPayload):
         guild = self.bot.guilds.get(int(g)) if (g := data.get("guild_id")) else None
         interaction = Interaction(data, guild=guild, state=self.bot._state)
-        match interaction.type:
-            case InteractionType.APPLICATION_COMMAND:
-                if interaction.data:
-                    await self._dispatch_commands(interaction.data.name, interaction)
+
+        if dispatcher := self._interaction_dispatchers.get(interaction.type):
+            await dispatcher(interaction)
 
         await self._dispatch("on_interaction_create", interaction)
 

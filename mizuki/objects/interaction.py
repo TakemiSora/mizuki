@@ -18,78 +18,33 @@ from mizuki.file import File
 from mizuki.flags import MessageFlags
 from mizuki.http import Path
 from mizuki.objects.channel import parse_channel_payload
+from mizuki.objects.components.resp_parser import parse_component_response
 from mizuki.objects.embed import Embed
 from mizuki.objects.guild import Guild
-from mizuki.objects.member import Member, PartialMember, ResolvedMember
-from mizuki.objects.message import AllowedMentions, Attachment, Message, PartialMessage
+from mizuki.objects.member import Member
+from mizuki.objects.message import AllowedMentions, Message
 from mizuki.objects.permissions import Permissions
-from mizuki.objects.role import Role
+from mizuki.objects.resolveddata import ResolvedData
 from mizuki.objects.snowflake import Snowflake
 from mizuki.objects.user import User
 from mizuki.payloads.interaction import (
     ApplicationCommandInteractionOptionPayload,
     InteractionCallbackDataPayload,
-    InteractionData,
+    InteractionDataPayload,
     InteractionPayload,
     InteractionResponseCallbackPayload,
     InteractionWebhookMessagePayload,
     InvokedApplicationCommandPayload,
-    ResolvedDataPayload,
 )
 
 if TYPE_CHECKING:
     from mizuki.state import ConnectionState
+    from mizuki.objects.components import Component, ComponentResponse
 
 __all__ = (
-    "ResolvedData",
     "ResponseHandler",
     "Interaction",
 )
-
-
-class ResolvedData:
-    __slots__ = ("users", "members", "roles", "channels", "messages", "attachments")
-
-    def __init__(
-        self, data: ResolvedDataPayload, *, guild_id: int | None, state: ConnectionState
-    ):
-        self.users = {
-            int(id): User(payload, state=state)
-            for id, payload in data.get("users", {}).items()
-        }
-
-        self.members = (
-            {
-                int(id): ResolvedMember._from_partial_member(
-                    PartialMember(
-                        payload, guild_id=guild_id, user_id=int(id), state=state
-                    ),
-                    user=self.users[int(id)],
-                )
-                for id, payload in data.get("members", {}).items()
-            }
-            if guild_id is not None
-            else {}
-        )
-
-        self.roles = {
-            int(id): Role(payload) for id, payload in data.get("roles", {}).items()
-        }
-
-        self.channels = {
-            int(id): parse_channel_payload(payload, partial=True, state=state)
-            for id, payload in data.get("channels", {}).items()
-        }
-
-        self.messages = {
-            int(id): PartialMessage(payload, state=state)
-            for id, payload in data.get("messages", {}).items()
-        }
-
-        self.attachments = {
-            int(id): Attachment(payload, state=state)
-            for id, payload in data.get("attachments", {}).items()
-        }
 
 
 class InvokedApplicationCommandOption:
@@ -125,8 +80,12 @@ class InvokedApplicationCommand:
 
 
 def parse_interaction_data(
-    type: InteractionType, data: InteractionData, *, state: ConnectionState
-) -> InvokedApplicationCommand:  # moretypes later
+    type: InteractionType,
+    data: InteractionDataPayload,
+    *,
+    guild_id: int | None,
+    state: ConnectionState,
+) -> InvokedApplicationCommand | ComponentResponse:
     match type:
         case (
             InteractionType.APPLICATION_COMMAND
@@ -135,6 +94,8 @@ def parse_interaction_data(
             return InvokedApplicationCommand(
                 cast(InvokedApplicationCommandPayload, data), state=state
             )
+        case InteractionType.MESSAGE_COMPONENT:
+            return parse_component_response(data, guild_id=guild_id, state=state)  # type: ignore # This is resolved.
         case _:
             raise UnknownInteractionType(f"Received unknown interaction type '{type}'")
 
@@ -167,6 +128,7 @@ class ResponseHandler:
         type: InteractionCallbackType,
         data: InteractionCallbackDataPayload,
         files: list[File] = _MISSING,
+        components: list[Component] = _MISSING,
     ):
         await self._state.http.request(
             Path(
@@ -177,6 +139,7 @@ class ResponseHandler:
             ),
             json=InteractionResponseCallbackPayload(type=type.value, data=data),
             files=files,
+            components=components,
         )
 
     async def send_response(
@@ -187,6 +150,7 @@ class ResponseHandler:
         embeds: list[Embed] = _MISSING,
         allowed_mentions: AllowedMentions = AllowedMentions.new(),
         files: list[File] = _MISSING,
+        components: list[Component] = _MISSING,
         flags: MessageFlags = MessageFlags(0),
         ephemeral: bool = False,
         suppress_embeds: bool = False,
@@ -197,7 +161,7 @@ class ResponseHandler:
         if self.acknowledged:
             raise InteractionResponded()
 
-        if any((content, embeds, files)):
+        if any((content, embeds, files, components)):
             if ephemeral:
                 flags |= MessageFlags.EPHEMERAL
             if suppress_embeds:
@@ -230,7 +194,13 @@ class ResponseHandler:
                         else _MISSING
                     ),
                     flags=flags.value,
+                    components=(
+                        [component._to_dict() for component in components]
+                        if components is not _MISSING
+                        else _MISSING
+                    ),
                 ),
+                components=components,
             )
             self.acknowledged = True
             return
@@ -435,13 +405,11 @@ class Interaction:
         self.id = Snowflake(data["id"])
         self.application_id = Snowflake(data["application_id"])
         self.type = InteractionType(data["type"])
-        self.data = (
-            parse_interaction_data(self.type, i, state=state)
-            if (i := data.get("data")) is not None
-            else None
-        )
         self.guild = guild
         self.guild_id = Snowflake._from_str(data.get("guild_id"))
+        self.data = parse_interaction_data(
+            self.type, data["data"], guild_id=self.guild_id, state=state
+        )
         self.channel = (
             parse_channel_payload(c, partial=True, state=state)
             if (c := data.get("channel")) is not None

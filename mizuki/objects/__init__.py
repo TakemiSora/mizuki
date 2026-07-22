@@ -15,5 +15,6 @@ from .permissions import *
 from .presence import *
 from .primary_guild import *
 from .role import *
+from .resolveddata import *
 from .sticker import *
 from .user import *
