@@ -40,6 +40,7 @@ from mizuki.payloads.message import (
 if TYPE_CHECKING:
     from mizuki.state import ConnectionState
     from mizuki.file import File
+    from mizuki.objects.components import Component
 
     from mizuki.enums.message import ReactionType
 
@@ -394,6 +395,7 @@ class Message(PartialMessage):
         *,
         tts: bool = _MISSING,
         embeds: list[Embed] = _MISSING,
+        components: list[Component] = _MISSING,
         allowed_mentions: AllowedMentions = _MISSING,
         files: list[File] = _MISSING,
         sticker_ids: list[int] = _MISSING,
@@ -416,6 +418,9 @@ class Message(PartialMessage):
 
         embeds : list[:class:`Embed <mizuki.objects.embed.Embed>`]
             The list of embeds to send along the message.
+
+        components : list[:class:`Component <mizuki.objects.component.Component>`]
+            The list of components to send in this message.
 
         allowed_mentions : :class:`AllowedMentions <mizuki.objects.message.AllowedMentions>`
             The AllowedMentions object that dictates whether user, role or everyone pings are enabled.
@@ -446,6 +451,7 @@ class Message(PartialMessage):
             content=content,
             tts=tts,
             embeds=embeds,
+            components=components,
             allowed_mentions=allowed_mentions,
             files=files,
             sticker_ids=sticker_ids,
@@ -652,6 +658,7 @@ class Message(PartialMessage):
         content: str | None = _MISSING,
         *,
         embeds: list[Embed] = _MISSING,
+        components: list[Component] = _MISSING,
         flags: MessageFlags = _MISSING,
         allowed_mentions: AllowedMentions | None = _MISSING,
         files: list[File] = _MISSING,
@@ -667,6 +674,9 @@ class Message(PartialMessage):
 
         embeds : list[:class:`Embed <mizuki.objects.embed.Embed>`]
             The embeds of the message.
+
+        components : list[Component <mizuki.objects.component.Component>]
+            The list of components.
 
         flags : :class:`MessageFlags <mizuki.flags.MessageFlags>`
             The flags of the message.
@@ -696,6 +706,7 @@ class Message(PartialMessage):
             message_id=self.id,
             content=content,
             embeds=embeds,
+            components=components,
             flags=flags,
             allowed_mentions=allowed_mentions,
             files=files,

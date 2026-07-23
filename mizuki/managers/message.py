@@ -1,15 +1,18 @@
-from typing import Any, overload
+from typing import Any, overload, TYPE_CHECKING
 
 from mizuki.http import Path
 from mizuki.file import File
 from mizuki.flags import MessageFlags
-from mizuki._utils import _MISSING, assign_val_dict, mtd
+from mizuki._utils import _MISSING, assign_val_dict, maybe_iter, mtd
 
 from mizuki.managers._types import BaseManager
 from mizuki.enums.message import MessageReferenceType, ReactionType
 from mizuki.objects.embed import Embed
 from mizuki.objects.user import User
 from mizuki.objects.message import AllowedMentions, Message, MessageReference
+
+if TYPE_CHECKING:
+    from mizuki.objects.components import Component
 
 __all__ = ("MessageManager",)
 
@@ -182,6 +185,7 @@ class MessageManager(BaseManager):
         content: str = _MISSING,
         tts: bool = _MISSING,
         embeds: list[Embed] = _MISSING,
+        components: list[Component] = _MISSING,
         allowed_mentions: AllowedMentions = _MISSING,
         message_reference: MessageReference = _MISSING,
         files: list[File] = _MISSING,
@@ -208,6 +212,9 @@ class MessageManager(BaseManager):
 
         embeds : list[:class:`Embed <mizuki.objects.embed.Embed>`]
             The list of embeds to send along the message.
+
+        components : list[:class:`Component <mizuki.objects.component.Component>`]
+            The list of components to send in this message.
 
         allowed_mentions : :class:`AllowedMentions <mizuki.objects.message.AllowedMentions>`
             The AllowedMentions object that dictates whether user, role or everyone pings are enabled.
@@ -242,26 +249,22 @@ class MessageManager(BaseManager):
                         "POST", "channels/{channel_id}/messages", channel_id=channel_id
                     ),
                     files=files,
+                    components=components,
                     json=assign_val_dict(
                         {},
                         _MISSING,
                         content=content,
                         tts=tts,
-                        embeds=(
-                            [e._to_dict() for e in embeds]
-                            if embeds is not _MISSING
-                            else _MISSING
-                        ),
+                        embeds=maybe_iter(embeds),
+                        components=maybe_iter(components),
                         attachments=(
-                            [
-                                file._to_attachment_dict(i)
-                                for i, file in enumerate(files)
-                            ]
-                            if (
-                                files
-                                and MessageFlags.IS_COMPONENTS_V2
-                                not in (flags or MessageFlags(0))
+                            maybe_iter(
+                                files,
+                                enumerate_iter=True,
+                                method=lambda i, a: a._to_attachment_dict(i),
                             )
+                            if MessageFlags.IS_COMPONENTS_V2
+                            not in (flags or MessageFlags(0))
                             else _MISSING
                         ),
                         allowed_mentions=mtd(allowed_mentions),
@@ -282,6 +285,7 @@ class MessageManager(BaseManager):
         content: str = _MISSING,
         tts: bool = _MISSING,
         embeds: list[Embed] = _MISSING,
+        components: list[Component] = _MISSING,
         allowed_mentions: AllowedMentions = _MISSING,
         files: list[File] = _MISSING,
         sticker_ids: list[int] = _MISSING,
@@ -311,6 +315,9 @@ class MessageManager(BaseManager):
         embeds : list[:class:`Embed <mizuki.objects.embed.Embed>`]
             The list of embeds to send along the message.
 
+        components : list[:class:`Component <mizuki.objects.component.Component>`]
+            The list of components to send in this message.
+
         allowed_mentions : :class:`AllowedMentions <mizuki.objects.message.AllowedMentions>`
             The AllowedMentions object that dictates whether user, role or everyone pings are enabled.
 
@@ -339,6 +346,7 @@ class MessageManager(BaseManager):
             content=content,
             tts=tts,
             embeds=embeds,
+            components=components,
             allowed_mentions=allowed_mentions,
             files=files,
             message_reference=MessageReference.new(message_id=message_id),
@@ -702,6 +710,7 @@ class MessageManager(BaseManager):
         message_id: int,
         content: str | None = _MISSING,
         embeds: list[Embed] = _MISSING,
+        components: list[Component] = _MISSING,
         flags: MessageFlags = _MISSING,
         allowed_mentions: AllowedMentions | None = _MISSING,
         files: list[File] = _MISSING,
@@ -723,6 +732,9 @@ class MessageManager(BaseManager):
 
         embeds : list[:class:`Embed <mizuki.objects.embed.Embed>`]
             The embeds of the message.
+
+        components : list[:class:`Component <mizuki.objects.component.Component>`]
+            The list of components.
 
         flags : :class:`MessageFlags <mizuki.flags.MessageFlags>`
             The flags of the message.
@@ -757,23 +769,22 @@ class MessageManager(BaseManager):
                         message_id=message_id,
                     ),
                     files=files,
+                    components=components,
                     json=assign_val_dict(
                         {},
                         _MISSING,
                         content=content,
-                        embeds=(
-                            [e._to_dict() for e in embeds]
-                            if embeds is not _MISSING
-                            else _MISSING
-                        ),
+                        embeds=maybe_iter(embeds),
+                        components=maybe_iter(components),
                         flags=(flags.value if flags is not _MISSING else _MISSING),
                         allowed_mentions=mtd(allowed_mentions),
                         attachments=(
-                            [
-                                file._to_attachment_dict(i)
-                                for i, file in enumerate(files)
-                            ]
-                            if override_files and files is not _MISSING
+                            maybe_iter(
+                                files,
+                                enumerate_iter=True,
+                                method=lambda i, a: a._to_attachment_dict(i),
+                            )
+                            if override_files
                             else _MISSING
                         ),
                     ),

@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Any, Literal, cast, TYPE_CHECKING
 
-from mizuki._utils import _MISSING, assign_val_dict, mtd, scls
+from mizuki._utils import _MISSING, assign_val_dict, maybe_iter, mtd, scls
 from mizuki.enums.command import ApplicationCommandType, CommandOptionType
 from mizuki.enums.interaction import (
     ApplicationIntegrationType,
@@ -17,7 +17,7 @@ from mizuki.errors import (
 from mizuki.file import File
 from mizuki.flags import MessageFlags
 from mizuki.http import Path
-from mizuki.objects.channel import parse_channel_payload
+from mizuki.objects.channel import PartialChannel, parse_channel_payload
 from mizuki.objects.components.resp_parser import parse_component_response
 from mizuki.objects.embed import Embed
 from mizuki.objects.guild import Guild
@@ -157,7 +157,56 @@ class ResponseHandler:
         suppress_notifications: bool = False,
         is_components_v2: bool = False,
         is_voice_message: bool = False,
-    ):
+    ) -> None:
+        """
+        Sends the first response to an interaction.
+
+        Parameters
+        ----------
+        content : :class:`str`, optional
+            The content of the message.
+
+        tts : :class:`bool`, optional
+            Whether the response is TTS.
+
+        embeds : list[:class:`Embed <mizuki.objects.embed.Embed>`], optional
+            The list of embeds to send along the response.
+
+        allowed_mentions : :class:`AllowedMentions <mizuki.objects.message.AllowedMentions>`, optional
+            Controls which mentions trigger notifications.
+
+        files : :class:`File <mizuki.file.File>`, optional
+            The files to send along the response.
+
+        components : list[:class:`Component <mizuki.objects.component.Component>`], optional
+            The components to send along the message.
+
+        flags : :class:`MessageFlags <mizuki.flags.MessageFlags>`, optional
+            The flags for this message.
+
+        ephemeral : :class:`bool`, optional
+            Whether the response is ephemeral. Defaults to `False`.
+
+        suppress_embeds : :class:`bool`, optional
+            Whether the embeds are suppressed. Defaults to `False`.
+
+        suppress_notifications : :class:`bool`, optional
+            Whether the notifications are suppressed for this response. Defaults to `False`.
+
+        is_components_v2 : :class:`bool`, optional
+            Whether the :attr:`IS_COMPONENTS_V2 <mizuki.flags.MessageFlags.IS_COMPONENTS_V2>` is enabled. Defaults to `False`
+
+        is_voice_message : :class:`bool`, optional
+            Whether the message is a voice message.
+
+        Raises
+        ------
+        `InteractionResponded`
+            This interaction was already responded to.
+
+        `HTTPException`
+            An HTTP error occured.
+        """
         if self.acknowledged:
             raise InteractionResponded()
 
@@ -183,22 +232,14 @@ class ResponseHandler:
                     ),
                     _MISSING,
                     content=content,
-                    embeds=(
-                        [embed._to_dict() for embed in embeds]
-                        if embeds is not _MISSING
-                        else _MISSING
-                    ),
-                    attachments=(
-                        [file._to_attachment_dict(i) for i, file in enumerate(files)]
-                        if files is not _MISSING
-                        else _MISSING
+                    embeds=maybe_iter(embeds),
+                    attachments=maybe_iter(
+                        files,
+                        enumerate_iter=True,
+                        method=lambda i, a: a._to_attachment_dict(i),
                     ),
                     flags=flags.value,
-                    components=(
-                        [component._to_dict() for component in components]
-                        if components is not _MISSING
-                        else _MISSING
-                    ),
+                    components=maybe_iter(components),
                 ),
                 components=components,
             )
@@ -225,6 +266,7 @@ class ResponseHandler:
         *,
         tts: bool = False,
         embeds: list[Embed] = _MISSING,
+        components: list[Component] = _MISSING,
         allowed_mentions: AllowedMentions = AllowedMentions.new(),
         files: list[File] = _MISSING,
         flags: MessageFlags = MessageFlags(0),
@@ -233,10 +275,56 @@ class ResponseHandler:
         suppress_notifications: bool = False,
         is_components_v2: bool = False,
     ) -> Message:
+        """
+        Sends a followup response to an interaction.
+
+        Parameters
+        ----------
+        content : :class:`str`, optional
+            The content of the message.
+
+        tts : :class:`bool`, optional
+            Whether the response is TTS.
+
+        embeds : list[:class:`Embed <mizuki.objects.embed.Embed>`], optional
+            The list of embeds to send along the response.
+
+        allowed_mentions : :class:`AllowedMentions <mizuki.objects.message.AllowedMentions>`, optional
+            Controls which mentions trigger notifications.
+
+        files : :class:`File <mizuki.file.File>`, optional
+            The files to send along the response.
+
+        components : list[:class:`Component <mizuki.objects.component.Component>`], optional
+            The components to send along the message.
+
+        flags : :class:`MessageFlags <mizuki.flags.MessageFlags>`, optional
+            The flags for this message.
+
+        ephemeral : :class:`bool`, optional
+            Whether the response is ephemeral. Defaults to `False`.
+
+        suppress_embeds : :class:`bool`, optional
+            Whether the embeds are suppressed. Defaults to `False`.
+
+        suppress_notifications : :class:`bool`, optional
+            Whether the notifications are suppressed for this response. Defaults to `False`.
+
+        is_components_v2 : :class:`bool`, optional
+            Whether the :attr:`IS_COMPONENTS_V2 <mizuki.flags.MessageFlags.IS_COMPONENTS_V2>` is enabled. Defaults to `False`
+
+        Raises
+        ------
+        `InteractionNotResponded`
+            This interaction was not yet responded to.
+
+        `HTTPException`
+            An HTTP error occured.
+        """
         if not self.acknowledged:
             raise InteractionNotResponded()
 
-        if any((content, embeds, files)):
+        if any((content, embeds, files, components)):
             if ephemeral:
                 flags |= MessageFlags.EPHEMERAL
             if suppress_embeds:
@@ -255,24 +343,19 @@ class ResponseHandler:
                         webhook_token=self.interaction_token,
                     ),
                     files=files,
+                    components=components,
                     json=assign_val_dict(
                         InteractionWebhookMessagePayload(
                             tts=tts, allowed_mentions=allowed_mentions._to_dict()
                         ),
                         _MISSING,
                         content=content,
-                        embeds=(
-                            [embed._to_dict() for embed in embeds]
-                            if embeds is not _MISSING
-                            else _MISSING
-                        ),
-                        attachments=(
-                            [
-                                file._to_attachment_dict(i)
-                                for i, file in enumerate(files)
-                            ]
-                            if files is not _MISSING
-                            else _MISSING
+                        embeds=maybe_iter(embeds),
+                        components=maybe_iter(components),
+                        attachments=maybe_iter(
+                            files,
+                            enumerate_iter=True,
+                            method=lambda i, a: a._to_attachment_dict(i),
                         ),
                         flags=flags.value,
                     ),
@@ -288,6 +371,7 @@ class ResponseHandler:
         method: str,
         message: int | str = "@original",
         files: list[File] = _MISSING,
+        components: list[Component] = _MISSING,
         **kwargs: Any,
     ) -> Any:
         return await self._state.http.request(
@@ -299,10 +383,22 @@ class ResponseHandler:
                 message=str(message),
             ),
             files=files,
+            components=components,
             **kwargs,
         )
 
     async def fetch_original_response(self) -> Message:
+        """
+        Fetches the original response of this interaction.
+
+        Raises
+        ------
+        `NotFound`
+            The interaction hasn't been responded to yet.
+
+        `HTTPException`
+            An HTTP error occured.
+        """
         return Message(
             await self._webhook_messages_request(method="GET"), state=self._state
         )
@@ -312,6 +408,7 @@ class ResponseHandler:
         content: str | None = _MISSING,
         *,
         embeds: list[Embed] = _MISSING,
+        components: list[Component] = _MISSING,
         flags: MessageFlags = _MISSING,
         allowed_mentions: AllowedMentions = _MISSING,
         files: list[File] = _MISSING,
@@ -319,11 +416,52 @@ class ResponseHandler:
         is_components_v2: Literal[True] = _MISSING,
         override_files: bool = True,
     ) -> Message:
+        """
+        Edits the original response to the interaction.
+
+        Parameters
+        ----------
+        content : :class:`str` | :class:`None`, optional
+            The content of the message.
+
+        embeds : list[:class:`Embed <mizuki.objects.embed.Embed>`], optional
+            The list of embeds of the message.
+
+        components : list[:class:`Component <mizuki.objects.component.Component>`], optional
+            The list of components of the message.
+
+        flags : :class:`MessageFlags <mizuki.flags.Flags>`, optional
+            The flags of this message.
+
+        allowed_mentions : :class:`AllowedMentions <mizuki.objects.message.AllowedMentions>`, optional
+            Controls which mentions trigger notifications.
+
+        files : :class:`File <mizuki.file.File>`, optional
+            The files to send along the response.
+
+        suppress_embeds : :class:`bool`, optional
+            Whether the embeds are suppressed. Defaults to `False`.
+
+        is_components_v2 : :class:`bool`, optional
+            Whether the :attr:`IS_COMPONENTS_V2 <mizuki.flags.MessageFlags.IS_COMPONENTS_V2>` is enabled. Defaults to `False`
+
+        override_files : :class:`bool`, optional
+            Whether the files will be overriden or added to the current files.
+
+        Raises
+        ------
+        `NotFound`
+            This interaction was not yet responded to.
+
+        `HTTPException`
+            An HTTP error occured.
+        """
         if all(
             x is _MISSING
             for x in [
                 content,
                 embeds,
+                components,
                 flags,
                 allowed_mentions,
                 files,
@@ -344,19 +482,21 @@ class ResponseHandler:
             await self._webhook_messages_request(
                 method="PATCH",
                 files=files,
+                components=components,
                 json=assign_val_dict(
                     InteractionWebhookMessagePayload(),
                     _MISSING,
                     content=content,
-                    embeds=(
-                        [embed._to_dict() for embed in embeds]
-                        if embeds is not _MISSING
-                        else _MISSING
-                    ),
+                    embeds=maybe_iter(embeds),
+                    components=maybe_iter(components),
                     allowed_mentions=mtd(allowed_mentions),
                     attachments=(
-                        [file._to_attachment_dict(i) for i, file in enumerate(files)]
-                        if override_files and files is not _MISSING
+                        maybe_iter(
+                            files,
+                            enumerate_iter=True,
+                            method=lambda i, a: a._to_attachment_dict(i),
+                        )
+                        if override_files
                         else _MISSING
                     ),
                     flags=flags.value if flags is not _MISSING else _MISSING,
@@ -366,10 +506,25 @@ class ResponseHandler:
         )
 
     async def delete_original_response(self):
+        """
+        Deletes the original response to the interaction.
+
+        Raises
+        ------
+        `NotFound`
+            The interaction hasn't been responded to yet.
+
+        `HTTPError`
+            An HTTP error occurred.
+        """
         await self._webhook_messages_request(method="DELETE")
 
 
 class Interaction:
+    """
+    Represents an Interaction object from discord.
+    """
+
     __slots__ = (
         "_state",
         "response",
@@ -384,7 +539,6 @@ class Interaction:
         "member",
         "user",
         "token",
-        "version",
         "message",
         "app_permissions",
         "locale",
@@ -393,6 +547,63 @@ class Interaction:
         "context",
         "attachment_size_limit",
     )
+
+    id: Snowflake
+    "The ID of the interaction."
+
+    application_id: Snowflake
+    "The ID of the application this interaction is for."
+
+    type: InteractionType
+    "The type of the interaction."
+
+    guild: Guild | None
+    "The Guild that this interaction was sent from."
+
+    guild_id: Snowflake | None
+    "The ID of the Guild that this interaction was sent from."
+
+    data: InvokedApplicationCommand | ComponentResponse
+    "The data of the interaction"
+
+    channel: PartialChannel | None
+    "The channel that this interaction was sent from."
+
+    channel_id: Snowflake
+    "The ID of the channel this interaction was sent from."
+
+    member: Member | None
+    "The guild member that created this interaction."
+
+    user: User | None
+    "The user that created this interaction."
+
+    token: str
+    "The Interaction token."
+
+    message: Message | None
+    "For components or modals triggered by components, the message that they were attached to."
+
+    app_permissions: Permissions
+    "The permissions that the app has at the source of the interaction."
+
+    locale: str
+    "The locale of the invoking user."
+
+    guild_locale: str | None
+    "The locale of the guild this interaction was created in."
+
+    authorizing_integration_owners: dict[ApplicationIntegrationType, Snowflake | int]
+    "The dict with keys of ApplicationIntegrationTypes to the authorizing user or guild."
+
+    context: InteractionContextType
+    "The context where this interaction was triggered from."
+
+    attachment_size_limit: int
+    "The attachment size limit in bytes."
+
+    response: ResponseHandler
+    "The ResponseHandler for this interaction."
 
     def __init__(
         self,
@@ -415,22 +626,21 @@ class Interaction:
             if (c := data.get("channel")) is not None
             else None
         )
-        self.channel_id = Snowflake._from_str(data.get("channel_id"))
+        self.channel_id = Snowflake(data["channel_id"])
         self.member = scls(
             Member, data.get("member"), guild_id=self.guild_id, state=state
         )
         self.user = scls(User, data.get("user"), state=state)
         self.token = data["token"]
-        self.version = data["version"]
         self.message = scls(Message, data.get("message"), state=state)
         self.app_permissions = Permissions(int(data["app_permissions"]))
-        self.locale = data.get("locale")
+        self.locale = data["locale"]
         self.guild_locale = data.get("guild_locale")
         self.authorizing_integration_owners = {
             ApplicationIntegrationType(int(a)): (Snowflake(id) if id != "0" else 0)
             for a, id in data.get("authorizing_integration_owners", {}).items()
         }
-        self.context = scls(InteractionContextType, data.get("context"))
+        self.context = InteractionContextType(data["context"])
         self.attachment_size_limit = data["attachment_size_limit"]
 
         self.response = ResponseHandler(

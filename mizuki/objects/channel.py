@@ -33,6 +33,7 @@ from mizuki.payloads.channel import (
 
 if TYPE_CHECKING:
     from mizuki.file import File
+    from mizuki.objects.components import Component
     from mizuki.objects.embed import Embed
     from mizuki.objects.emoji import DefaultReaction
     from mizuki.objects.message import AllowedMentions, Message, MessageReference
@@ -259,6 +260,7 @@ class BaseChannel:
         *,
         tts: bool = _MISSING,
         embeds: list[Embed] = _MISSING,
+        components: list[Component] = _MISSING,
         allowed_mentions: AllowedMentions = _MISSING,
         message_reference: MessageReference = _MISSING,
         files: list[File] = _MISSING,
@@ -282,6 +284,9 @@ class BaseChannel:
 
         embeds : list[:class:`Embed <mizuki.objects.embed.Embed>`]
             The list of embeds to send along the message.
+
+        components : list[:class:`Component <mizuki.objects.component.Component>`]
+            The list of components to send in this message.
 
         allowed_mentions : :class:`AllowedMentions <mizuki.objects.message.AllowedMentions>`
             The AllowedMentions object that dictates whether user, role or everyone pings are enabled.
@@ -314,6 +319,7 @@ class BaseChannel:
             content=content,
             tts=tts,
             embeds=embeds,
+            components=components,
             allowed_mentions=allowed_mentions,
             message_reference=message_reference,
             files=files,
@@ -1096,3 +1102,6 @@ def parse_channel_payload(
 
 type Channel = ThreadChannel | PrivateChannel | GuildChannel
 "This is only a type hint for all channel types, not an object."
+
+type PartialChannel = PartialThreadChannel | PrivateChannel | PartialGuildChannel
+"This is only a type hint for all partial channel types, not an object."

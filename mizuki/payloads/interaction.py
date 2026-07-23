@@ -65,18 +65,18 @@ class InteractionPayload(TypedDict, total=False):
     guild: GuildPayload
     guild_id: Snowflake
     channel: PartialGuildChannelPayload | PartialThreadPayload | PrivateChannelPayload
-    channel_id: Snowflake
+    channel_id: Required[Snowflake]
     member: MemberPayload
     user: UserPayload
     token: Required[str]
     version: Required[Literal[1]]
     message: MessagePayload
     app_permissions: Required[Permissions]
-    locale: str
+    locale: Required[str]
     guild_locale: str
     # skippinf entitlements as of now
     authorizing_integration_owners: Required[AuthorizingIntegrationOwnersDict]
-    context: Literal[0, 1, 2]
+    context: Required[Literal[0, 1, 2]]
     attachment_size_limit: Required[int]
 
 
