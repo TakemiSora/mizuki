@@ -142,7 +142,7 @@ class StringSelect(BaseSelect[StringSelectResponse]):
         cls,
         *,
         options: list[StringOption],
-        custom_id: str,
+        custom_id: str = _MISSING,
         id: int = _MISSING,
         placeholder: str = _MISSING,
         min_values: int = _MISSING,
@@ -158,8 +158,8 @@ class StringSelect(BaseSelect[StringSelectResponse]):
         options : list[:class:`StringOption`]
             The options for the StringSelect.
 
-        custom_id : :class:`str`
-            The custom ID of the StringSelect.
+        custom_id : :class:`str`, optional
+            The custom ID of the StringSelect. Auto-generated for you if not provided.
 
         id : :class:`int`, optional
             Optional Unique identifier for the StringSelect.
@@ -180,7 +180,13 @@ class StringSelect(BaseSelect[StringSelectResponse]):
             Whether this StringSelect is disabled in messages.
         """
         return assign_val(
-            cls({"type": 3, "custom_id": custom_id, "options": []}),
+            cls(
+                {
+                    "type": 3,
+                    "custom_id": custom_id or cls.generate_custom_id(),
+                    "options": [],
+                }
+            ),
             options=options,
             id=id,
             placeholder=placeholder,

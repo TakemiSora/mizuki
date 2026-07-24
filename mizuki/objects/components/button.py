@@ -89,7 +89,7 @@ class Button(BaseComponent[ButtonResponse]):
         ],
         id: int = _MISSING,
         emoji: PartialEmoji = _MISSING,
-        custom_id: str,
+        custom_id: str = _MISSING,
         disabled: bool = False,
     ) -> Button: ...
 
@@ -136,7 +136,7 @@ class Button(BaseComponent[ButtonResponse]):
             The emoji shown for the button.
 
         custom_id : :class:`str`, optional
-            The custom ID of the button. Must be provided for non-link and non-premium buttons.
+            The custom ID of the button. Auto-generated if not provided.
 
         sku_id : :class:`int`, optional
             The Sku ID of the related item. Must only be provided for premium buttons.
@@ -152,7 +152,7 @@ class Button(BaseComponent[ButtonResponse]):
             label=label,
             id=id,
             emoji=emoji,
-            custom_id=custom_id,
+            custom_id=custom_id or cls.generate_custom_id(),
             sku_id=sku_id,
             url=url,
             disabled=disabled,

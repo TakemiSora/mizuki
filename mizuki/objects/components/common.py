@@ -1,4 +1,5 @@
 import inspect
+import uuid
 from collections.abc import Callable, Coroutine
 from typing import TYPE_CHECKING, Any, Self
 
@@ -57,6 +58,13 @@ class BaseComponent[CallbackResponse: BaseComponentResponse]:
 
     def _to_dict(self):
         raise NotImplementedError()
+
+    @staticmethod
+    def generate_custom_id() -> str:
+        """
+        Generates a custom ID for a component with `uuid`.
+        """
+        return uuid.uuid4().hex
 
     def set_callback(self, callback: ComponentCallback) -> Self:
         """

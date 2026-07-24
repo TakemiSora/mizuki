@@ -122,7 +122,7 @@ class ObjectSelect[
     def new(
         cls,
         *,
-        custom_id: str,
+        custom_id: str = _MISSING,
         id: int = _MISSING,
         placeholder: str = _MISSING,
         min_values: int = _MISSING,
@@ -136,8 +136,8 @@ class ObjectSelect[
 
         Parameters
         ----------
-        custom_id : :class:`str`
-            The custom ID of the Select.
+        custom_id : :class:`str`, optional
+            The custom ID of the Select. Auto-generated if not provided.
 
         id : :class:`int`, optional
             Optional Unique identifier for the Select.
@@ -181,7 +181,7 @@ class ObjectSelect[
                 cls(
                     {
                         "type": component_type,
-                        "custom_id": custom_id,
+                        "custom_id": custom_id or cls.generate_custom_id(),
                     }
                 ),
                 id=id,
@@ -290,7 +290,7 @@ class ChannelSelect(
     def new(
         cls,
         *,
-        custom_id: str,
+        custom_id: str = _MISSING,
         id: int = _MISSING,
         placeholder: str = _MISSING,
         min_values: int = _MISSING,
@@ -305,8 +305,8 @@ class ChannelSelect(
 
         Parameters
         ----------
-        custom_id : :class:`str`
-            The custom ID of the Select.
+        custom_id : :class:`str`, optional
+            The custom ID of the Select. Auto-generated if not provided.
 
         id : :class:`int`, optional
             Optional Unique identifier for the Select.
@@ -333,7 +333,7 @@ class ChannelSelect(
             Whether this Select is disabled in messages.
         """
         return assign_val(
-            cls({"type": 8, "custom_id": custom_id}),
+            cls({"type": 8, "custom_id": custom_id or cls.generate_custom_id()}),
             id=id,
             placeholder=placeholder,
             min_values=min_values,

@@ -48,7 +48,7 @@ class TextInput(BaseComponent):
     def new(
         cls,
         *,
-        custom_id: str,
+        custom_id: str = _MISSING,
         id: int = _MISSING,
         style: TextInputStyle = TextInputStyle.SHORT,
         min_length: int = _MISSING,
@@ -61,8 +61,8 @@ class TextInput(BaseComponent):
 
         Parameters
         ----------
-        custom_id : :class:`str`
-            The custom ID of the TextInput.
+        custom_id : :class:`str`, optional
+            The custom ID of the TextInput. Auto-generated if not provided.
 
         id : :class:`int`, optional
             Optional unique identifier for the TextInput.
@@ -84,7 +84,7 @@ class TextInput(BaseComponent):
         """
         return assign_val(
             cls(
-                {"type": 4, "custom_id": custom_id, "style": style.value},
+                {"type": 4, "custom_id": custom_id or cls.generate_custom_id(), "style": style.value},
             ),
             id=id,
             min_length=min_length,
