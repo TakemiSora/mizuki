@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Literal, Required, TypedDict
+from typing import Literal, NotRequired, Required, TypedDict
 
 from mizuki.payloads._types import UNIMPLEMENTED, Permissions, Snowflake
 from mizuki.payloads.channel import (
@@ -103,6 +103,26 @@ class InteractionWebhookMessagePayload(TypedDict, total=False):
     poll: UNIMPLEMENTED | None
 
 
-class InteractionResponseCallbackPayload(TypedDict, total=False):
-    type: Literal[1, 4, 5, 6, 7, 8, 9, 10, 12]
+type InteractionCallbackTypeLiteral = Literal[1, 4, 5, 6, 7, 8, 9, 10, 12]
+
+
+class InteractionResponseCallbackPayload(TypedDict):
+    type: InteractionCallbackTypeLiteral
     data: InteractionCallbackDataPayload
+
+class InteractionCallbackPayload(TypedDict, total=False):
+    id: Required[Snowflake]
+    type: Required[InteractionCallbackTypeLiteral]
+    activity_instance_id: str
+    response_message_id: Snowflake
+    response_message_loading: bool
+    response_message_ephemeral: bool
+    
+
+class InteractionCallbackResourcePayload(TypedDict):
+    type: InteractionCallbackTypeLiteral
+    message: NotRequired[MessagePayload]
+
+class InteractionCallbackResponsePayload(TypedDict):
+    interaction: InteractionCallbackPayload
+    resource: InteractionCallbackResourcePayload

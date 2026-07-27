@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, Literal, cast, TYPE_CHECKING
+from typing import Any, Literal, cast, TYPE_CHECKING, overload
 
 from mizuki._utils import _MISSING, assign_val_dict, maybe_iter, mtd, scls
 from mizuki.enums.command import ApplicationCommandType, CommandOptionType
@@ -30,6 +30,9 @@ from mizuki.objects.user import User
 from mizuki.payloads.interaction import (
     ApplicationCommandInteractionOptionPayload,
     InteractionCallbackDataPayload,
+    InteractionCallbackPayload,
+    InteractionCallbackResourcePayload,
+    InteractionCallbackResponsePayload,
     InteractionDataPayload,
     InteractionPayload,
     InteractionResponseCallbackPayload,
@@ -77,6 +80,45 @@ class InvokedApplicationCommand:
             ResolvedData, data.get("resolved"), guild_id=self.guild_id, state=state
         )
         self.target_id = Snowflake._from_str(data.get("target_id"))
+
+
+class InteractionCallback:
+    __slots__ = (
+        "id",
+        "type",
+        "activity_instance_id",
+        "response_message_id",
+        "response_message_loading",
+        "response_message_ephemeral",
+    )
+
+    def __init__(self, data: InteractionCallbackPayload):
+        self.id = Snowflake(data["id"])
+        self.type = InteractionType(data["type"])
+        self.activity_instance_id = data.get("activity_instance_id")
+        self.response_message_id = Snowflake._from_str(data.get("response_message_id"))
+        self.response_message_loading = data.get("response_message_loading", False)
+        self.response_message_ephemeral = data.get("response_message_ephemeral")
+
+
+class InteractionCallbackResource:
+    __slots__ = ("type", "message")
+
+    def __init__(
+        self, data: InteractionCallbackResourcePayload, *, state: ConnectionState
+    ):
+        self.type = InteractionCallbackType(data["type"])
+        self.message = scls(Message, data.get("message"), state=state)
+
+
+class InteractionCallbackResponse:
+    __slots__ = ("interaction", "resource")
+
+    def __init__(
+        self, data: InteractionCallbackResponsePayload, *, state: ConnectionState
+    ):
+        self.interaction = InteractionCallback(data["interaction"])
+        self.resource = InteractionCallbackResource(data["resource"], state=state)
 
 
 def parse_interaction_data(
@@ -129,17 +171,19 @@ class ResponseHandler:
         data: InteractionCallbackDataPayload,
         files: list[File] = _MISSING,
         components: list[Component] = _MISSING,
-    ):
-        await self._state.http.request(
+        **kwargs: Any,
+    ) -> Any:
+        return await self._state.http.request(
             Path(
                 "POST",
                 "interactions/{interaction_id}/{interaction_token}/callback",
                 interaction_id=self.interaction_id,
                 interaction_token=self.interaction_token,
             ),
-            json=InteractionResponseCallbackPayload(type=type.value, data=data),
+            json={"type": type.value, "data": data},
             files=files,
             components=components,
+            **kwargs,
         )
 
     async def send_response(
@@ -157,7 +201,7 @@ class ResponseHandler:
         suppress_notifications: bool = False,
         is_components_v2: bool = False,
         is_voice_message: bool = False,
-    ) -> None:
+    ) -> InteractionCallbackResponse:
         """
         Sends the first response to an interaction.
 
@@ -222,43 +266,69 @@ class ResponseHandler:
             if is_voice_message:
                 flags |= MessageFlags.IS_VOICE_MESSAGE
 
-            await self._post(
-                type=InteractionCallbackType.CHANNEL_MESSAGE_WITH_SOURCE,
-                files=files,
-                data=assign_val_dict(
-                    InteractionCallbackDataPayload(
-                        tts=tts,
-                        allowed_mentions=allowed_mentions._to_dict(),
+            resp = InteractionCallbackResponse(
+                await self._post(
+                    type=InteractionCallbackType.CHANNEL_MESSAGE_WITH_SOURCE,
+                    files=files,
+                    data=assign_val_dict(
+                        InteractionCallbackDataPayload(
+                            tts=tts,
+                            allowed_mentions=allowed_mentions._to_dict(),
+                        ),
+                        _MISSING,
+                        content=content,
+                        embeds=maybe_iter(embeds),
+                        attachments=maybe_iter(
+                            files,
+                            enumerate_iter=True,
+                            method=lambda i, a: a._to_attachment_dict(i),
+                        ),
+                        flags=flags.value,
+                        components=maybe_iter(components),
                     ),
-                    _MISSING,
-                    content=content,
-                    embeds=maybe_iter(embeds),
-                    attachments=maybe_iter(
-                        files,
-                        enumerate_iter=True,
-                        method=lambda i, a: a._to_attachment_dict(i),
-                    ),
-                    flags=flags.value,
-                    components=maybe_iter(components),
+                    components=components,
+                    params={"with_response": "True"},
                 ),
-                components=components,
+                state=self._state,
             )
+
             self.acknowledged = True
-            return
+
+            return resp
 
         raise ValueError("No sendable field was passed to the response")
 
-    async def defer(self, *, ephemeral: bool = False):
+    async def defer(self, *, ephemeral: bool = False) -> InteractionCallbackResponse:
+        """
+        Defers / Acknowledges the response.
+
+        Parameters
+        ----------
+        ephemeral : class:`bool`, optional
+            Whether the defer is ephemeral, defaults to ``False``.
+
+        Raises
+        ------
+        `InteractionResponded`
+            This interaction was already responded to.
+
+        `HTTPException`
+            An HTTP error occured.
+        """
         if self.acknowledged:
             raise InteractionResponded()
 
-        await self._post(
-            InteractionCallbackType.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE,
-            InteractionCallbackDataPayload(
-                flags=MessageFlags(MessageFlags.EPHEMERAL if ephemeral else 0)
+        resp = InteractionCallbackResponse(
+            await self._post(
+                InteractionCallbackType.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE,
+                {"flags": MessageFlags(MessageFlags.EPHEMERAL if ephemeral else 0)},
             ),
+            state=self._state,
         )
+
         self.acknowledged = True
+
+        return resp
 
     async def send_followup(
         self,
