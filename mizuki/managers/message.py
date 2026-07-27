@@ -242,14 +242,13 @@ class MessageManager(BaseManager):
         :class:`HTTPException`
             A HTTP error occurred.
         """
-        return self._cache_storage.update_messages(
+        message = self._cache_storage.update_messages(
             Message(
                 await self._state.http.request(
                     Path(
                         "POST", "channels/{channel_id}/messages", channel_id=channel_id
                     ),
                     files=files,
-                    components=components,
                     json=assign_val_dict(
                         {},
                         _MISSING,
@@ -276,6 +275,10 @@ class MessageManager(BaseManager):
                 state=self._state,
             )
         )
+
+        self._state.register_components(message.id, components)
+
+        return message
 
     async def reply(
         self,
@@ -759,7 +762,7 @@ class MessageManager(BaseManager):
         :class:`HTTPException`
             A HTTP error occurred.
         """
-        return self._cache_storage.update_messages(
+        message = self._cache_storage.update_messages(
             Message(
                 await self._state.http.request(
                     Path(
@@ -769,7 +772,6 @@ class MessageManager(BaseManager):
                         message_id=message_id,
                     ),
                     files=files,
-                    components=components,
                     json=assign_val_dict(
                         {},
                         _MISSING,
@@ -792,6 +794,10 @@ class MessageManager(BaseManager):
                 state=self._state,
             )
         )
+
+        self._state.register_components(message.id, components)
+
+        return message
 
     async def delete(self, *, channel_id: int, message_id: int) -> None:
         """

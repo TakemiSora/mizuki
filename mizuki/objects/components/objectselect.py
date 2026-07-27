@@ -8,6 +8,7 @@ from mizuki.enums.components import DefaultSelectValueType
 from mizuki.objects.components.common import BaseComponentResponse, BaseSelect
 from mizuki.objects.resolveddata import ResolvedData
 from mizuki.objects.snowflake import Snowflake
+from mizuki.public_utils import generate_custom_id
 
 if TYPE_CHECKING:
     from mizuki.state import ConnectionState
@@ -181,7 +182,7 @@ class ObjectSelect[
                 cls(
                     {
                         "type": component_type,
-                        "custom_id": custom_id or cls.generate_custom_id(),
+                        "custom_id": custom_id or generate_custom_id(),
                     }
                 ),
                 id=id,
@@ -333,7 +334,7 @@ class ChannelSelect(
             Whether this Select is disabled in messages.
         """
         return assign_val(
-            cls({"type": 8, "custom_id": custom_id or cls.generate_custom_id()}),
+            cls({"type": 8, "custom_id": custom_id or generate_custom_id()}),
             id=id,
             placeholder=placeholder,
             min_values=min_values,

@@ -166,12 +166,17 @@ class EventDispatcher:
             )
 
     async def _dispatch_components(self, interaction: Interaction):
-        assert isinstance(interaction.data, BaseComponentResponse)
+        assert (
+            isinstance(interaction.data, BaseComponentResponse)
+            and interaction.message is not None
+        )
 
         component_type_val = interaction.data.component_type.value
 
         try:
-            callback = self.bot._state.components_data[interaction.data.custom_id]
+            callback = self.bot._state.components_data[
+                interaction.message.id, interaction.data.custom_id
+            ]
 
             asyncio.create_task(
                 callback(interaction, interaction.data)

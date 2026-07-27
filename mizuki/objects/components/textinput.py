@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 from mizuki._utils import JSONPayload, assign_val, assign_val_dict, _MISSING
 from mizuki.objects.components.common import BaseComponent
 from mizuki.enums.components import TextInputStyle
+from mizuki.public_utils import generate_custom_id
 
 if TYPE_CHECKING:
     from mizuki.payloads.components import TextInputPayload
@@ -84,7 +85,11 @@ class TextInput(BaseComponent):
         """
         return assign_val(
             cls(
-                {"type": 4, "custom_id": custom_id or cls.generate_custom_id(), "style": style.value},
+                {
+                    "type": 4,
+                    "custom_id": custom_id or generate_custom_id(),
+                    "style": style.value,
+                },
             ),
             id=id,
             min_length=min_length,

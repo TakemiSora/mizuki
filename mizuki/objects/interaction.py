@@ -1,6 +1,5 @@
 from __future__ import annotations
-from typing import Any, Literal, cast, TYPE_CHECKING, overload
-
+from typing import Any, Literal, cast, TYPE_CHECKING
 from mizuki._utils import _MISSING, assign_val_dict, maybe_iter, mtd, scls
 from mizuki.enums.command import ApplicationCommandType, CommandOptionType
 from mizuki.enums.interaction import (
@@ -29,13 +28,12 @@ from mizuki.objects.snowflake import Snowflake
 from mizuki.objects.user import User
 from mizuki.payloads.interaction import (
     ApplicationCommandInteractionOptionPayload,
-    InteractionCallbackDataPayload,
+    InteractionMessageCallbackDataPayload,
     InteractionCallbackPayload,
     InteractionCallbackResourcePayload,
     InteractionCallbackResponsePayload,
     InteractionDataPayload,
     InteractionPayload,
-    InteractionResponseCallbackPayload,
     InteractionWebhookMessagePayload,
     InvokedApplicationCommandPayload,
 )
@@ -168,9 +166,8 @@ class ResponseHandler:
     async def _post(
         self,
         type: InteractionCallbackType,
-        data: InteractionCallbackDataPayload,
+        data: InteractionMessageCallbackDataPayload,
         files: list[File] = _MISSING,
-        components: list[Component] = _MISSING,
         **kwargs: Any,
     ) -> Any:
         return await self._state.http.request(
@@ -182,7 +179,6 @@ class ResponseHandler:
             ),
             json={"type": type.value, "data": data},
             files=files,
-            components=components,
             **kwargs,
         )
 
@@ -271,10 +267,7 @@ class ResponseHandler:
                     type=InteractionCallbackType.CHANNEL_MESSAGE_WITH_SOURCE,
                     files=files,
                     data=assign_val_dict(
-                        InteractionCallbackDataPayload(
-                            tts=tts,
-                            allowed_mentions=allowed_mentions._to_dict(),
-                        ),
+                        {"tts": tts, "allowed_mentions": allowed_mentions._to_dict()},
                         _MISSING,
                         content=content,
                         embeds=maybe_iter(embeds),
@@ -286,13 +279,15 @@ class ResponseHandler:
                         flags=flags.value,
                         components=maybe_iter(components),
                     ),
-                    components=components,
                     params={"with_response": "True"},
                 ),
                 state=self._state,
             )
 
             self.acknowledged = True
+
+            assert resp.resource.message is not None
+            self._state.register_components(resp.resource.message.id, components)
 
             return resp
 
@@ -404,7 +399,7 @@ class ResponseHandler:
             if is_components_v2:
                 flags |= MessageFlags.IS_COMPONENTS_V2
 
-            return Message(
+            message = Message(
                 await self._state.http.request(
                     Path(
                         "POST",
@@ -413,7 +408,6 @@ class ResponseHandler:
                         webhook_token=self.interaction_token,
                     ),
                     files=files,
-                    components=components,
                     json=assign_val_dict(
                         InteractionWebhookMessagePayload(
                             tts=tts, allowed_mentions=allowed_mentions._to_dict()
@@ -433,6 +427,9 @@ class ResponseHandler:
                 state=self._state,
             )
 
+            self._state.register_components(message.id, components)
+            return message
+
         raise ValueError("No sendable field was passed to the response")
 
     async def _webhook_messages_request(
@@ -441,7 +438,6 @@ class ResponseHandler:
         method: str,
         message: int | str = "@original",
         files: list[File] = _MISSING,
-        components: list[Component] = _MISSING,
         **kwargs: Any,
     ) -> Any:
         return await self._state.http.request(
@@ -453,7 +449,6 @@ class ResponseHandler:
                 message=str(message),
             ),
             files=files,
-            components=components,
             **kwargs,
         )
 
@@ -548,11 +543,10 @@ class ResponseHandler:
             if is_components_v2:
                 flags |= MessageFlags.IS_COMPONENTS_V2
 
-        return Message(
+        message = Message(
             await self._webhook_messages_request(
                 method="PATCH",
                 files=files,
-                components=components,
                 json=assign_val_dict(
                     InteractionWebhookMessagePayload(),
                     _MISSING,
@@ -574,6 +568,9 @@ class ResponseHandler:
             ),
             state=self._state,
         )
+
+        self._state.register_components(message.id, components)
+        return message
 
     async def delete_original_response(self):
         """

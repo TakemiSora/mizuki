@@ -7,7 +7,7 @@ from mizuki.payloads.channel import (
     PartialThreadPayload,
     PrivateChannelPayload,
 )
-from mizuki.payloads.components import ComponentResponsePayload
+from mizuki.payloads.components import ComponentPayload, ComponentResponsePayload
 from mizuki.payloads.embed import EmbedPayload
 from mizuki.payloads.file import FileUploadPayload
 from mizuki.payloads.guild import GuildPayload
@@ -18,6 +18,7 @@ from mizuki.payloads.message import (
     PartialMessagePayload,
     AllowedMentionsPayload,
 )
+from mizuki.payloads.modal import ModalPayload
 from mizuki.payloads.role import RolePayload
 from mizuki.payloads.user import UserPayload
 
@@ -80,15 +81,20 @@ class InteractionPayload(TypedDict, total=False):
     attachment_size_limit: Required[int]
 
 
-class InteractionCallbackDataPayload(TypedDict, total=False):
+class InteractionMessageCallbackDataPayload(TypedDict, total=False):
     tts: bool
     content: str
     embeds: list[EmbedPayload]
     allowed_mentions: AllowedMentionsPayload
     flags: int
-    components: list[UNIMPLEMENTED]
+    components: list[ComponentPayload]
     attachments: list[FileUploadPayload]
     poll: UNIMPLEMENTED
+
+
+type InteractionCallbackDataPayload = (
+    InteractionMessageCallbackDataPayload | ModalPayload
+)
 
 
 class InteractionWebhookMessagePayload(TypedDict, total=False):
@@ -110,6 +116,7 @@ class InteractionResponseCallbackPayload(TypedDict):
     type: InteractionCallbackTypeLiteral
     data: InteractionCallbackDataPayload
 
+
 class InteractionCallbackPayload(TypedDict, total=False):
     id: Required[Snowflake]
     type: Required[InteractionCallbackTypeLiteral]
@@ -117,11 +124,12 @@ class InteractionCallbackPayload(TypedDict, total=False):
     response_message_id: Snowflake
     response_message_loading: bool
     response_message_ephemeral: bool
-    
+
 
 class InteractionCallbackResourcePayload(TypedDict):
     type: InteractionCallbackTypeLiteral
     message: NotRequired[MessagePayload]
+
 
 class InteractionCallbackResponsePayload(TypedDict):
     interaction: InteractionCallbackPayload

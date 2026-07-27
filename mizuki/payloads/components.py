@@ -214,8 +214,11 @@ type LabelChildComponent = (
     TextInputPayload
     | StringSelectPayload
     | UserSelectPayload
+    | RoleSelectPayload
     | MentionableSelectPayload
     | ChannelSelectPayload
+    | CheckboxGroupPayload
+    | CheckboxPayload
     | RadioGroupPayload
 )
 

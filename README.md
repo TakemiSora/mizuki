@@ -14,18 +14,19 @@ pip install mizuki
 ```python
 import mizuki
 
-bot = mizuki.Bot(
-     intents=mizuki.IntentFlags.standard()
-)
+bot = mizuki.Bot(intents=mizuki.IntentFlags.standard())
+
 
 @bot.setup()
 async def setup():
     commands = await bot.commands.sync_all()
     print(f"Synced {len(commands)} commands!")
 
+
 @bot.command(name="ping", description="Send a ping to the bot")
 async def ping(interaction: mizuki.Interaction):
     await interaction.response.send_response("Pong!")
+
 
 bot.run("TOKEN-HERE")
 ```
