@@ -1,13 +1,13 @@
 [project]
 name = "mizuki"
-version = "0.5.0"
+version = "0.5.1"
 description = "A modern async-based API wrapper for Discord API."
 readme = "README.md"
 requires-python = ">=3.13"
 license = "MIT"
 dependencies = [
     "aiohttp>=3.13.5",
-    "shibuya[docs]>=2026.7.12",
+    "shibuya>=2026.7.12",
 ]
 authors = [
     { name = "Sora" }
