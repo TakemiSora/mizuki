@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 from mizuki._utils import _MISSING, JSONPayload, assign_val, assign_val_dict, mtd, scls
 from mizuki.objects.components.common import BaseComponentResponse, BaseSelect
 from mizuki.objects.emoji import PartialEmoji
+from mizuki.public_utils import generate_custom_id
 
 if TYPE_CHECKING:
     from mizuki.payloads.components import (
@@ -183,7 +184,7 @@ class StringSelect(BaseSelect[StringSelectResponse]):
             cls(
                 {
                     "type": 3,
-                    "custom_id": custom_id or cls.generate_custom_id(),
+                    "custom_id": custom_id or generate_custom_id(),
                     "options": [],
                 }
             ),

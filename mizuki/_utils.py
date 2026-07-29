@@ -1,6 +1,6 @@
 from datetime import datetime
-from typing import Any, Literal, Protocol, cast, overload
-from collections.abc import Callable, Coroutine, Iterable
+from typing import Any, Literal, Never, Protocol, cast, overload
+from collections.abc import Callable, Coroutine, Iterable, Iterator
 
 
 class Missing:
@@ -8,6 +8,9 @@ class Missing:
 
     def __bool__(self) -> bool:
         return False
+
+    def __iter__(self) -> Iterator[Never]:
+        return iter(())
 
 
 _MISSING: Any = Missing()

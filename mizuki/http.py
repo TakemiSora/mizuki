@@ -1,3 +1,5 @@
+from collections.abc import Sequence
+
 import aiohttp
 import asyncio
 import logging
@@ -20,6 +22,7 @@ from mizuki._utils import _MISSING
 if TYPE_CHECKING:
     from mizuki.state import ConnectionState
     from mizuki.objects.components import Component
+    from mizuki.objects.modal import Modal
 
 _log = logging.getLogger(__name__)
 
@@ -147,16 +150,6 @@ class HTTPClient:
         self._buckets_keys: dict[str, str] = {}
         self._buckets: dict[str, RateLimitBucket] = {}
 
-    def _register_component(self, components: list[Component]):
-        for component in components:
-            if (custom_id := getattr(component, "custom_id", None)) and (
-                callback := getattr(component, "_callback", None)
-            ):
-                self._state.components_data[custom_id] = callback
-
-            if child_components := getattr(component, "components", ()):
-                self._register_component(child_components)
-
     async def _request(self, path: Path, **kwargs: Any) -> Any:
         await self._global_ratelimit.wait()
 
@@ -239,7 +232,6 @@ class HTTPClient:
         path: Path,
         *,
         files: list[File] = _MISSING,
-        components: list[Component] = _MISSING,
         json: Any = _MISSING,
         **kwargs: Any,
     ) -> Any:
@@ -253,9 +245,6 @@ class HTTPClient:
 
         files : list[:class:`File` <mizuki.file.File>`], optional
             The files to upload with the request. Providing this field makes the request use ``multipart/form-data``.
-
-        components : list[:class:`Component <mizuki.objects.components.Component>`]
-            The components to register for interaction handling.
 
         json : dict[:class:`str`, :class:`Any <typing.Any>`], optional
             The JSON payload for the request, is added under ``payload_json`` in the FormData if files is also provided.
@@ -292,6 +281,4 @@ class HTTPClient:
             elif json and not files:
                 request_data["json"] = json
 
-            resp_data = await self._request(path, **request_data, **kwargs)
-            self._register_component(components or [])
-            return resp_data
+            return await self._request(path, **request_data, **kwargs)

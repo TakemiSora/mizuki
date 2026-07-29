@@ -78,45 +78,44 @@ class EventDispatcher:
             _log.debug("Dispatched %s to function '%s'.", key, f.__name__)
 
     def _parse_option_value(
-        self, resolved: ResolvedData, option: InvokedApplicationCommandOption
+        self, resolved: ResolvedData | None, option: InvokedApplicationCommandOption
     ) -> Any:
-        match option.type:
-            case CommandOptionType.CHANNEL:
-                assert isinstance(option.value, str)
-                value = resolved.channels[int(option.value)]
+        value = None
+        if resolved is not None:
+            match option.type:
+                case CommandOptionType.CHANNEL:
+                    assert isinstance(option.value, str)
+                    value = resolved.channels[int(option.value)]
 
-            case CommandOptionType.ROLE:
-                assert isinstance(option.value, str)
-                value = resolved.roles[int(option.value)]
+                case CommandOptionType.ROLE:
+                    assert isinstance(option.value, str)
+                    value = resolved.roles[int(option.value)]
 
-            case CommandOptionType.USER:
-                assert isinstance(option.value, str)
+                case CommandOptionType.USER:
+                    assert isinstance(option.value, str)
 
-                if (m := resolved.members.get(int(option.value))) is not None:
-                    value = m
-                else:
-                    value = resolved.users[int(option.value)]
-
-            case CommandOptionType.MENTIONABLE:
-                assert isinstance(option.value, str)
-                val = int(option.value)
-                if (r := resolved.roles.get(val)) is not None:
-                    value = r
-                else:
-                    if (m := resolved.members.get(val)) is not None:
+                    if (m := resolved.members.get(int(option.value))) is not None:
                         value = m
                     else:
-                        value = resolved.users[val]
+                        value = resolved.users[int(option.value)]
 
-            case _:
-                value = None
+                case CommandOptionType.MENTIONABLE:
+                    assert isinstance(option.value, str)
+                    val = int(option.value)
+                    if (r := resolved.roles.get(val)) is not None:
+                        value = r
+                    else:
+                        if (m := resolved.members.get(val)) is not None:
+                            value = m
+                        else:
+                            value = resolved.users[val]
 
         return value or option.value
 
     def _parse_options(
         self,
         command_options: dict[str, ApplicationCommandOption],
-        resolved: ResolvedData,
+        resolved: ResolvedData | None,
         options: list[InvokedApplicationCommandOption],
     ) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
@@ -138,14 +137,10 @@ class EventDispatcher:
         command_data = self.bot._commands_data.get(interaction.data.name)
         callback = command_data[1]._callback if command_data else None
         if callback and command_data:
-            kwargs = (
-                self._parse_options(
-                    getattr(callback, "__command_options__", {}),
-                    interaction.data.resolved,
-                    interaction.data.options,
-                )
-                if interaction.data.resolved
-                else {}
+            kwargs = self._parse_options(
+                getattr(callback, "__command_options__", {}),
+                interaction.data.resolved,
+                interaction.data.options,
             )
 
             asyncio.create_task(callback(interaction, **kwargs)).add_done_callback(
@@ -166,12 +161,17 @@ class EventDispatcher:
             )
 
     async def _dispatch_components(self, interaction: Interaction):
-        assert isinstance(interaction.data, BaseComponentResponse)
+        assert (
+            isinstance(interaction.data, BaseComponentResponse)
+            and interaction.message is not None
+        )
 
         component_type_val = interaction.data.component_type.value
 
         try:
-            callback = self.bot._state.components_data[interaction.data.custom_id]
+            callback = self.bot._state.components_data[
+                interaction.message.id, interaction.data.custom_id
+            ]
 
             asyncio.create_task(
                 callback(interaction, interaction.data)

@@ -8,6 +8,7 @@ from mizuki.objects.components.common import BaseComponent, BaseComponentRespons
 from mizuki.objects.emoji import PartialEmoji
 from mizuki.objects.snowflake import Snowflake
 from mizuki.payloads.components import ButtonPayload
+from mizuki.public_utils import generate_custom_id
 
 __all__ = ("ButtonResponse", "Button")
 
@@ -152,7 +153,7 @@ class Button(BaseComponent[ButtonResponse]):
             label=label,
             id=id,
             emoji=emoji,
-            custom_id=custom_id or cls.generate_custom_id(),
+            custom_id=custom_id or generate_custom_id(),
             sku_id=sku_id,
             url=url,
             disabled=disabled,

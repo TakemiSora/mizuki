@@ -1,5 +1,5 @@
 from __future__ import annotations
-from collections.abc import Coroutine, Callable
+from collections.abc import Coroutine, Callable, Sequence
 import aiohttp
 
 from typing import TYPE_CHECKING, Any
@@ -13,15 +13,22 @@ if TYPE_CHECKING:
     from mizuki.bot import Bot
     from mizuki.cache import CacheStorage
     from mizuki.objects.command import PartialApplicationCommand
+    from mizuki.objects.components import Component
     from mizuki.objects.interaction import Interaction
 
 
 class ConnectionState:
-    __slots__ = ("http", "gateway", "managers", "session", "components_data")
+    __slots__ = (
+        "http",
+        "gateway",
+        "managers",
+        "session",
+        "components_data",
+    )
 
     def __init__(self):
         self.components_data: dict[
-            str, Callable[[Interaction, Any], Coroutine[Any, Any, Any]]
+            tuple[int, str], Callable[[Interaction, Any], Coroutine[Any, Any, Any]]
         ] = {}
 
     def init_http(self, token: str) -> HTTPClient:
@@ -54,3 +61,15 @@ class ConnectionState:
         self.gateway = GatewayClient(bot, self.session, token, intents)
         await self.gateway.connect()
         return self.gateway
+
+    def register_components(
+        self, message_id: int, components: Sequence[Component]
+    ) -> None:
+        for component in components:
+            if (custom_id := getattr(component, "custom_id", None)) and (
+                callback := getattr(component, "_callback", None)
+            ):
+                self.components_data[message_id, custom_id] = callback
+
+            if child_components := getattr(component, "components", ()):
+                self.register_components(message_id, child_components)
