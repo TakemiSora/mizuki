@@ -6,12 +6,11 @@ from mizuki._utils import _MISSING, JSONPayload, assign_val, assign_val_dict
 from mizuki.enums.channel import ChannelType
 from mizuki.enums.components import DefaultSelectValueType
 from mizuki.objects.components.common import BaseComponentResponse, BaseSelect
-from mizuki.objects.resolveddata import ResolvedData
 from mizuki.objects.snowflake import Snowflake
 from mizuki.public_utils import generate_custom_id
 
 if TYPE_CHECKING:
-    from mizuki.state import ConnectionState
+    from mizuki.objects.resolveddata import ResolvedData
     from mizuki.payloads.components import (
         ChannelSelectPayload,
         DefaultSelectValuePayload,
@@ -75,15 +74,10 @@ class ObjectSelectResponse[T: ObjectSelectTypeLiteral](BaseComponentResponse):
     "The list of IDs of objects selected."
 
     def __init__(
-        self,
-        data: ObjectSelectResponsePayload[T],
-        *,
-        guild_id: int | None = None,
-        state: ConnectionState,
+        self, data: ObjectSelectResponsePayload[T], *, resolved_data: ResolvedData
     ):
         super().__init__(data)
 
-        self.resolved = ResolvedData(data["resolved"], guild_id=guild_id, state=state)
         self.values = [Snowflake(i) for i in data["values"]]
 
 
@@ -256,7 +250,7 @@ class ChannelSelectResponse(ObjectSelectResponse[Literal[8]]):
 
 class ChannelSelect(
     ObjectSelect[Literal[8], int | DefaultSelectValue, ChannelSelectResponse]
-):  # we're overriding the .new() anyways
+):
     """
     Represents a ChannelSelect component.
     """

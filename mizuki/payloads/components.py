@@ -255,10 +255,13 @@ type ComponentPayload = (
 type InteractiveComponentTypeLiteral = Literal[2, 3, 5, 6, 7, 8]
 
 
-class BaseComponentResponsePayload[T: InteractiveComponentTypeLiteral](TypedDict):
+class BaseComponentResponsePayload[T: InteractiveComponentTypeLiteral](
+    TypedDict, total=False
+):
     component_type: T
-    custom_id: str
-    id: NotRequired[int]
+    type: T
+    custom_id: Required[str]
+    id: int
 
 
 type ButtonResponsePayload = BaseComponentResponsePayload[Literal[2]]
@@ -271,7 +274,6 @@ class StringSelectResponsePayload(BaseComponentResponsePayload[Literal[3]]):
 class ObjectSelectResponsePayload[T: ObjectSelectTypeLiteral](
     BaseComponentResponsePayload[T]
 ):
-    resolved: ResolvedDataPayload
     values: list[Snowflake]
 
 

@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from mizuki.objects.command import PartialApplicationCommand
     from mizuki.objects.components import Component
     from mizuki.objects.interaction import Interaction
+    from mizuki.objects.modal import Modal, ModalResponse
 
 
 class ConnectionState:
@@ -24,11 +25,17 @@ class ConnectionState:
         "managers",
         "session",
         "components_data",
+        "modals_data",
     )
 
     def __init__(self):
         self.components_data: dict[
             tuple[int, str], Callable[[Interaction, Any], Coroutine[Any, Any, Any]]
+        ] = {}
+
+        self.modals_data: dict[
+            str,
+            Callable[[Interaction, ModalResponse], Coroutine[Any, Any, Any]],
         ] = {}
 
     def init_http(self, token: str) -> HTTPClient:
@@ -73,3 +80,7 @@ class ConnectionState:
 
             if child_components := getattr(component, "components", ()):
                 self.register_components(message_id, child_components)
+
+    def register_modal(self, modal: Modal) -> None:
+        if callback := getattr(modal, "_callback", None):
+            self.modals_data[modal.custom_id] = callback

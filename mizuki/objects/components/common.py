@@ -36,7 +36,13 @@ class BaseComponentResponse:
     ):
         self.custom_id = data["custom_id"]
         self.id = data.get("id")
-        self.component_type = ComponentType(data["component_type"])
+
+        if (
+            resolved_component_type := (data.get("component_type") or data.get("type"))
+        ) is None:
+            raise ValueError("Recieved malformed component response without a type.")
+
+        self.component_type = ComponentType(resolved_component_type)
 
 
 class BaseComponent[CallbackResponse: BaseComponentResponse]:

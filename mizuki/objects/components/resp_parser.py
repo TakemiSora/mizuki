@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from mizuki.enums.components import ComponentType
 from mizuki.objects.components.button import ButtonResponse
@@ -11,9 +11,9 @@ from mizuki.objects.components.objectselect import (
 from mizuki.objects.components.stringselect import StringSelectResponse
 
 if TYPE_CHECKING:
-    from mizuki.state import ConnectionState
     from mizuki.payloads.components import ComponentResponsePayload
     from mizuki.objects.components import ComponentResponse
+    from mizuki.objects.resolveddata import ResolvedData
 
 type BasicComponent = ButtonResponse | StringSelectResponse
 
@@ -40,15 +40,31 @@ OBJECT_CONTAINING_COMPONENT_MAP: dict[
 
 
 def parse_component_response(
-    data: ComponentResponsePayload, *, guild_id: int | None, state: ConnectionState
+    data: ComponentResponsePayload, *, resolved_data: ResolvedData
 ) -> ComponentResponse:
-    component_type = ComponentType(data["component_type"])
+    if (
+        resolved_component_type := (data.get("component_type") or data.get("type"))
+    ) is None:
+        raise ValueError(
+            "Recieved a malformed component response. Could not find the component type."
+        )
+
+    component_type = ComponentType(resolved_component_type)
+
+    if component_type is ComponentType.LABEL:
+        if (component_data := data.get("component")) is None or (
+            child_type := component_data.get("type")
+        ) is None:
+            raise ValueError(f"Recieved malformed label component in a response.")
+
+        component_type = ComponentType(child_type)
+        data = component_data
 
     if resp_object := BASIC_COMPONENT_MAP.get(component_type):
         return resp_object(data)  # type: ignore # This is resolved properly
 
     if resp_object := OBJECT_CONTAINING_COMPONENT_MAP.get(component_type):
-        return resp_object(data, guild_id=guild_id, state=state)  # type: ignore # This is resolved properly
+        return resp_object(data, resolved_data=resolved_data)  # type: ignore # This is resolved properly
 
     raise TypeError(
         f"Component of type {component_type.value} does not support interactions yet."

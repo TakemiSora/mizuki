@@ -3,6 +3,7 @@ from .button import *
 from .objectselect import *
 from .staticui import *
 from .stringselect import *
+from .modal_child import *
 from .textinput import *
 
 type Component = (
@@ -21,6 +22,7 @@ type Component = (
     | FileComponent
     | Separator
     | Container
+    | Label
 )
 
 type ComponentResponse = (

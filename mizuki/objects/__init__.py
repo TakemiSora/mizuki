@@ -11,6 +11,7 @@ from .invite import *
 from .interaction import *
 from .member import *
 from .message import *
+from .modal import *
 from .permissions import *
 from .presence import *
 from .primary_guild import *
