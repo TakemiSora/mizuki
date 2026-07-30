@@ -1,7 +1,8 @@
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 from mizuki.enums.components import ComponentType
 from mizuki.objects.components.button import ButtonResponse
+from mizuki.objects.components.modal_child import RadioGroupResponse
 from mizuki.objects.components.objectselect import (
     ChannelSelectResponse,
     MentionableSelectResponse,
@@ -15,14 +16,15 @@ if TYPE_CHECKING:
     from mizuki.objects.components import ComponentResponse
     from mizuki.objects.resolveddata import ResolvedData
 
-type BasicComponent = ButtonResponse | StringSelectResponse
+type BasicComponentResponse = ButtonResponse | StringSelectResponse | RadioGroupResponse
 
-BASIC_COMPONENT_MAP: dict[ComponentType, type[BasicComponent]] = {
+BASIC_COMPONENT_MAP: dict[ComponentType, type[BasicComponentResponse]] = {
     ComponentType.BUTTON: ButtonResponse,
     ComponentType.STRING_SELECT: StringSelectResponse,
+    ComponentType.RADIO_GROUP: RadioGroupResponse,
 }
 
-type ObjectContainingComponent = (
+type ObjectContainingComponentResponse = (
     UserSelectResponse
     | RoleSelectResponse
     | MentionableSelectResponse
@@ -30,7 +32,7 @@ type ObjectContainingComponent = (
 )
 
 OBJECT_CONTAINING_COMPONENT_MAP: dict[
-    ComponentType, type[ObjectContainingComponent]
+    ComponentType, type[ObjectContainingComponentResponse]
 ] = {
     ComponentType.USER_SELECT: UserSelectResponse,
     ComponentType.ROLE_SELECT: RoleSelectResponse,

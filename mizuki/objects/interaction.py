@@ -727,7 +727,9 @@ class Interaction:
         self.member = scls(
             Member, data.get("member"), guild_id=self.guild_id, state=state
         )
-        if (user := scls(User, data.get("user"), state=state) or (self.member and self.member.user)):
+        if user := scls(User, data.get("user"), state=state) or (
+            self.member and self.member.user
+        ):
             self.user = user
         else:
             raise ValueError("Recieved malformed interaction payload.")

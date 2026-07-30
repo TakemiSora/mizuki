@@ -4,9 +4,6 @@ from typing import Literal, NotRequired, Required, TypedDict, TYPE_CHECKING
 from mizuki.payloads._types import Snowflake
 from mizuki.payloads.emoji import PartialEmojiPayload
 
-if TYPE_CHECKING:
-    from mizuki.payloads.interaction import ResolvedDataPayload
-
 type ComponentTypeLiteral = Literal[
     1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17, 18, 19, 21, 22, 23
 ]
@@ -252,7 +249,7 @@ type ComponentPayload = (
     | CheckboxPayload
 )
 
-type InteractiveComponentTypeLiteral = Literal[2, 3, 5, 6, 7, 8]
+type InteractiveComponentTypeLiteral = Literal[2, 3, 4, 5, 6, 7, 8, 19, 21, 22, 23]
 
 
 class BaseComponentResponsePayload[T: InteractiveComponentTypeLiteral](
@@ -281,6 +278,11 @@ type UserSelectResponsePayload = ObjectSelectResponsePayload[Literal[5]]
 type RoleSelectResponsePayload = ObjectSelectResponsePayload[Literal[6]]
 type MentionableSelectResponsePayload = ObjectSelectResponsePayload[Literal[7]]
 type ChannelSelectResponsePayload = ObjectSelectResponsePayload[Literal[8]]
+
+
+class RadioGroupResponsePayload(BaseComponentResponsePayload[Literal[21]], total=False):
+    value: str
+
 
 type ComponentResponsePayload = (
     ButtonResponsePayload

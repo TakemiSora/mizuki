@@ -37,7 +37,7 @@ class TextInput(BaseComponent):
     def _to_dict(self) -> JSONPayload:
         return assign_val_dict(
             {"type": 4, "custom_id": self.custom_id, "style": self.style.value},
-            id=id,
+            id=self.id,
             min_length=self.min_length,
             max_length=self.max_length,
             required=(self.required if self.required is not True else None),

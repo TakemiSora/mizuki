@@ -53,7 +53,7 @@ class ModalResponse[*ResponseType]:
         state: ConnectionState,
     ) -> None:
         self.custom_id = data["custom_id"]
-        
+
         self.resolved = ResolvedData(
             data.get("resolved", {}), guild_id=guild_id, state=state
         )

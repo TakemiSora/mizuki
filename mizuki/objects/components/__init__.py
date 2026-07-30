@@ -23,6 +23,7 @@ type Component = (
     | Separator
     | Container
     | Label
+    | RadioGroup
 )
 
 type ComponentResponse = (
@@ -32,4 +33,5 @@ type ComponentResponse = (
     | RoleSelectResponse
     | MentionableSelectResponse
     | ChannelSelectResponse
+    | RadioGroupResponse
 )
