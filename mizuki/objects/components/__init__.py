@@ -4,7 +4,6 @@ from .objectselect import *
 from .staticui import *
 from .stringselect import *
 from .modal_child import *
-from .textinput import *
 
 type Component = (
     ActionRow
@@ -31,6 +30,7 @@ type Component = (
 type ComponentResponse = (
     ButtonResponse
     | StringSelectResponse
+    | TextInputResponse
     | UserSelectResponse
     | RoleSelectResponse
     | MentionableSelectResponse

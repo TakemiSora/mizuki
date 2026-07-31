@@ -48,8 +48,8 @@ class DefaultSelectValueType(StrEnum):
 
 
 class TextInputStyle(IntEnum):
-    SHORT = 0
-    PARAGRAPH = 1
+    SHORT = 1
+    PARAGRAPH = 2
 
 
 class SeparatorSpacing(IntEnum):

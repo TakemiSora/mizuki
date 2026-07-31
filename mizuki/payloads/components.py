@@ -261,6 +261,10 @@ class StringSelectResponsePayload(BaseComponentResponsePayload[Literal[3]]):
     values: list[str]
 
 
+class TextInputResponsePayload(BaseComponentResponsePayload[Literal[4]]):
+    value: str
+
+
 class ObjectSelectResponsePayload[T: ObjectSelectTypeLiteral](
     BaseComponentResponsePayload[T]
 ):
