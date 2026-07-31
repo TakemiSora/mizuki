@@ -2,7 +2,11 @@ from typing import TYPE_CHECKING
 
 from mizuki.enums.components import ComponentType
 from mizuki.objects.components.button import ButtonResponse
-from mizuki.objects.components.modal_child import RadioGroupResponse
+from mizuki.objects.components.modal_child import (
+    CheckboxGroupResponse,
+    CheckboxResponse,
+    RadioGroupResponse,
+)
 from mizuki.objects.components.objectselect import (
     ChannelSelectResponse,
     MentionableSelectResponse,
@@ -16,12 +20,20 @@ if TYPE_CHECKING:
     from mizuki.objects.components import ComponentResponse
     from mizuki.objects.resolveddata import ResolvedData
 
-type BasicComponentResponse = ButtonResponse | StringSelectResponse | RadioGroupResponse
+type BasicComponentResponse = (
+    ButtonResponse
+    | StringSelectResponse
+    | RadioGroupResponse
+    | CheckboxGroupResponse
+    | CheckboxResponse
+)
 
 BASIC_COMPONENT_MAP: dict[ComponentType, type[BasicComponentResponse]] = {
     ComponentType.BUTTON: ButtonResponse,
     ComponentType.STRING_SELECT: StringSelectResponse,
     ComponentType.RADIO_GROUP: RadioGroupResponse,
+    ComponentType.CHECKBOX_GROUP: CheckboxGroupResponse,
+    ComponentType.CHECKBOX: CheckboxResponse,
 }
 
 type ObjectContainingComponentResponse = (

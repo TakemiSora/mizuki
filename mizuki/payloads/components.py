@@ -174,7 +174,7 @@ class FileUploadPayload(BaseComponentPayload[Literal[19]], total=False):
     required: bool
 
 
-class RadioGroupOptionPayload(TypedDict):
+class GroupOptionPayload(TypedDict):
     value: str
     label: str
     description: NotRequired[str]
@@ -183,22 +183,15 @@ class RadioGroupOptionPayload(TypedDict):
 
 class RadioGroupPayload(BaseComponentPayload[Literal[21]]):
     custom_id: str
-    options: list[RadioGroupOptionPayload]
+    options: list[GroupOptionPayload]
     required: NotRequired[bool]
 
 
-class CheckboxGroupOptionPayload(TypedDict):
-    value: str
-    label: str
-    description: NotRequired[str]
-    default: NotRequired[bool]
-
-
-class CheckboxGroupPayload(BaseComponentPayload[Literal[22]]):
-    custom_id: str
-    options: list[CheckboxGroupOptionPayload]
-    min_values: NotRequired[int]
-    max_values: NotRequired[int]
+class CheckboxGroupPayload(BaseComponentPayload[Literal[22]], total=False):
+    custom_id: Required[str]
+    options: Required[list[GroupOptionPayload]]
+    min_values: int
+    max_values: int
     required: bool
 
 
@@ -280,8 +273,16 @@ type MentionableSelectResponsePayload = ObjectSelectResponsePayload[Literal[7]]
 type ChannelSelectResponsePayload = ObjectSelectResponsePayload[Literal[8]]
 
 
-class RadioGroupResponsePayload(BaseComponentResponsePayload[Literal[21]], total=False):
-    value: str
+class RadioGroupResponsePayload(BaseComponentResponsePayload[Literal[21]]):
+    value: str | None
+
+
+class CheckboxGroupResponsePayload(BaseComponentResponsePayload[Literal[22]]):
+    values: list[str]
+
+
+class CheckboxResponsePayload(BaseComponentResponsePayload[Literal[23]]):
+    value: bool
 
 
 type ComponentResponsePayload = (

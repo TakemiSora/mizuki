@@ -1,10 +1,11 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Self
 
 from mizuki._utils import JSONPayload, assign_val, assign_val_dict, _MISSING, maybe_iter
 from mizuki.enums.components import ComponentType
 from mizuki.objects.components.common import (
     BaseComponent,
     BaseComponentResponse,
+    HasCallbackResponse,
     component_parser_gen,
 )
 from mizuki.objects.components.objectselect import (
@@ -20,19 +21,29 @@ from mizuki.public_utils import generate_custom_id
 if TYPE_CHECKING:
     from mizuki.payloads.components import LabelPayload
     from mizuki.payloads.components import (
-        RadioGroupOptionPayload,
+        GroupOptionPayload,
         RadioGroupPayload,
         RadioGroupResponsePayload,
+        CheckboxGroupPayload,
+        CheckboxGroupResponsePayload,
+        CheckboxResponsePayload,
+        CheckboxPayload,
     )
 
-__all__ = ("Label", "RadioGroupOption", "RadioGroupResponse", "RadioGroup")
+__all__ = (
+    "Label",
+    "RadioGroupOption",
+    "RadioGroupResponse",
+    "RadioGroup",
+    "CheckboxGroupOption",
+    "CheckboxGroupResponse",
+    "CheckboxGroup",
+    "CheckboxResponse",
+    "Checkbox",
+)
 
 
-class RadioGroupOption:
-    """
-    Represents an option for a radio group.
-    """
-
+class BaseGroupOption:
     __slots__ = ("value", "label", "description", "default")
 
     value: str
@@ -47,7 +58,7 @@ class RadioGroupOption:
     default: bool
     "Whether this option will be selected by default."
 
-    def __init__(self, data: RadioGroupOptionPayload):
+    def __init__(self, data: GroupOptionPayload):
         self.value = data["value"]
         self.label = data["label"]
         self.description = data.get("description")
@@ -68,9 +79,9 @@ class RadioGroupOption:
         label: str,
         description: str = _MISSING,
         default: bool = False,
-    ) -> RadioGroupOption:
+    ) -> Self:
         """
-        Returns an instance of a Radio Group Option.
+        Returns an instance of a Group Option.
 
         Parameters
         ----------
@@ -93,6 +104,14 @@ class RadioGroupOption:
         )
 
 
+class RadioGroupOption(BaseGroupOption):
+    """
+    Represents an option for a radio group.
+    """
+
+    __slots__ = ()
+
+
 class RadioGroupResponse(BaseComponentResponse):
     """
     Represents a response from a radio group component.
@@ -106,10 +125,10 @@ class RadioGroupResponse(BaseComponentResponse):
     def __init__(self, data: RadioGroupResponsePayload):
         super().__init__(data)
 
-        self.value = data.get("value")
+        self.value = data["value"]
 
 
-class RadioGroup(BaseComponent[RadioGroupResponse]):
+class RadioGroup(BaseComponent, HasCallbackResponse[RadioGroupResponse]):
     """
     Represents a Radio Group component.
     """
@@ -181,6 +200,167 @@ class RadioGroup(BaseComponent[RadioGroupResponse]):
         )
 
 
+class CheckboxGroupOption(BaseGroupOption):
+    """
+    Represents an option in a checkbox group.
+    """
+
+    __slots__ = ()
+
+
+class CheckboxGroupResponse(BaseComponentResponse):
+    """
+    Represents a response from a checkbox group component.
+    """
+
+    __slots__ = ("values",)
+
+    values: list[str]
+    "The values selected in the component."
+
+    def __init__(self, data: CheckboxGroupResponsePayload):
+        super().__init__(data)
+
+        self.values = data["values"]
+
+
+class CheckboxGroup(BaseComponent, HasCallbackResponse[CheckboxGroupResponse]):
+    """
+    Represents a checkbox group component.
+    """
+
+    __slots__ = ("custom_id", "options", "min_values", "max_values", "required")
+
+    custom_id: str
+    "The custom ID of this component."
+
+    options: list[CheckboxGroupOption]
+    "The options for this checkbox group."
+
+    min_values: int | None
+    "The minimum amount of values an user must select to submit this component."
+
+    max_values: int | None
+    "The maxmium amount of values an user can select at most when submitting this component."
+
+    required: bool
+    "Whether this component is required to submit."
+
+    def __init__(self, data: CheckboxGroupPayload):
+        super().__init__(data)
+
+        self.custom_id = data["custom_id"]
+        self.options = [CheckboxGroupOption(d) for d in data["options"]]
+        self.min_values = data.get("min_values")
+        self.max_values = data.get("max_values")
+        self.required = data.get("required", True)
+
+    def _to_dict(self) -> JSONPayload:
+        return assign_val_dict(
+            {
+                "type": 22,
+                "custom_id": self.custom_id,
+                "options": maybe_iter(self.options),
+            },
+            id=self.id,
+            min_values=self.min_values,
+            max_values=self.max_values,
+            required=self.required and None,
+        )
+
+    @classmethod
+    def new(
+        cls,
+        *options: CheckboxGroupOption,
+        id: int = _MISSING,
+        custom_id: str = _MISSING,
+        min_values: int = _MISSING,
+        max_values: int = _MISSING,
+        required: bool = True,
+    ) -> CheckboxGroup:
+        return assign_val(
+            cls(
+                {
+                    "type": 22,
+                    "options": [],
+                    "custom_id": custom_id or generate_custom_id(),
+                }
+            ),
+            id=id,
+            options=options,
+            min_values=min_values,
+            max_values=max_values,
+            required=required and None,
+        )
+
+
+class CheckboxResponse(BaseComponentResponse):
+    """
+    Represents a response from a checkbox component.
+    """
+
+    __slots__ = ("value",)
+
+    value: bool
+    "The value of the checkbox selected."
+
+    def __init__(self, data: CheckboxResponsePayload):
+        super().__init__(data)
+
+        self.value = data["value"]
+
+
+class Checkbox(BaseComponent, HasCallbackResponse[CheckboxResponse]):
+    """
+    Represents a checkbox component.
+    """
+
+    __slots__ = ("custom_id", "default")
+
+    custom_id: str
+    "The custom ID for this component."
+
+    default: bool
+    "The value thats selected by default."
+
+    def __init__(self, data: CheckboxPayload):
+        super().__init__(data)
+
+        self.custom_id = data["custom_id"]
+        self.default = data.get("default", False)
+
+    def _to_dict(self) -> JSONPayload:
+        return assign_val_dict(
+            {"type": 23, "custom_id": self.custom_id},
+            id=self.id,
+            default=self.default or None,
+        )
+
+    @classmethod
+    def new(
+        cls, *, custom_id: str = _MISSING, id: int = _MISSING, default: bool = False
+    ) -> Checkbox:
+        """
+        Returns an instance of a checkbox component.
+
+        Parameters
+        ----------
+        custom_id : :class:`str`, optional
+            The custom ID for this component, auto-generated if not provided.
+
+        id : :class:`int`, optional
+            Optional unique identifier for this component.
+
+        default : :class:`bool`, optional
+            Whether this checkbox is set to ``True`` or ``False`` by default.
+        """
+        return assign_val(
+            cls({"type": 23, "custom_id": custom_id or generate_custom_id()}),
+            id=id,
+            default=default,
+        )
+
+
 type LabelChildComponent = (
     TextInput
     | StringSelect
@@ -189,6 +369,8 @@ type LabelChildComponent = (
     | MentionableSelect
     | ChannelSelect
     | RadioGroup
+    | CheckboxGroup
+    | Checkbox
 )
 
 LABEL_CHILD_MAP: dict[ComponentType, type[LabelChildComponent]] = {
@@ -199,6 +381,8 @@ LABEL_CHILD_MAP: dict[ComponentType, type[LabelChildComponent]] = {
     ComponentType.MENTIONABLE_SELECT: MentionableSelect,
     ComponentType.CHANNEL_SELECT: ChannelSelect,
     ComponentType.RADIO_GROUP: RadioGroup,
+    ComponentType.CHECKBOX_GROUP: CheckboxGroup,
+    ComponentType.CHECKBOX: Checkbox,
 }
 
 parse_label_child = component_parser_gen(LABEL_CHILD_MAP, "Label")

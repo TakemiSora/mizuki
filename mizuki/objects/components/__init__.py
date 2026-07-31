@@ -24,6 +24,8 @@ type Component = (
     | Container
     | Label
     | RadioGroup
+    | CheckboxGroup
+    | Checkbox
 )
 
 type ComponentResponse = (
@@ -34,4 +36,6 @@ type ComponentResponse = (
     | MentionableSelectResponse
     | ChannelSelectResponse
     | RadioGroupResponse
+    | CheckboxGroupResponse
+    | CheckboxResponse
 )
