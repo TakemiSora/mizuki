@@ -22,13 +22,14 @@ from mizuki.objects.embed import Embed
 from mizuki.objects.guild import Guild
 from mizuki.objects.member import Member
 from mizuki.objects.message import AllowedMentions, Message
+from mizuki.objects.modal import ModalResponse
 from mizuki.objects.permissions import Permissions
 from mizuki.objects.resolveddata import ResolvedData
 from mizuki.objects.snowflake import Snowflake
 from mizuki.objects.user import User
 from mizuki.payloads.interaction import (
     ApplicationCommandInteractionOptionPayload,
-    InteractionMessageCallbackDataPayload,
+    InteractionCallbackDataPayload,
     InteractionCallbackPayload,
     InteractionCallbackResourcePayload,
     InteractionCallbackResponsePayload,
@@ -37,11 +38,12 @@ from mizuki.payloads.interaction import (
     InteractionWebhookMessagePayload,
     InvokedApplicationCommandPayload,
 )
+from mizuki.payloads.modal import ModalResponsePayload
 
 if TYPE_CHECKING:
     from mizuki.state import ConnectionState
     from mizuki.objects.components import Component, ComponentResponse
-
+    from mizuki.objects.modal import Modal
 __all__ = (
     "ResponseHandler",
     "Interaction",
@@ -125,7 +127,7 @@ def parse_interaction_data(
     *,
     guild_id: int | None,
     state: ConnectionState,
-) -> InvokedApplicationCommand | ComponentResponse:
+) -> InvokedApplicationCommand | ComponentResponse | ModalResponse:
     match type:
         case (
             InteractionType.APPLICATION_COMMAND
@@ -136,6 +138,10 @@ def parse_interaction_data(
             )
         case InteractionType.MESSAGE_COMPONENT:
             return parse_component_response(data, guild_id=guild_id, state=state)  # type: ignore # This is resolved.
+        case InteractionType.MODAL_SUBMIT:
+            return ModalResponse(
+                cast(ModalResponsePayload, data), guild_id=guild_id, state=state
+            )
         case _:
             raise UnknownInteractionType(f"Received unknown interaction type '{type}'")
 
@@ -166,7 +172,7 @@ class ResponseHandler:
     async def _post(
         self,
         type: InteractionCallbackType,
-        data: InteractionMessageCallbackDataPayload,
+        data: InteractionCallbackDataPayload,
         files: list[File] = _MISSING,
         **kwargs: Any,
     ) -> Any:
@@ -292,6 +298,30 @@ class ResponseHandler:
             return resp
 
         raise ValueError("No sendable field was passed to the response")
+
+    async def send_modal(self, modal: Modal) -> None:
+        """
+        Sends a modal to an Interaction.
+
+        Parameters
+        ----------
+        modal : :class:`Modal <mizuki.objects.modal.Modal>`
+            The modal to send.
+
+        Raises
+        ------
+        `InteractionResponded`
+            This interaction was already responded to.
+
+        `HTTPException`
+            An HTTP error occured.
+        """
+        if self.acknowledged:
+            raise InteractionResponded()
+
+        await self._post(InteractionCallbackType.MODAL, modal._to_dict())
+
+        self._state.register_modal(modal)
 
     async def defer(self, *, ephemeral: bool = False) -> InteractionCallbackResponse:
         """
@@ -630,7 +660,7 @@ class Interaction:
     guild_id: Snowflake | None
     "The ID of the Guild that this interaction was sent from."
 
-    data: InvokedApplicationCommand | ComponentResponse
+    data: InvokedApplicationCommand | ComponentResponse | ModalResponse
     "The data of the interaction"
 
     channel: PartialChannel | None
@@ -642,7 +672,7 @@ class Interaction:
     member: Member | None
     "The guild member that created this interaction."
 
-    user: User | None
+    user: User
     "The user that created this interaction."
 
     token: str
@@ -697,7 +727,13 @@ class Interaction:
         self.member = scls(
             Member, data.get("member"), guild_id=self.guild_id, state=state
         )
-        self.user = scls(User, data.get("user"), state=state)
+        if user := scls(User, data.get("user"), state=state) or (
+            self.member and self.member.user
+        ):
+            self.user = user
+        else:
+            raise ValueError("Recieved malformed interaction payload.")
+
         self.token = data["token"]
         self.message = scls(Message, data.get("message"), state=state)
         self.app_permissions = Permissions(int(data["app_permissions"]))

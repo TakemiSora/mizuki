@@ -360,9 +360,8 @@ class BasePublicChannel(BaseChannel):
         self._update(data, guild_id)
 
     def _update(self, data: BasePublicChannelPayload, guild_id: int | None) -> None:
-        assert (
-            resolved_guild_id := (data.get("guild_id") or str(guild_id))
-        ) is not None, "A PublicChannel object formed without any guild ID."
+        if (resolved_guild_id := (data.get("guild_id") or str(guild_id))) is None:
+            raise ValueError("A PublicChannel object formed without any guild ID.")
 
         super()._update(data)
         self.guild_id = Snowflake(resolved_guild_id)

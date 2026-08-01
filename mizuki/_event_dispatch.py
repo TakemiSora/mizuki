@@ -19,6 +19,7 @@ from mizuki.objects.interaction import (
     InvokedApplicationCommandOption,
     ResolvedData,
 )
+from mizuki.objects.modal import ModalResponse
 
 if TYPE_CHECKING:
     from mizuki.bot import Bot
@@ -59,6 +60,7 @@ class EventDispatcher:
         self._interaction_dispatchers = {
             InteractionType.APPLICATION_COMMAND: self._dispatch_commands,
             InteractionType.MESSAGE_COMPONENT: self._dispatch_components,
+            InteractionType.MODAL_SUBMIT: self._dispatch_modals,
         }
 
     def _on_task_done(self, task: asyncio.Task, data: str):
@@ -183,12 +185,43 @@ class EventDispatcher:
             )
 
             _log.debug(
-                f"Dispatched component callback (ComponentType={component_type_val}, Func={callback.__name__})"
+                "Dispatched component callback (ComponentType=%s, Func=%s",
+                component_type_val,
+                callback.__name__,
             )
+
         except KeyError:
             _log.warning(
                 "Recieved component interaction (ComponentType=%s), but no callback was found for it.",
                 component_type_val,
+            )
+
+    async def _dispatch_modals(self, interaction: Interaction):
+        assert isinstance(interaction.data, ModalResponse)
+
+        try:
+            print(self.bot._state.modals_data, interaction.data.custom_id)
+            callback = self.bot._state.modals_data[interaction.data.custom_id]
+
+            asyncio.create_task(
+                callback(interaction, interaction.data)
+            ).add_done_callback(
+                lambda t: self._on_task_done(
+                    t,
+                    f"Modal Callback (InteractionID={interaction.id}, Func={callback.__name__})",
+                )
+            )
+
+            _log.debug(
+                "Dispatched modal callback (InteractionID=%s, Func=%s)",
+                interaction.id,
+                callback.__name__,
+            )
+
+        except KeyError:
+            _log.warning(
+                "Recieved modal interaction (InteractionID=%s), but no callback was found for it.",
+                interaction.id,
             )
 
     async def _handle_guild_create(self, data: GuildPayload | UnavailableGuildPayload):

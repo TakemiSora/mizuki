@@ -4,9 +4,6 @@ from typing import Literal, NotRequired, Required, TypedDict, TYPE_CHECKING
 from mizuki.payloads._types import Snowflake
 from mizuki.payloads.emoji import PartialEmojiPayload
 
-if TYPE_CHECKING:
-    from mizuki.payloads.interaction import ResolvedDataPayload
-
 type ComponentTypeLiteral = Literal[
     1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17, 18, 19, 21, 22, 23
 ]
@@ -92,7 +89,7 @@ class ActionRowPayload(BaseComponentPayload[Literal[1]]):
 
 class TextInputPayload(BaseComponentPayload[Literal[4]], total=False):
     custom_id: Required[str]
-    style: Required[Literal[0, 1]]
+    style: Required[Literal[1, 2]]
     min_length: int
     max_length: int
     required: bool
@@ -177,7 +174,7 @@ class FileUploadPayload(BaseComponentPayload[Literal[19]], total=False):
     required: bool
 
 
-class RadioGroupOptionPayload(TypedDict):
+class GroupOptionPayload(TypedDict):
     value: str
     label: str
     description: NotRequired[str]
@@ -186,22 +183,15 @@ class RadioGroupOptionPayload(TypedDict):
 
 class RadioGroupPayload(BaseComponentPayload[Literal[21]]):
     custom_id: str
-    options: list[RadioGroupOptionPayload]
+    options: list[GroupOptionPayload]
     required: NotRequired[bool]
 
 
-class CheckboxGroupOptionPayload(TypedDict):
-    value: str
-    label: str
-    description: NotRequired[str]
-    default: NotRequired[bool]
-
-
-class CheckboxGroupPayload(BaseComponentPayload[Literal[22]]):
-    custom_id: str
-    options: list[CheckboxGroupOptionPayload]
-    min_values: NotRequired[int]
-    max_values: NotRequired[int]
+class CheckboxGroupPayload(BaseComponentPayload[Literal[22]], total=False):
+    custom_id: Required[str]
+    options: Required[list[GroupOptionPayload]]
+    min_values: int
+    max_values: int
     required: bool
 
 
@@ -252,13 +242,16 @@ type ComponentPayload = (
     | CheckboxPayload
 )
 
-type InteractiveComponentTypeLiteral = Literal[2, 3, 5, 6, 7, 8]
+type InteractiveComponentTypeLiteral = Literal[2, 3, 4, 5, 6, 7, 8, 19, 21, 22, 23]
 
 
-class BaseComponentResponsePayload[T: InteractiveComponentTypeLiteral](TypedDict):
+class BaseComponentResponsePayload[T: InteractiveComponentTypeLiteral](
+    TypedDict, total=False
+):
     component_type: T
-    custom_id: str
-    id: NotRequired[int]
+    type: T
+    custom_id: Required[str]
+    id: int
 
 
 type ButtonResponsePayload = BaseComponentResponsePayload[Literal[2]]
@@ -268,10 +261,13 @@ class StringSelectResponsePayload(BaseComponentResponsePayload[Literal[3]]):
     values: list[str]
 
 
+class TextInputResponsePayload(BaseComponentResponsePayload[Literal[4]]):
+    value: str
+
+
 class ObjectSelectResponsePayload[T: ObjectSelectTypeLiteral](
     BaseComponentResponsePayload[T]
 ):
-    resolved: ResolvedDataPayload
     values: list[Snowflake]
 
 
@@ -280,10 +276,33 @@ type RoleSelectResponsePayload = ObjectSelectResponsePayload[Literal[6]]
 type MentionableSelectResponsePayload = ObjectSelectResponsePayload[Literal[7]]
 type ChannelSelectResponsePayload = ObjectSelectResponsePayload[Literal[8]]
 
+
+class FileUploadResponsePayload(BaseComponentResponsePayload[Literal[19]]):
+    values: list[Snowflake]
+
+
+class RadioGroupResponsePayload(BaseComponentResponsePayload[Literal[21]]):
+    value: str | None
+
+
+class CheckboxGroupResponsePayload(BaseComponentResponsePayload[Literal[22]]):
+    values: list[str]
+
+
+class CheckboxResponsePayload(BaseComponentResponsePayload[Literal[23]]):
+    value: bool
+
+
 type ComponentResponsePayload = (
     ButtonResponsePayload
+    | StringSelectResponsePayload
+    | TextInputResponsePayload
     | UserSelectResponsePayload
     | RoleSelectResponsePayload
     | MentionableSelectResponsePayload
     | ChannelSelectResponsePayload
+    | FileUploadResponsePayload
+    | RadioGroupResponsePayload
+    | CheckboxGroupResponsePayload
+    | CheckboxResponsePayload
 )

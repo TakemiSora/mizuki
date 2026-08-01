@@ -1,8 +1,8 @@
 import inspect
-import uuid
 from collections.abc import Callable, Coroutine
 from typing import TYPE_CHECKING, Any, Self
 
+from mizuki._utils import JSONPayload
 from mizuki.enums.components import ComponentType
 
 if TYPE_CHECKING:
@@ -36,28 +36,20 @@ class BaseComponentResponse:
     ):
         self.custom_id = data["custom_id"]
         self.id = data.get("id")
-        self.component_type = ComponentType(data["component_type"])
 
+        if (
+            resolved_component_type := (data.get("component_type") or data.get("type"))
+        ) is None:
+            raise ValueError("Recieved malformed component response without a type.")
 
-class BaseComponent[CallbackResponse: BaseComponentResponse]:
+        self.component_type = ComponentType(resolved_component_type)
+
+class HasCallbackResponse[CallbackResponse: BaseComponentResponse]:
+    __slots__ = ()
+
     type ComponentCallback = Callable[
         [Interaction, CallbackResponse], Coroutine[Any, Any, Any]
     ]
-
-    __slots__ = ("id", "type", "_callback")
-
-    type: ComponentType
-    "The type of the component."
-
-    id: int | None
-    "An optional identifier for the component."
-
-    def __init__[T: ComponentTypeLiteral](self, data: BaseComponentPayload[T]):
-        self.type = ComponentType(data["type"])
-        self.id = data.get("id")
-
-    def _to_dict(self):
-        raise NotImplementedError()
 
     def set_callback(self, callback: ComponentCallback) -> Self:
         """
@@ -81,8 +73,25 @@ class BaseComponent[CallbackResponse: BaseComponentResponse]:
         return self
 
 
+class BaseComponent:
+    __slots__ = ("id", "type", "_callback")
+
+    type: ComponentType
+    "The type of the component."
+
+    id: int | None
+    "An optional identifier for the component."
+
+    def __init__[T: ComponentTypeLiteral](self, data: BaseComponentPayload[T]):
+        self.type = ComponentType(data["type"])
+        self.id = data.get("id")
+
+    def _to_dict(self) -> JSONPayload:
+        raise NotImplementedError()
+
+
 class BaseSelect[CallbackResponse: BaseComponentResponse](
-    BaseComponent[CallbackResponse]
+    BaseComponent, HasCallbackResponse[CallbackResponse]
 ):
     __slots__ = (
         "custom_id",

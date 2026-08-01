@@ -3,7 +3,7 @@ from .button import *
 from .objectselect import *
 from .staticui import *
 from .stringselect import *
-from .textinput import *
+from .modal_child import *
 
 type Component = (
     ActionRow
@@ -21,13 +21,23 @@ type Component = (
     | FileComponent
     | Separator
     | Container
+    | Label
+    | FileUpload
+    | RadioGroup
+    | CheckboxGroup
+    | Checkbox
 )
 
 type ComponentResponse = (
     ButtonResponse
     | StringSelectResponse
+    | TextInputResponse
     | UserSelectResponse
     | RoleSelectResponse
     | MentionableSelectResponse
     | ChannelSelectResponse
+    | FileUploadResponse
+    | RadioGroupResponse
+    | CheckboxGroupResponse
+    | CheckboxResponse
 )
