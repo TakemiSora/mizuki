@@ -3,18 +3,21 @@ from typing import TYPE_CHECKING
 from mizuki.objects.user import User
 from mizuki.objects.member import PartialMember, ResolvedMember
 from mizuki.objects.role import Role
-from mizuki.objects.channel import parse_channel_payload
+from mizuki.objects.channel import PartialThreadChannel, parse_channel_payload
 from mizuki.objects.message import PartialMessage, Attachment
 
 if TYPE_CHECKING:
     from mizuki.state import ConnectionState
     from mizuki.payloads.interaction import ResolvedDataPayload
+    from mizuki.objects.channel import PartialGuildChannel, PartialThreadChannel
 
 __all__ = ("ResolvedData",)
 
 
 class ResolvedData:
     __slots__ = ("users", "members", "roles", "channels", "messages", "attachments")
+
+    type Mentionable = User | Role | PartialGuildChannel | PartialThreadChannel | ResolvedMember
 
     def __init__(
         self, data: ResolvedDataPayload, *, guild_id: int | None, state: ConnectionState
@@ -56,3 +59,6 @@ class ResolvedData:
             int(id): Attachment(payload, state=state)
             for id, payload in data.get("attachments", {}).items()
         }
+
+    def get_mentionable(self, id: int) -> Mentionable:
+        return self.users.get(id) or self.roles.get(id) or self.channels[id]

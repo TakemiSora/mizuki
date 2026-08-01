@@ -19,6 +19,8 @@ from mizuki.objects.snowflake import Snowflake
 from mizuki.public_utils import generate_custom_id
 
 if TYPE_CHECKING:
+    from mizuki.objects.resolveddata import ResolvedData
+    from mizuki.objects.message import Attachment
     from mizuki.payloads.components import (
         TextInputResponsePayload,
         TextInputPayload,
@@ -191,14 +193,13 @@ class FileUploadResponse(BaseComponentResponse):
 
     __slots__ = ("values",)
 
-    values: list[Snowflake]
+    values:list[Attachment]
     "The IDs of the attachments uploaded."
 
-    def __init__(self, data: FileUploadResponsePayload):
+    def __init__(self, data: FileUploadResponsePayload, *, resolved_data: ResolvedData):
         super().__init__(data)
 
-        self.values = [Snowflake(s) for s in data["values"]]
-
+        self.values = [resolved_data.attachments[Snowflake(a)] for a in data["values"]]
 
 class FileUpload(BaseComponent, HasCallbackResponse[FileUploadResponse]):
     """

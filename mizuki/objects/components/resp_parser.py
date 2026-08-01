@@ -26,7 +26,6 @@ type BasicComponentResponse = (
     ButtonResponse
     | StringSelectResponse
     | TextInputResponse
-    | FileUploadResponse
     | RadioGroupResponse
     | CheckboxGroupResponse
     | CheckboxResponse
@@ -36,7 +35,6 @@ BASIC_COMPONENT_MAP: dict[ComponentType, type[BasicComponentResponse]] = {
     ComponentType.BUTTON: ButtonResponse,
     ComponentType.STRING_SELECT: StringSelectResponse,
     ComponentType.TEXT_INPUT: TextInputResponse,
-    ComponentType.FILE_UPLOAD: FileUploadResponse,
     ComponentType.RADIO_GROUP: RadioGroupResponse,
     ComponentType.CHECKBOX_GROUP: CheckboxGroupResponse,
     ComponentType.CHECKBOX: CheckboxResponse,
@@ -47,6 +45,7 @@ type ObjectContainingComponentResponse = (
     | RoleSelectResponse
     | MentionableSelectResponse
     | ChannelSelectResponse
+    | FileUploadResponse
 )
 
 OBJECT_CONTAINING_COMPONENT_MAP: dict[
@@ -56,6 +55,7 @@ OBJECT_CONTAINING_COMPONENT_MAP: dict[
     ComponentType.ROLE_SELECT: RoleSelectResponse,
     ComponentType.MENTIONABLE_SELECT: MentionableSelectResponse,
     ComponentType.CHANNEL_SELECT: ChannelSelectResponse,
+    ComponentType.FILE_UPLOAD: FileUploadResponse,
 }
 
 

@@ -5,8 +5,13 @@ from typing import TYPE_CHECKING, Literal, Self
 from mizuki._utils import _MISSING, JSONPayload, assign_val, assign_val_dict
 from mizuki.enums.channel import ChannelType
 from mizuki.enums.components import DefaultSelectValueType
+from mizuki.objects.channel import PartialGuildChannel, PartialThreadChannel
 from mizuki.objects.components.common import BaseComponentResponse, BaseSelect
+from mizuki.objects.member import ResolvedMember
+from mizuki.objects.message import Attachment, PartialMessage
+from mizuki.objects.role import Role
 from mizuki.objects.snowflake import Snowflake
+from mizuki.objects.user import User
 from mizuki.public_utils import generate_custom_id
 
 if TYPE_CHECKING:
@@ -67,10 +72,20 @@ class DefaultSelectValue:
 class ObjectSelectResponse[T: ObjectSelectTypeLiteral](BaseComponentResponse):
     __slots__ = ("resolved", "values")
 
+    type ValidObjectTypes = (
+        User
+        | ResolvedMember
+        | Role
+        | PartialGuildChannel
+        | PartialThreadChannel
+        | PartialMessage
+        | Attachment
+    )
+
     resolved: ResolvedData
     "The resolved data for this response."
 
-    values: list[Snowflake]
+    values: list[ValidObjectTypes]
     "The list of IDs of objects selected."
 
     def __init__(
@@ -78,7 +93,12 @@ class ObjectSelectResponse[T: ObjectSelectTypeLiteral](BaseComponentResponse):
     ):
         super().__init__(data)
 
-        self.values = [Snowflake(i) for i in data["values"]]
+        self.values = self._resolved_parser(data["values"], resolved_data=resolved_data)
+
+    def _resolved_parser(
+        self, ids: list[str], *, resolved_data: ResolvedData
+    ) -> list[ValidObjectTypes]:
+        raise NotImplementedError()
 
 
 class ObjectSelect[
@@ -196,6 +216,14 @@ class UserSelectResponse(ObjectSelectResponse[Literal[5]]):
     Represents a response from an UserSelect component.
     """
 
+    values: list[User]
+    "The list of users that were selected in this component."
+
+    def _resolved_parser(
+        self, ids: list[str], *, resolved_data: ResolvedData
+    ) -> list[User]:
+        return [resolved_data.users[int(id)] for id in ids]
+
 
 class UserSelect(
     ObjectSelect[Literal[5], int | DefaultSelectValue, UserSelectResponse]
@@ -212,6 +240,14 @@ class RoleSelectResponse(ObjectSelectResponse[Literal[6]]):
     """
     Represents a response from a RoleSelect component.
     """
+
+    values: list[Role]
+    "The list of roles that were selected in this component."
+
+    def _resolved_parser(
+        self, ids: list[str], *, resolved_data: ResolvedData
+    ) -> list[Role]:
+        return [resolved_data.roles[int(id)] for id in ids]
 
 
 class RoleSelect(
@@ -230,6 +266,18 @@ class MentionableSelectResponse(ObjectSelectResponse[Literal[7]]):
     Represents a response from a MentionableSelect component.
     """
 
+    type Mentionable = (
+        User | Role | PartialGuildChannel | PartialThreadChannel | ResolvedMember
+    )
+
+    values: list[Mentionable]
+    "The list of mentionables that were selected in this component."
+
+    def _resolved_parser(
+        self, ids: list[str], *, resolved_data: ResolvedData
+    ) -> list[Mentionable]:
+        return [resolved_data.get_mentionable(int(id)) for id in ids]
+
 
 class MentionableSelect(
     ObjectSelect[Literal[7], DefaultSelectValue, MentionableSelectResponse]
@@ -246,6 +294,14 @@ class ChannelSelectResponse(ObjectSelectResponse[Literal[8]]):
     """
     Represents a response from a ChannelSelect component.
     """
+
+    values: list[PartialGuildChannel | PartialThreadChannel]
+    "The list of channels that were selected in this component."
+
+    def _resolved_parser(
+        self, ids: list[str], *, resolved_data: ResolvedData
+    ) -> list[PartialGuildChannel | PartialThreadChannel]:
+        return [resolved_data.channels[int(id)] for id in ids]
 
 
 class ChannelSelect(
