@@ -22,6 +22,7 @@ type Component = (
     | Separator
     | Container
     | Label
+    | FileUpload
     | RadioGroup
     | CheckboxGroup
     | Checkbox
@@ -35,6 +36,7 @@ type ComponentResponse = (
     | RoleSelectResponse
     | MentionableSelectResponse
     | ChannelSelectResponse
+    | FileUploadResponse
     | RadioGroupResponse
     | CheckboxGroupResponse
     | CheckboxResponse

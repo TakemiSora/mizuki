@@ -4,9 +4,10 @@ from mizuki.enums.components import ComponentType
 from mizuki.objects.components.button import ButtonResponse
 from mizuki.objects.components.modal_child import (
     TextInputResponse,
+    FileUploadResponse,
+    RadioGroupResponse,
     CheckboxGroupResponse,
     CheckboxResponse,
-    RadioGroupResponse,
 )
 from mizuki.objects.components.objectselect import (
     ChannelSelectResponse,
@@ -25,6 +26,7 @@ type BasicComponentResponse = (
     ButtonResponse
     | StringSelectResponse
     | TextInputResponse
+    | FileUploadResponse
     | RadioGroupResponse
     | CheckboxGroupResponse
     | CheckboxResponse
@@ -34,6 +36,7 @@ BASIC_COMPONENT_MAP: dict[ComponentType, type[BasicComponentResponse]] = {
     ComponentType.BUTTON: ButtonResponse,
     ComponentType.STRING_SELECT: StringSelectResponse,
     ComponentType.TEXT_INPUT: TextInputResponse,
+    ComponentType.FILE_UPLOAD: FileUploadResponse,
     ComponentType.RADIO_GROUP: RadioGroupResponse,
     ComponentType.CHECKBOX_GROUP: CheckboxGroupResponse,
     ComponentType.CHECKBOX: CheckboxResponse,

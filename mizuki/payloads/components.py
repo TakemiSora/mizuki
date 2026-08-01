@@ -89,7 +89,7 @@ class ActionRowPayload(BaseComponentPayload[Literal[1]]):
 
 class TextInputPayload(BaseComponentPayload[Literal[4]], total=False):
     custom_id: Required[str]
-    style: Required[Literal[0, 1]]
+    style: Required[Literal[1, 2]]
     min_length: int
     max_length: int
     required: bool
@@ -277,6 +277,10 @@ type MentionableSelectResponsePayload = ObjectSelectResponsePayload[Literal[7]]
 type ChannelSelectResponsePayload = ObjectSelectResponsePayload[Literal[8]]
 
 
+class FileUploadResponsePayload(BaseComponentResponsePayload[Literal[19]]):
+    values: list[Snowflake]
+
+
 class RadioGroupResponsePayload(BaseComponentResponsePayload[Literal[21]]):
     value: str | None
 
@@ -291,8 +295,14 @@ class CheckboxResponsePayload(BaseComponentResponsePayload[Literal[23]]):
 
 type ComponentResponsePayload = (
     ButtonResponsePayload
+    | StringSelectResponsePayload
+    | TextInputResponsePayload
     | UserSelectResponsePayload
     | RoleSelectResponsePayload
     | MentionableSelectResponsePayload
     | ChannelSelectResponsePayload
+    | FileUploadResponsePayload
+    | RadioGroupResponsePayload
+    | CheckboxGroupResponsePayload
+    | CheckboxResponsePayload
 )

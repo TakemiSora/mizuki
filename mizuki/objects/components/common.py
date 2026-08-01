@@ -44,7 +44,6 @@ class BaseComponentResponse:
 
         self.component_type = ComponentType(resolved_component_type)
 
-
 class HasCallbackResponse[CallbackResponse: BaseComponentResponse]:
     __slots__ = ()
 

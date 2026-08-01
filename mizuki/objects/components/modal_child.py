@@ -15,12 +15,15 @@ from mizuki.objects.components.objectselect import (
     UserSelect,
 )
 from mizuki.objects.components.stringselect import StringSelect
+from mizuki.objects.snowflake import Snowflake
 from mizuki.public_utils import generate_custom_id
 
 if TYPE_CHECKING:
     from mizuki.payloads.components import (
         TextInputResponsePayload,
         TextInputPayload,
+        FileUploadResponsePayload,
+        FileUploadPayload,
         GroupOptionPayload,
         RadioGroupResponsePayload,
         RadioGroupPayload,
@@ -34,6 +37,8 @@ if TYPE_CHECKING:
 __all__ = (
     "TextInputResponse",
     "TextInput",
+    "FileUploadResponse",
+    "FileUpload",
     "RadioGroupOption",
     "RadioGroupResponse",
     "RadioGroup",
@@ -176,6 +181,105 @@ class TextInput(BaseComponent, HasCallbackResponse[TextInputResponse]):
             required=required,
             value=value,
             placeholder=placeholder,
+        )
+
+
+class FileUploadResponse(BaseComponentResponse):
+    """
+    Represents a response from a file upload comonent.
+    """
+
+    __slots__ = ("values",)
+
+    values: list[Snowflake]
+    "The IDs of the attachments uploaded."
+
+    def __init__(self, data: FileUploadResponsePayload):
+        super().__init__(data)
+
+        self.values = [Snowflake(s) for s in data["values"]]
+
+
+class FileUpload(BaseComponent, HasCallbackResponse[FileUploadResponse]):
+    """
+    Represents a file upload component.
+    """
+
+    __slots__ = ("custom_id", "min_values", "max_values", "required")
+
+    custom_id: str
+    "The custom ID of this component."
+
+    min_values: int | None
+    "The minimum amount of files the user must uplaod to submit this component."
+
+    max_values: int | None
+    "The maximum amount of files the user can upload."
+
+    required: bool
+    "Whether this component is required to submit."
+
+    def __init__(self, data: FileUploadPayload):
+        super().__init__(data)
+
+        self.custom_id = data["custom_id"]
+        self.min_values = data.get("min_values")
+        self.max_values = data.get("max_values")
+        self.required = data.get("required", True)
+
+    def _to_dict(self) -> JSONPayload:
+        return assign_val_dict(
+            {
+                "type": 19,
+                "custom_id": self.custom_id,
+            },
+            id=self.id,
+            min_values=self.min_values,
+            max_values=self.max_values,
+            required=self.required and None,
+        )
+
+    @classmethod
+    def new(
+        cls,
+        *,
+        id: int = _MISSING,
+        custom_id: str = _MISSING,
+        min_values: int = _MISSING,
+        max_values: int = _MISSING,
+        required: bool = True,
+    ) -> FileUpload:
+        """
+        Returns an instance of a file upload component.
+
+        Parameters
+        ----------
+        id : :class:`int`, optional
+            Optional unique identifier for this component.
+
+        custom_id : :class:`str`, optional
+            The custom ID for this component, auto-generated if not provided.
+
+        min_values : :class:`int`, optional
+            The minimum amount of files the user must uplaod to submit this component."
+
+        max_values : :class:`int`, optional 
+            The maximum amount of files the user can upload.
+
+        required : :class:`bool`, optional
+            Whether this component is required to submit the modal.
+        """
+        return assign_val(
+            cls(
+                {
+                    "type": 19,
+                    "custom_id": custom_id or generate_custom_id(),
+                    "required": required,
+                }
+            ),
+            id=id,
+            min_values=min_values,
+            max_values=max_values,
         )
 
 
@@ -504,6 +608,7 @@ type LabelChildComponent = (
     | RoleSelect
     | MentionableSelect
     | ChannelSelect
+    | FileUpload
     | RadioGroup
     | CheckboxGroup
     | Checkbox
@@ -516,6 +621,7 @@ LABEL_CHILD_MAP: dict[ComponentType, type[LabelChildComponent]] = {
     ComponentType.ROLE_SELECT: RoleSelect,
     ComponentType.MENTIONABLE_SELECT: MentionableSelect,
     ComponentType.CHANNEL_SELECT: ChannelSelect,
+    ComponentType.FILE_UPLOAD: FileUpload,
     ComponentType.RADIO_GROUP: RadioGroup,
     ComponentType.CHECKBOX_GROUP: CheckboxGroup,
     ComponentType.CHECKBOX: Checkbox,
