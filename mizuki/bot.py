@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 import aiohttp
 import asyncio
 import logging
@@ -91,14 +93,22 @@ class Bot:
     )
 
     def __init__(
-        self, *, intents: IntentFlags, cache_settings: CacheSettings | None = None
+        self,
+        *,
+        intents: IntentFlags,
+        cache_settings: CacheSettings | None = None,
+        default_component_timeout: timedelta | None = None,
+        default_modal_timeout: timedelta | None = None,
     ):
         self.intents = intents
         self._listeners: dict[str, list[CoroFunc]] = {}
         self._setup_hook: CoroFunc | None = None
         self._commands_data: dict[str, tuple[int, PartialApplicationCommand]] = {}
         self._storage = CacheStorage(cache_settings or CacheSettings())
-        self._state = ConnectionState()
+        self._state = ConnectionState(
+            default_component_timeout=default_component_timeout,
+            default_modal_timeout=default_modal_timeout,
+        )
         self._session: aiohttp.ClientSession | None = None
 
     def run(self, token: str) -> None:
@@ -142,6 +152,7 @@ class Bot:
         try:
             if self._storage.settings.cache_invalidation:
                 self._storage.start_cleanup_tasks()
+            self._state.start_cleanup_tasks()
 
             self.http = self._state.init_http(token)
             self._session = self._state.session

@@ -173,7 +173,7 @@ class EventDispatcher:
         try:
             callback = self.bot._state.components_data[
                 interaction.message.id, interaction.data.custom_id
-            ]
+            ][0]
 
             asyncio.create_task(
                 callback(interaction, interaction.data)
@@ -200,8 +200,7 @@ class EventDispatcher:
         assert isinstance(interaction.data, ModalResponse)
 
         try:
-            print(self.bot._state.modals_data, interaction.data.custom_id)
-            callback = self.bot._state.modals_data[interaction.data.custom_id]
+            callback = self.bot._state.modals_data[interaction.data.custom_id][0]
 
             asyncio.create_task(
                 callback(interaction, interaction.data)

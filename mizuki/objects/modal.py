@@ -1,5 +1,6 @@
 from __future__ import annotations
 from collections.abc import Callable, Coroutine
+from datetime import timedelta
 import inspect
 from typing import TYPE_CHECKING, Self, cast, Any
 
@@ -70,7 +71,7 @@ class ModalResponse[*ResponseType]:
 class Modal:
     """Represents a Discord Modal."""
 
-    __slots__ = ("custom_id", "title", "components", "_callback")
+    __slots__ = ("custom_id", "title", "components", "_callback", "_timeout")
 
     custom_id: str
     "The custom ID of the modal."
@@ -128,6 +129,11 @@ class Modal:
         """
         Sets the callback for this modal.
 
+        .. note::
+
+            This method also returns the class instance to allow chaining.
+
+
         Parameters
         ----------
         callback : :type:`ModalCallback`
@@ -143,4 +149,23 @@ class Modal:
 
         self._callback = callback
 
+        return self
+
+    def set_timeout(self, timeout: timedelta | int | None) -> Self:
+        """
+        Sets the amount of the time the bot will keep track of this modal to respond to it.
+
+        .. note::
+
+            This method also returns the class instance to allow chaining.
+
+
+        Paramters
+        ---------
+        timeout : :class:`datetime.timedelta` | :class:`int` | :class:`None`
+            The timeout to set for this modal. Integers are treated as seconds. Use ``None`` to disable timeout.
+        """
+        if isinstance(timeout, int):
+            timeout = timedelta(seconds=timeout)
+        self._timeout = timeout
         return self

@@ -1,8 +1,9 @@
+from datetime import timedelta
 import inspect
 from collections.abc import Callable, Coroutine
 from typing import TYPE_CHECKING, Any, Self
 
-from mizuki._utils import JSONPayload
+from mizuki._utils import JSONPayload, _MISSING
 from mizuki.enums.components import ComponentType
 
 if TYPE_CHECKING:
@@ -44,6 +45,7 @@ class BaseComponentResponse:
 
         self.component_type = ComponentType(resolved_component_type)
 
+
 class HasCallbackResponse[CallbackResponse: BaseComponentResponse]:
     __slots__ = ()
 
@@ -54,6 +56,11 @@ class HasCallbackResponse[CallbackResponse: BaseComponentResponse]:
     def set_callback(self, callback: ComponentCallback) -> Self:
         """
         Sets the callback for this component.
+
+        ..note ::
+
+            This method also returns the class instance to allow chaining.
+
 
         Parameters
         ----------
@@ -72,9 +79,29 @@ class HasCallbackResponse[CallbackResponse: BaseComponentResponse]:
 
         return self
 
+    def set_timeout(self, timeout: timedelta | int | None) -> Self:
+        """
+        Sets the amount of the time the bot will keep track of this component to respond to it.
+
+        .. note::
+
+            This method also returns the class instance to allow chaining.
+
+
+        Paramters
+        ---------
+        timeout : :class:`timedelta` | :class:`int` | :class:`None`
+            The timeout to set for this component. Integers are treated as seconds. Use ``None`` to disable timeout.
+        """
+        if isinstance(timeout, int):
+            timeout = timedelta(seconds=timeout)
+
+        self._timeout = timeout
+        return self
+
 
 class BaseComponent:
-    __slots__ = ("id", "type", "_callback")
+    __slots__ = ("id", "type", "_timeout", "_callback")
 
     type: ComponentType
     "The type of the component."

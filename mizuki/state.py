@@ -1,5 +1,7 @@
 from __future__ import annotations
+import asyncio
 from collections.abc import Coroutine, Callable, Sequence
+from datetime import datetime, timedelta
 import aiohttp
 
 from typing import TYPE_CHECKING, Any
@@ -26,17 +28,33 @@ class ConnectionState:
         "session",
         "components_data",
         "modals_data",
+        "default_component_timeout",
+        "default_modal_timeout",
     )
 
-    def __init__(self):
+    def __init__(
+        self,
+        *,
+        default_component_timeout: timedelta | None,
+        default_modal_timeout: timedelta | None,
+    ) -> None:
         self.components_data: dict[
-            tuple[int, str], Callable[[Interaction, Any], Coroutine[Any, Any, Any]]
+            tuple[int, str],
+            tuple[
+                Callable[[Interaction, Any], Coroutine[Any, Any, Any]], datetime | None
+            ],
         ] = {}
 
         self.modals_data: dict[
             str,
-            Callable[[Interaction, ModalResponse], Coroutine[Any, Any, Any]],
+            tuple[
+                Callable[[Interaction, ModalResponse], Coroutine[Any, Any, Any]],
+                datetime | None,
+            ],
         ] = {}
+
+        self.default_component_timeout = default_component_timeout
+        self.default_modal_timeout = default_modal_timeout
 
     def init_http(self, token: str) -> HTTPClient:
         self.http = HTTPClient(self)
@@ -67,7 +85,21 @@ class ConnectionState:
         assert hasattr(self, "http"), "Init Gateway was called without init http"
         self.gateway = GatewayClient(bot, self.session, token, intents)
         await self.gateway.connect()
+
         return self.gateway
+
+    def start_cleanup_tasks(self) -> None:
+        asyncio.create_task(self.cleanup_registered(self.components_data))
+        asyncio.create_task(self.cleanup_registered(self.modals_data))
+
+    async def cleanup_registered(
+        self, data: dict[Any, tuple[Any, datetime | None]]
+    ) -> None:
+        while True:
+            for key, (_, expires_at) in data.copy().items():
+                if expires_at and expires_at < datetime.now():
+                    data.pop(key)
+            await asyncio.sleep(10)
 
     def register_components(
         self, message_id: int, components: Sequence[Component]
@@ -76,11 +108,23 @@ class ConnectionState:
             if (custom_id := getattr(component, "custom_id", None)) and (
                 callback := getattr(component, "_callback", None)
             ):
-                self.components_data[message_id, custom_id] = callback
+                timeout: timedelta | None = getattr(
+                    component, "_timeout", self.default_component_timeout
+                )
+                self.components_data[message_id, custom_id] = (
+                    callback,
+                    (datetime.now() + timeout) if timeout else None,
+                )
 
             if child_components := getattr(component, "components", ()):
                 self.register_components(message_id, child_components)
 
     def register_modal(self, modal: Modal) -> None:
         if callback := getattr(modal, "_callback", None):
-            self.modals_data[modal.custom_id] = callback
+            timeout: timedelta | None = getattr(
+                modal, "_timeout", self.default_modal_timeout
+            )
+            self.modals_data[modal.custom_id] = (
+                callback,
+                (datetime.now() + timeout) if timeout else None,
+            )

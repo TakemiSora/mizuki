@@ -193,13 +193,14 @@ class FileUploadResponse(BaseComponentResponse):
 
     __slots__ = ("values",)
 
-    values:list[Attachment]
+    values: list[Attachment]
     "The IDs of the attachments uploaded."
 
     def __init__(self, data: FileUploadResponsePayload, *, resolved_data: ResolvedData):
         super().__init__(data)
 
         self.values = [resolved_data.attachments[Snowflake(a)] for a in data["values"]]
+
 
 class FileUpload(BaseComponent, HasCallbackResponse[FileUploadResponse]):
     """
@@ -264,7 +265,7 @@ class FileUpload(BaseComponent, HasCallbackResponse[FileUploadResponse]):
         min_values : :class:`int`, optional
             The minimum amount of files the user must uplaod to submit this component."
 
-        max_values : :class:`int`, optional 
+        max_values : :class:`int`, optional
             The maximum amount of files the user can upload.
 
         required : :class:`bool`, optional

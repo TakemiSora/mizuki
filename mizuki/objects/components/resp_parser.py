@@ -74,7 +74,7 @@ def parse_component_response(
         return resp_object(data)  # type: ignore # This is resolved properly
 
     if resp_object := OBJECT_CONTAINING_COMPONENT_MAP.get(component_type):
-        return resp_object(data, resolved_data=resolved_data) # type: ignore # This is resolved properly.
+        return resp_object(data, resolved_data=resolved_data)  # type: ignore # This is resolved properly.
 
     if resp_object := OBJECT_AND_STATE_CONTAINING_COMPONENT_MAP.get(component_type):
         return resp_object(data, resolved_data=resolved_data, state=state)  # type: ignore # This is resolved properly

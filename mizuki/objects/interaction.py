@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, Literal, cast, TYPE_CHECKING 
+from typing import Any, Literal, cast, TYPE_CHECKING
 from mizuki._utils import _MISSING, assign_val_dict, maybe_iter, mtd, scls
 from mizuki.enums.command import ApplicationCommandType, CommandOptionType
 from mizuki.enums.interaction import (
@@ -137,7 +137,7 @@ def parse_interaction_data(
                 cast(InvokedApplicationCommandPayload, data), state=state
             )
         case InteractionType.MESSAGE_COMPONENT:
-            return parse_component_response(data, resolved_data=None, state=state)# type: ignore # This is resolved.
+            return parse_component_response(data, resolved_data=None, state=state)  # type: ignore # This is resolved.
         case InteractionType.MODAL_SUBMIT:
             return ModalResponse(
                 cast(ModalResponsePayload, data), guild_id=guild_id, state=state

@@ -4,6 +4,9 @@ from typing import Literal, NotRequired, Required, TypedDict, TYPE_CHECKING
 from mizuki.payloads._types import Snowflake
 from mizuki.payloads.emoji import PartialEmojiPayload
 
+if TYPE_CHECKING:
+    from mizuki.payloads.interaction import ResolvedDataPayload
+
 type ComponentTypeLiteral = Literal[
     1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17, 18, 19, 21, 22, 23
 ]
@@ -269,6 +272,7 @@ class ObjectSelectResponsePayload[T: ObjectSelectTypeLiteral](
     BaseComponentResponsePayload[T]
 ):
     values: list[Snowflake]
+    resolved: NotRequired[ResolvedDataPayload]
 
 
 type UserSelectResponsePayload = ObjectSelectResponsePayload[Literal[5]]

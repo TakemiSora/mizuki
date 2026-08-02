@@ -17,7 +17,9 @@ __all__ = ("ResolvedData",)
 class ResolvedData:
     __slots__ = ("users", "members", "roles", "channels", "messages", "attachments")
 
-    type Mentionable = User | Role | PartialGuildChannel | PartialThreadChannel | ResolvedMember
+    type Mentionable = (
+        User | Role | PartialGuildChannel | PartialThreadChannel | ResolvedMember
+    )
 
     def __init__(
         self, data: ResolvedDataPayload, *, guild_id: int | None, state: ConnectionState
