@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Literal, Self
 
-from mizuki._utils import _MISSING, JSONPayload, assign_val, assign_val_dict
+from mizuki._utils import _MISSING, JSONPayload, assign_val, assign_val_dict, scls
 from mizuki.enums.channel import ChannelType
 from mizuki.enums.components import DefaultSelectValueType
 from mizuki.objects.channel import PartialGuildChannel, PartialThreadChannel
@@ -15,6 +15,7 @@ from mizuki.objects.user import User
 from mizuki.public_utils import generate_custom_id
 
 if TYPE_CHECKING:
+    from mizuki.state import ConnectionState
     from mizuki.objects.resolveddata import ResolvedData
     from mizuki.payloads.components import (
         ChannelSelectPayload,
@@ -89,11 +90,22 @@ class ObjectSelectResponse[T: ObjectSelectTypeLiteral](BaseComponentResponse):
     "The list of IDs of objects selected."
 
     def __init__(
-        self, data: ObjectSelectResponsePayload[T], *, resolved_data: ResolvedData
+        self,
+        data: ObjectSelectResponsePayload[T],
+        *,
+        resolved_data: ResolvedData | None = None,
+        state: ConnectionState | None = None,
     ):
         super().__init__(data)
 
-        self.values = self._resolved_parser(data["values"], resolved_data=resolved_data)
+        resolved = (
+            scls(ResolvedData, data.get("resolved"), state=state) or resolved_data
+        )
+        if not resolved:
+            raise ValueError(f"Received malformed ObjectSelect response payload.")
+
+        self.resolved = resolved
+        self.values = self._resolved_parser(data["values"], resolved_data=self.resolved)
 
     def _resolved_parser(
         self, ids: list[str], *, resolved_data: ResolvedData

@@ -18,20 +18,12 @@ from mizuki.objects.components.objectselect import (
 from mizuki.objects.components.stringselect import StringSelectResponse
 
 if TYPE_CHECKING:
+    from mizuki.state import ConnectionState
     from mizuki.payloads.components import ComponentResponsePayload
     from mizuki.objects.components import ComponentResponse
     from mizuki.objects.resolveddata import ResolvedData
 
-type BasicComponentResponse = (
-    ButtonResponse
-    | StringSelectResponse
-    | TextInputResponse
-    | RadioGroupResponse
-    | CheckboxGroupResponse
-    | CheckboxResponse
-)
-
-BASIC_COMPONENT_MAP: dict[ComponentType, type[BasicComponentResponse]] = {
+BASIC_COMPONENT_MAP: dict[ComponentType, type[ComponentResponse]] = {
     ComponentType.BUTTON: ButtonResponse,
     ComponentType.STRING_SELECT: StringSelectResponse,
     ComponentType.TEXT_INPUT: TextInputResponse,
@@ -40,27 +32,25 @@ BASIC_COMPONENT_MAP: dict[ComponentType, type[BasicComponentResponse]] = {
     ComponentType.CHECKBOX: CheckboxResponse,
 }
 
-type ObjectContainingComponentResponse = (
-    UserSelectResponse
-    | RoleSelectResponse
-    | MentionableSelectResponse
-    | ChannelSelectResponse
-    | FileUploadResponse
-)
+OBJECT_CONTAINING_COMPONENT_MAP: dict[ComponentType, type[ComponentResponse]] = {
+    ComponentType.FILE_UPLOAD: FileUploadResponse,
+}
 
-OBJECT_CONTAINING_COMPONENT_MAP: dict[
-    ComponentType, type[ObjectContainingComponentResponse]
+OBJECT_AND_STATE_CONTAINING_COMPONENT_MAP: dict[
+    ComponentType, type[ComponentResponse]
 ] = {
     ComponentType.USER_SELECT: UserSelectResponse,
     ComponentType.ROLE_SELECT: RoleSelectResponse,
     ComponentType.MENTIONABLE_SELECT: MentionableSelectResponse,
     ComponentType.CHANNEL_SELECT: ChannelSelectResponse,
-    ComponentType.FILE_UPLOAD: FileUploadResponse,
 }
 
 
 def parse_component_response(
-    data: ComponentResponsePayload, *, resolved_data: ResolvedData
+    data: ComponentResponsePayload,
+    *,
+    resolved_data: ResolvedData | None = None,
+    state: ConnectionState | None = None,
 ) -> ComponentResponse:
     if (
         resolved_component_type := (data.get("component_type") or data.get("type"))
@@ -84,7 +74,10 @@ def parse_component_response(
         return resp_object(data)  # type: ignore # This is resolved properly
 
     if resp_object := OBJECT_CONTAINING_COMPONENT_MAP.get(component_type):
-        return resp_object(data, resolved_data=resolved_data)  # type: ignore # This is resolved properly
+        return resp_object(data, resolved_data=resolved_data) # type: ignore # This is resolved properly.
+
+    if resp_object := OBJECT_AND_STATE_CONTAINING_COMPONENT_MAP.get(component_type):
+        return resp_object(data, resolved_data=resolved_data, state=state)  # type: ignore # This is resolved properly
 
     raise TypeError(
         f"Component of type {component_type.value} does not support interactions yet."
