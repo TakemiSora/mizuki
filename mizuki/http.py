@@ -11,6 +11,7 @@ from urllib.parse import quote
 
 from mizuki.file import File
 from mizuki.errors import (
+    BadRequest,
     NotFound,
     HTTPException,
     Forbidden,
@@ -182,16 +183,19 @@ class HTTPClient:
 
                     if resp.status >= 400:
                         data = await resp.json()
+                        if resp.status == 400:
+                            raise BadRequest(data)
+
                         message = data.get("message", "")
                         match resp.status:
                             case 401:
-                                raise Unauthorized(resp.status, message)
+                                raise Unauthorized(message)
                             case 403:
-                                raise Forbidden(resp.status, message)
+                                raise Forbidden(message)
                             case 404:
-                                raise NotFound(resp.status, message)
+                                raise NotFound(message)
                             case _:
-                                raise HTTPException(resp.status, message)
+                                raise HTTPException(message)
 
                     if new_bucket_id:
                         bucket = self._buckets.get(new_bucket_id)
