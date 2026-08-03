@@ -10,13 +10,13 @@ from mizuki.objects.components.common import BaseComponentResponse, BaseSelect
 from mizuki.objects.member import ResolvedMember
 from mizuki.objects.message import Attachment, PartialMessage
 from mizuki.objects.role import Role
+from mizuki.objects.resolveddata import ResolvedData
 from mizuki.objects.snowflake import Snowflake
 from mizuki.objects.user import User
 from mizuki.public_utils import generate_custom_id
 
 if TYPE_CHECKING:
     from mizuki.state import ConnectionState
-    from mizuki.objects.resolveddata import ResolvedData
     from mizuki.payloads.components import (
         ChannelSelectPayload,
         DefaultSelectValuePayload,
