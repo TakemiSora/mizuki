@@ -17,6 +17,7 @@ if TYPE_CHECKING:
 
 __all__ = (
     "PartialMember",
+    "ResolvedMember",
     "Member",
 )
 

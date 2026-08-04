@@ -7,7 +7,7 @@ from typing import Any, TYPE_CHECKING
 from mizuki._utils import scls
 
 from mizuki.enums.channel import ChannelType
-from mizuki.enums.command import CommandOptionType
+from mizuki.enums.command import ApplicationCommandType, CommandOptionType
 from mizuki.enums.interaction import InteractionType
 from mizuki.objects.command import ApplicationCommandOption
 from mizuki.objects.channel import ThreadChannel, ThreadMember, parse_channel_payload
@@ -139,13 +139,25 @@ class EventDispatcher:
         command_data = self.bot._commands_data.get(interaction.data.name)
         callback = command_data[1]._callback if command_data else None
         if callback and command_data:
-            kwargs = self._parse_options(
-                getattr(callback, "__command_options__", {}),
-                interaction.data.resolved,
-                interaction.data.options,
-            )
+            if interaction.data.type is ApplicationCommandType.CHAT_INPUT:
+                kwargs = self._parse_options(
+                    getattr(callback, "__command_options__", {}),
+                    interaction.data.resolved,
+                    interaction.data.options,
+                )
 
-            asyncio.create_task(callback(interaction, **kwargs)).add_done_callback(
+                coro = callback(interaction, **kwargs)
+
+            elif interaction.data.type is ApplicationCommandType.USER:
+                assert interaction.data.target_id is not None
+
+                coro = callback(
+                    interaction,
+                    interaction.data.resolved.users[interaction.data.target_id],
+                    interaction.data.resolved.members.get(interaction.data.target_id),
+                )
+
+            asyncio.create_task(coro).add_done_callback(
                 lambda t: self._on_task_done(
                     t,
                     f"Handler Function {callback.__name__} for command '{interaction.data.name}'",  # type: ignore # This is resolved

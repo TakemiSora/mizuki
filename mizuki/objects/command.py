@@ -488,22 +488,24 @@ class PartialApplicationCommand(BaseApplicationCommand):
         type: ApplicationCommandType = ApplicationCommandType.CHAT_INPUT,
         nsfw: bool = False,
     ) -> Self:
-        parameters = list(inspect.signature(func).parameters.values())
         options: list[ApplicationCommandOption] = []
-        command_options: dict[str, ApplicationCommandOption] = getattr(
-            func, "__command_options__", {}
-        )
 
-        for param in parameters[1:]:
-            if param.annotation is inspect.Parameter.empty:
-                raise ValueError(
-                    f"No type hint for slash command '{name}', function={func.__name__}: '{param.name}'"
-                )
+        if type is ApplicationCommandType.CHAT_INPUT:
+            parameters = list(inspect.signature(func).parameters.values())
+            command_options: dict[str, ApplicationCommandOption] = getattr(
+                func, "__command_options__", {}
+            )
 
-            if param.name in command_options:
-                options.append(command_options[param.name])
-            else:
-                options.append(ApplicationCommandOption._from_function_param(param))
+            for param in parameters[1:]:
+                if param.annotation is inspect.Parameter.empty:
+                    raise ValueError(
+                        f"No type hint for slash command '{name}', function={func.__name__}: '{param.name}'"
+                    )
+
+                if param.name in command_options:
+                    options.append(command_options[param.name])
+                else:
+                    options.append(ApplicationCommandOption._from_function_param(param))
 
         return cls.new(
             name=name,
