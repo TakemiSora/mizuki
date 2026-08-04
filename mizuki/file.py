@@ -52,12 +52,14 @@ class File:
         self.path = pathlib.Path(path)
         self.spoiler = spoiler
         self.description = description
-        self.filename = ("SPOILER_" if spoiler else "") + (
-            filename if filename else self.path.name
-        )
+        self.filename = filename if filename else self.path.name
         self.url = f"attachment://{self.filename}"
 
     def _to_attachment_dict(self, id: int) -> dict[str, Any]:
         return assign_val_dict(
-            {}, id=id, filename=self.filename, description=self.description
+            {},
+            id=id,
+            filename=self.filename,
+            description=self.description,
+            is_spoiler=self.spoiler,
         )
