@@ -5,3 +5,4 @@ class FileUploadPayload(TypedDict):
     id: int
     filename: str
     description: NotRequired[str]
+    is_spoiler: bool
