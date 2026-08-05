@@ -44,6 +44,7 @@ if TYPE_CHECKING:
     from mizuki.state import ConnectionState
     from mizuki.objects.components import Component, ComponentResponse
     from mizuki.objects.modal import Modal
+
 __all__ = (
     "ResponseHandler",
     "Interaction",
@@ -323,7 +324,7 @@ class ResponseHandler:
 
         self._state.register_modal(modal)
 
-    async def defer(self, *, ephemeral: bool = False) -> InteractionCallbackResponse:
+    async def defer(self, *, ephemeral: bool = False) -> None:
         """
         Defers / Acknowledges the response.
 
@@ -343,17 +344,12 @@ class ResponseHandler:
         if self.acknowledged:
             raise InteractionResponded()
 
-        resp = InteractionCallbackResponse(
-            await self._post(
-                InteractionCallbackType.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE,
-                {"flags": MessageFlags(MessageFlags.EPHEMERAL if ephemeral else 0)},
-            ),
-            state=self._state,
+        await self._post(
+            InteractionCallbackType.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE,
+            {"flags": MessageFlags(MessageFlags.EPHEMERAL if ephemeral else 0)},
         )
 
         self.acknowledged = True
-
-        return resp
 
     async def send_followup(
         self,
