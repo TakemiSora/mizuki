@@ -299,7 +299,7 @@ class Bot:
     def command(
         self,
         *,
-        type: Literal[ApplicationCommandType.USER],
+        type: Literal[ApplicationCommandType.USER, ApplicationCommandType.MESSAGE],
         name: str,
         name_localizations: Localization = _MISSING,
         default_member_permissions: Permissions = _MISSING,
@@ -312,7 +312,7 @@ class Bot:
     def command(
         self,
         *,
-        type: Literal[ApplicationCommandType.USER],
+        type: Literal[ApplicationCommandType.USER, ApplicationCommandType.MESSAGE],
         guild_id: int,
         name: str,
         name_localizations: Localization = _MISSING,
@@ -351,6 +351,53 @@ class Bot:
         ------
         :class:`TypeError`
             The decorator was applied to a synchronous function.
+
+        Examples
+        --------
+
+        Chat Input (Slash) Commands:
+
+        .. code-block:: python
+
+            @bot.command(
+                name="chat-input-command",
+                description="This is a chat input command!"
+            )
+            async def _(interaction: mizuki.Interaction, some_parameter: str) -> None:
+                await interaction.response.send_response("Hello!")
+
+
+        User Context Commands:
+
+        .. code-block:: python
+
+            @bot.command(
+                type=mizuki.ApplicationCommandType.USER,
+                name="user-context-command"
+            )
+            async def _(
+                interaction: mizuki.Interaction,
+                user: mizuki.User, # The user this command targeted, always present
+                member: mizuki.ResolvedMember | None, # The member object for the guild, if it was ran in a guild
+            ) -> None:
+                await interaction.response.send_response(f"Hello, {user}!")
+
+
+        Message Context Commands:
+
+        .. code-block:: python
+
+            @bot.command(
+                type=mizuki.ApplicationCommandType.MESSAGE,
+                name="message-context-command"
+            )
+            async def _(
+                interaction: mizuki.Interaction,
+                message: mizuki.Message, # The targeted message
+            ) -> None:
+                await interaction.response.send_response(f"Hello, <@{message.author.id}>!")
+
+
         """
 
         def decorator(func: CoroFunc) -> CoroFunc:

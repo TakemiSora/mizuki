@@ -138,6 +138,7 @@ class EventDispatcher:
 
         command_data = self.bot._commands_data.get(interaction.data.name)
         callback = command_data[1]._callback if command_data else None
+
         if callback and command_data:
             if interaction.data.type is ApplicationCommandType.CHAT_INPUT:
                 kwargs = self._parse_options(
@@ -155,6 +156,14 @@ class EventDispatcher:
                     interaction,
                     interaction.data.resolved.users[interaction.data.target_id],
                     interaction.data.resolved.members.get(interaction.data.target_id),
+                )
+
+            elif interaction.data.type is ApplicationCommandType.MESSAGE:
+                assert interaction.data.target_id is not None
+
+                coro = callback(
+                    interaction,
+                    interaction.data.resolved.messages[interaction.data.target_id],
                 )
 
             asyncio.create_task(coro).add_done_callback(
