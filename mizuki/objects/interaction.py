@@ -77,8 +77,8 @@ class InvokedApplicationCommand:
             InvokedApplicationCommandOption(o) for o in data.get("options", [])
         ]
         self.guild_id = Snowflake._from_str(data.get("guild_id"))
-        self.resolved = scls(
-            ResolvedData, data.get("resolved"), guild_id=self.guild_id, state=state
+        self.resolved = ResolvedData(
+            data.get("resolved", {}), guild_id=self.guild_id, state=state
         )
         self.target_id = Snowflake._from_str(data.get("target_id"))
 

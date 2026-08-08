@@ -4,7 +4,7 @@ from mizuki.objects.user import User
 from mizuki.objects.member import PartialMember, ResolvedMember
 from mizuki.objects.role import Role
 from mizuki.objects.channel import PartialThreadChannel, parse_channel_payload
-from mizuki.objects.message import PartialMessage, Attachment
+from mizuki.objects.message import Message, Attachment
 
 if TYPE_CHECKING:
     from mizuki.state import ConnectionState
@@ -53,7 +53,7 @@ class ResolvedData:
         }
 
         self.messages = {
-            int(id): PartialMessage(payload, state=state)
+            int(id): Message(payload, state=state)
             for id, payload in data.get("messages", {}).items()
         }
 

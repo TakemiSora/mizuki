@@ -28,7 +28,7 @@ class ResolvedDataPayload(TypedDict, total=False):
     members: dict[Snowflake, PartialMemberPayload]
     roles: dict[Snowflake, RolePayload]
     channels: dict[Snowflake, PartialGuildChannelPayload | PartialThreadPayload]
-    messages: dict[Snowflake, PartialMessagePayload]
+    messages: dict[Snowflake, MessagePayload]
     attachments: dict[Snowflake, AttachmentPayload]
 
 
