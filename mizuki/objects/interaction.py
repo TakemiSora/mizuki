@@ -69,9 +69,20 @@ __all__ = (
 
 
 class AutocompleteChoice:
+    """Represents an autocomplete choice to respond with to the autocomplete requests for command parameters."""
+
     __slots__ = ("name", "name_localizations", "value")
 
-    def __init__(self, data: AutocompleteChoicePayload):
+    name: str
+    "The name of the choice."
+
+    name_localizations: Localization | None
+    "The localizations for the name of the choice."
+
+    value: str | int | float
+    "The value of this choice."
+
+    def __init__(self, data: AutocompleteChoicePayload) -> None:
         self.name = data["name"]
         self.name_localizations = scls(Localization, data.get("name_localizations"))
         self.value = data["value"]
@@ -82,7 +93,7 @@ class AutocompleteChoice:
                 "name": self.name,
                 "value": self.value,
             },
-            name_localizations=mtd(self.name_localizations)
+            name_localizations=mtd(self.name_localizations),
         )
 
     @classmethod
@@ -93,34 +104,90 @@ class AutocompleteChoice:
         value: str | int | float,  # noqa: PYI041
         name_localizations: Localization = _MISSING,
     ) -> AutocompleteChoice:
+        """Returns an instance of a Autocomplete choice.
+
+        Parameters
+        ----------
+        name : :class:`str`
+            The name of the choice.
+
+        value : :class:`str` | :class:`int` | :class:`float`
+            The value for this choice.
+
+        name_localizations : :class:`Localization <mizuki.objects.command.Localization>`, optional
+            The localizations for the name of the choice.
+        """
         return assign_val(
             cls({"name": name, "value": value}), name_localizations=name_localizations
         )
 
 
-class ApplicationCommandDataOption:
+class ApplicationCommandDataOption[ValueType: str | int | float | bool]:
+    """Represents an option in a ApplicationCommand that's invoked/being invoked."""
+
     __slots__ = ("focused", "name", "options", "type", "value")
 
-    def __init__(self, data: ApplicationCommandDataOptionPayload):
+    name: str
+    "The name of the option."
+
+    type: CommandOptionType
+    "The type of this option."
+
+    value: ValueType | None
+    "The value for this option that the user inputted."
+
+    options: list[ApplicationCommandDataOption]
+    "The nested options in this option, non-empty only in a SubGroup or SubGroupCommand type option."
+
+    focused: bool
+    "Returns ``True`` in an autocomplete response if the user is inputting this option/parameter."
+
+    def __init__(self, data: ApplicationCommandDataOptionPayload) -> None:
         self.name = data["name"]
         self.type = CommandOptionType(data["type"])
-        self.value = data.get("value")
+        self.value = cast(ValueType, data.get("value"))
         self.options = [
             ApplicationCommandDataOption(o) for o in data.get("options", [])
         ]
         self.focused = data.get("focused", False)
 
 
-class ApplicationCommandData:
+class ApplicationCommandData[*OptionTypes]:
+    """Represents an ApplicationCommand that's invoked/being invoked."""
+
     __slots__ = ("guild_id", "id", "name", "options", "resolved", "target_id", "type")
 
-    def __init__(self, data: ApplicationCommandDataPayload, *, state: ConnectionState):
+    id: Snowflake
+    "The ID of the command."
+
+    name: str
+    "The name of the command."
+
+    type: ApplicationCommandType
+    "The type of the command."
+
+    options: tuple[*OptionTypes]
+    "The options for the command."
+
+    guild_id: Snowflake | None
+    "The guild ID of the guild the command was ran in."
+
+    resolved: ResolvedData
+    "The ID to object maps for this command."
+
+    target_id: Snowflake | None
+    "The ID of the object this command is targeted at, if the command is a context command."
+
+    def __init__(
+        self, data: ApplicationCommandDataPayload, *, state: ConnectionState
+    ) -> None:
         self.id = Snowflake(data["id"])
         self.name = data["name"]
         self.type = ApplicationCommandType(data["type"])
-        self.options = [
-            ApplicationCommandDataOption(o) for o in data.get("options", [])
-        ]
+        self.options = cast(
+            tuple[*OptionTypes],
+            tuple(ApplicationCommandDataOption(o) for o in data.get("options", [])),
+        )
         self.guild_id = Snowflake._from_str(data.get("guild_id"))
         self.resolved = ResolvedData(
             data.get("resolved", {}), guild_id=self.guild_id, state=state
@@ -167,13 +234,13 @@ class InteractionCallbackResponse:
         self.resource = InteractionCallbackResource(data["resource"], state=state)
 
 
-def parse_interaction_data(
+def parse_interaction_data[*TypeData](
     type: InteractionType,
     data: InteractionDataPayload,
     *,
     guild_id: int | None,
     state: ConnectionState,
-) -> ApplicationCommandData | ComponentResponse | ModalResponse:
+) -> ApplicationCommandData[*TypeData] | ComponentResponse | ModalResponse[*TypeData]:
     match type:
         case (
             InteractionType.APPLICATION_COMMAND
@@ -250,8 +317,7 @@ class ResponseHandler:
         is_components_v2: bool = False,
         is_voice_message: bool = False,
     ) -> InteractionCallbackResponse:
-        """
-        Sends the first response to an interaction.
+        """Sends the first response to an interaction.
 
         Parameters
         ----------
@@ -344,7 +410,7 @@ class ResponseHandler:
 
         raise ValueError("No sendable field was passed to the response")
 
-    async def send_modal(self, modal: Modal) -> None:
+    async def send_modal(self, modal: Modal) -> InteractionCallbackResponse:
         """
         Sends a modal to an Interaction.
 
@@ -364,19 +430,37 @@ class ResponseHandler:
         if self.acknowledged:
             raise InteractionResponded()
 
-        await self._post(InteractionCallbackType.MODAL, modal._to_dict())
-
+        resp = await self._post(InteractionCallbackType.MODAL, modal._to_dict())
         self._state.register_modal(modal)
 
-    async def send_autocomplete_options(self, *choices: AutocompleteChoice):
-        return await self._post(
+        return InteractionCallbackResponse(resp, state=self._state)
+
+    async def send_autocomplete_choices(self, *choices: AutocompleteChoice) -> None:
+        """Send the autocomplete choices to give the user the choices they can use.
+
+        Parameters
+        ----------
+        *choices : :class:`AutocompleteChoice`
+            The choices to respond with.
+
+        Raises
+        ------
+        `InteractionResponded`
+            This interaction was already respnnded to.
+
+        `HTTPException`
+            An HTTP error occured.
+        """
+        if self.acknowledged:
+            raise InteractionResponded()
+
+        await self._post(
             InteractionCallbackType.APPLICATION_COMMAND_AUTOCOMPLETE_RESULT,
             {"choices": [c._to_dict() for c in choices]},
         )
 
     async def defer(self, *, ephemeral: bool = False) -> None:
-        """
-        Defers / Acknowledges the response.
+        """Defers / Acknowledges the response.
 
         Parameters
         ----------
@@ -416,8 +500,7 @@ class ResponseHandler:
         suppress_notifications: bool = False,
         is_components_v2: bool = False,
     ) -> Message:
-        """
-        Sends a followup response to an interaction.
+        """Sends a followup response to an interaction.
 
         Parameters
         ----------
@@ -528,8 +611,7 @@ class ResponseHandler:
         )
 
     async def fetch_original_response(self) -> Message:
-        """
-        Fetches the original response of this interaction.
+        """Fetches the original response of this interaction.
 
         Raises
         ------
@@ -556,8 +638,7 @@ class ResponseHandler:
         is_components_v2: Literal[True] = _MISSING,
         override_files: bool = True,
     ) -> Message:
-        """
-        Edits the original response to the interaction.
+        """Edits the original response to the interaction.
 
         Parameters
         ----------
@@ -647,9 +728,8 @@ class ResponseHandler:
         self._state.register_components(message.id, components)
         return message
 
-    async def delete_original_response(self):
-        """
-        Deletes the original response to the interaction.
+    async def delete_original_response(self) -> None:
+        """Deletes the original response to the interaction.
 
         Raises
         ------
@@ -662,10 +742,10 @@ class ResponseHandler:
         await self._webhook_messages_request(method="DELETE")
 
 
-class Interaction:
-    """
-    Represents an Interaction object from discord.
-    """
+class Interaction[
+    InteractionDataType: ApplicationCommandData | ComponentResponse | ModalResponse
+]:
+    """Represents an Interaction object from discord."""
 
     __slots__ = (
         "_state",
@@ -705,7 +785,7 @@ class Interaction:
     guild_id: Snowflake | None
     "The ID of the Guild that this interaction was sent from."
 
-    data: ApplicationCommandData | ComponentResponse | ModalResponse
+    data: InteractionDataType
     "The data of the interaction"
 
     channel: PartialChannel | None
@@ -753,15 +833,18 @@ class Interaction:
         *,
         guild: Guild | None = None,
         state: ConnectionState,
-    ):
+    ) -> None:
         self._state = state
         self.id = Snowflake(data["id"])
         self.application_id = Snowflake(data["application_id"])
         self.type = InteractionType(data["type"])
         self.guild = guild
         self.guild_id = Snowflake._from_str(data.get("guild_id"))
-        self.data = parse_interaction_data(
-            self.type, data["data"], guild_id=self.guild_id, state=state
+        self.data = cast(
+            InteractionDataType,
+            parse_interaction_data(
+                self.type, data["data"], guild_id=self.guild_id, state=state
+            ),
         )
         self.channel = (
             parse_channel_payload(c, partial=True, state=state)
