@@ -1,13 +1,15 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from mizuki.enums.components import ComponentType
 from mizuki.objects.components.button import ButtonResponse
 from mizuki.objects.components.modal_child import (
-    TextInputResponse,
-    FileUploadResponse,
-    RadioGroupResponse,
     CheckboxGroupResponse,
     CheckboxResponse,
+    FileUploadResponse,
+    RadioGroupResponse,
+    TextInputResponse,
 )
 from mizuki.objects.components.objectselect import (
     ChannelSelectResponse,
@@ -18,10 +20,10 @@ from mizuki.objects.components.objectselect import (
 from mizuki.objects.components.stringselect import StringSelectResponse
 
 if TYPE_CHECKING:
-    from mizuki.state import ConnectionState
-    from mizuki.payloads.components import ComponentResponsePayload
     from mizuki.objects.components import ComponentResponse
     from mizuki.objects.resolveddata import ResolvedData
+    from mizuki.payloads.components import ComponentResponsePayload
+    from mizuki.state import ConnectionState
 
 BASIC_COMPONENT_MAP: dict[ComponentType, type[ComponentResponse]] = {
     ComponentType.BUTTON: ButtonResponse,
@@ -65,7 +67,7 @@ def parse_component_response(
         if (component_data := data.get("component")) is None or (
             child_type := component_data.get("type")
         ) is None:
-            raise ValueError(f"Recieved malformed label component in a response.")
+            raise ValueError("Recieved malformed label component in a response.")
 
         component_type = ComponentType(child_type)
         data = component_data

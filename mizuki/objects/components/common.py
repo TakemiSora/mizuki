@@ -1,9 +1,11 @@
-from datetime import timedelta
+from __future__ import annotations
+
 import inspect
 from collections.abc import Callable, Coroutine
+from datetime import timedelta
 from typing import TYPE_CHECKING, Any, Self
 
-from mizuki._utils import JSONPayload, _MISSING
+from mizuki._utils import JSONPayload
 from mizuki.enums.components import ComponentType
 
 if TYPE_CHECKING:
@@ -21,7 +23,7 @@ if TYPE_CHECKING:
 
 
 class BaseComponentResponse:
-    __slots__ = ("custom_id", "id", "component_type")
+    __slots__ = ("component_type", "custom_id", "id")
 
     custom_id: str
     "The custom ID of the component."
@@ -101,7 +103,7 @@ class HasCallbackResponse[CallbackResponse: BaseComponentResponse]:
 
 
 class BaseComponent:
-    __slots__ = ("id", "type", "_timeout", "_callback")
+    __slots__ = ("_callback", "_timeout", "id", "type")
 
     type: ComponentType
     "The type of the component."
@@ -122,11 +124,11 @@ class BaseSelect[CallbackResponse: BaseComponentResponse](
 ):
     __slots__ = (
         "custom_id",
-        "placeholder",
-        "min_values",
-        "max_values",
-        "required",
         "disabled",
+        "max_values",
+        "min_values",
+        "placeholder",
+        "required",
     )
 
     custom_id: str

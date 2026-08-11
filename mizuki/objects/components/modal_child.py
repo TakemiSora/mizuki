@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING, Self
 
-from mizuki._utils import JSONPayload, assign_val, assign_val_dict, _MISSING, maybe_iter
+from mizuki._utils import _MISSING, JSONPayload, assign_val, assign_val_dict, maybe_iter
 from mizuki.enums.components import ComponentType, TextInputStyle
 from mizuki.objects.components.common import (
     BaseComponent,
@@ -19,37 +21,37 @@ from mizuki.objects.snowflake import Snowflake
 from mizuki.public_utils import generate_custom_id
 
 if TYPE_CHECKING:
-    from mizuki.objects.resolveddata import ResolvedData
     from mizuki.objects.message import Attachment
+    from mizuki.objects.resolveddata import ResolvedData
     from mizuki.payloads.components import (
-        TextInputResponsePayload,
-        TextInputPayload,
-        FileUploadResponsePayload,
-        FileUploadPayload,
-        GroupOptionPayload,
-        RadioGroupResponsePayload,
-        RadioGroupPayload,
-        CheckboxGroupResponsePayload,
         CheckboxGroupPayload,
-        CheckboxResponsePayload,
+        CheckboxGroupResponsePayload,
         CheckboxPayload,
+        CheckboxResponsePayload,
+        FileUploadPayload,
+        FileUploadResponsePayload,
+        GroupOptionPayload,
         LabelPayload,
+        RadioGroupPayload,
+        RadioGroupResponsePayload,
+        TextInputPayload,
+        TextInputResponsePayload,
     )
 
 __all__ = (
-    "TextInputResponse",
-    "TextInput",
-    "FileUploadResponse",
-    "FileUpload",
-    "RadioGroupOption",
-    "RadioGroupResponse",
-    "RadioGroup",
+    "Checkbox",
+    "CheckboxGroup",
     "CheckboxGroupOption",
     "CheckboxGroupResponse",
-    "CheckboxGroup",
     "CheckboxResponse",
-    "Checkbox",
+    "FileUpload",
+    "FileUploadResponse",
     "Label",
+    "RadioGroup",
+    "RadioGroupOption",
+    "RadioGroupResponse",
+    "TextInput",
+    "TextInputResponse",
 )
 
 
@@ -76,12 +78,12 @@ class TextInput(BaseComponent, HasCallbackResponse[TextInputResponse]):
 
     __slots__ = (
         "custom_id",
-        "style",
-        "min_length",
         "max_length",
-        "required",
-        "value",
+        "min_length",
         "placeholder",
+        "required",
+        "style",
+        "value",
     )
 
     custom_id: str
@@ -207,7 +209,7 @@ class FileUpload(BaseComponent, HasCallbackResponse[FileUploadResponse]):
     Represents a file upload component.
     """
 
-    __slots__ = ("custom_id", "min_values", "max_values", "required")
+    __slots__ = ("custom_id", "max_values", "min_values", "required")
 
     custom_id: str
     "The custom ID of this component."
@@ -286,7 +288,7 @@ class FileUpload(BaseComponent, HasCallbackResponse[FileUploadResponse]):
 
 
 class BaseGroupOption:
-    __slots__ = ("value", "label", "description", "default")
+    __slots__ = ("default", "description", "label", "value")
 
     value: str
     "The value that the option will send."
@@ -359,7 +361,7 @@ class RadioGroupResponse(BaseComponentResponse):
     Represents a response from a radio group component.
     """
 
-    __slots__ = "value"
+    __slots__ = ("value",)
 
     value: str | None
     "The value that was selected, ``None`` if no values were selected."
@@ -471,7 +473,7 @@ class CheckboxGroup(BaseComponent, HasCallbackResponse[CheckboxGroupResponse]):
     Represents a checkbox group component.
     """
 
-    __slots__ = ("custom_id", "options", "min_values", "max_values", "required")
+    __slots__ = ("custom_id", "max_values", "min_values", "options", "required")
 
     custom_id: str
     "The custom ID of this component."
@@ -635,7 +637,7 @@ parse_label_child = component_parser_gen(LABEL_CHILD_MAP, "Label")
 class Label(BaseComponent):
     """Represents a Label component."""
 
-    __slots__ = ("label", "description", "component")
+    __slots__ = ("component", "description", "label")
 
     label: str
     "The text of the label."

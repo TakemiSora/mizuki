@@ -1,15 +1,16 @@
-from typing import Any, overload, TYPE_CHECKING
+from __future__ import annotations
 
-from mizuki.http import Path
+from typing import TYPE_CHECKING, Any, overload
+
+from mizuki._utils import _MISSING, assign_val_dict, maybe_iter, mtd
+from mizuki.enums.message import MessageReferenceType, ReactionType
 from mizuki.file import File
 from mizuki.flags import MessageFlags
-from mizuki._utils import _MISSING, assign_val_dict, maybe_iter, mtd
-
+from mizuki.http import Path
 from mizuki.managers._types import BaseManager
-from mizuki.enums.message import MessageReferenceType, ReactionType
 from mizuki.objects.embed import Embed
-from mizuki.objects.user import User
 from mizuki.objects.message import AllowedMentions, Message, MessageReference
+from mizuki.objects.user import User
 
 if TYPE_CHECKING:
     from mizuki.objects.components import Component

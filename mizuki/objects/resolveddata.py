@@ -1,21 +1,23 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
-from mizuki.objects.user import User
-from mizuki.objects.member import PartialMember, ResolvedMember
-from mizuki.objects.role import Role
 from mizuki.objects.channel import PartialThreadChannel, parse_channel_payload
-from mizuki.objects.message import Message, Attachment
+from mizuki.objects.member import PartialMember, ResolvedMember
+from mizuki.objects.message import Attachment, Message
+from mizuki.objects.role import Role
+from mizuki.objects.user import User
 
 if TYPE_CHECKING:
-    from mizuki.state import ConnectionState
-    from mizuki.payloads.interaction import ResolvedDataPayload
     from mizuki.objects.channel import PartialGuildChannel, PartialThreadChannel
+    from mizuki.payloads.interaction import ResolvedDataPayload
+    from mizuki.state import ConnectionState
 
 __all__ = ("ResolvedData",)
 
 
 class ResolvedData:
-    __slots__ = ("users", "members", "roles", "channels", "messages", "attachments")
+    __slots__ = ("attachments", "channels", "members", "messages", "roles", "users")
 
     type Mentionable = (
         User | Role | PartialGuildChannel | PartialThreadChannel | ResolvedMember
