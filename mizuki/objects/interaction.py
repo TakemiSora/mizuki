@@ -1,6 +1,17 @@
 from __future__ import annotations
-from typing import Any, Literal, cast, TYPE_CHECKING
-from mizuki._utils import _MISSING, assign_val_dict, maybe_iter, mtd, scls
+
+from typing import TYPE_CHECKING, Any, Literal, cast
+
+from mizuki._utils import (
+    _MISSING,
+    JSONPayload,
+    assign_val,
+    assign_val_dict,
+    maybe_iter,
+    mtd,
+    parse_flags,
+    scls,
+)
 from mizuki.enums.command import ApplicationCommandType, CommandOptionType
 from mizuki.enums.interaction import (
     ApplicationIntegrationType,
@@ -17,6 +28,7 @@ from mizuki.file import File
 from mizuki.flags import MessageFlags
 from mizuki.http import Path
 from mizuki.objects.channel import PartialChannel, parse_channel_payload
+from mizuki.objects.command import Localization
 from mizuki.objects.components.resp_parser import parse_component_response
 from mizuki.objects.embed import Embed
 from mizuki.objects.guild import Guild
@@ -28,7 +40,9 @@ from mizuki.objects.resolveddata import ResolvedData
 from mizuki.objects.snowflake import Snowflake
 from mizuki.objects.user import User
 from mizuki.payloads.interaction import (
-    ApplicationCommandInteractionOptionPayload,
+    ApplicationCommandDataOptionPayload,
+    ApplicationCommandDataPayload,
+    AutocompleteChoicePayload,
     InteractionCallbackDataPayload,
     InteractionCallbackPayload,
     InteractionCallbackResourcePayload,
@@ -36,45 +50,76 @@ from mizuki.payloads.interaction import (
     InteractionDataPayload,
     InteractionPayload,
     InteractionWebhookMessagePayload,
-    InvokedApplicationCommandPayload,
 )
 from mizuki.payloads.modal import ModalResponsePayload
 
 if TYPE_CHECKING:
-    from mizuki.state import ConnectionState
     from mizuki.objects.components import Component, ComponentResponse
     from mizuki.objects.modal import Modal
+    from mizuki.state import ConnectionState
 
 __all__ = (
-    "ResponseHandler",
+    "ApplicationCommandData",
+    "ApplicationCommandDataOption",
+    "AutocompleteChoice",
     "Interaction",
+    "InteractionCallbackResponse",
+    "ResponseHandler",
 )
 
 
-class InvokedApplicationCommandOption:
-    __slots__ = ("name", "type", "value", "options", "focused")
+class AutocompleteChoice:
+    __slots__ = ("name", "name_localizations", "value")
 
-    def __init__(self, data: ApplicationCommandInteractionOptionPayload):
+    def __init__(self, data: AutocompleteChoicePayload):
+        self.name = data["name"]
+        self.name_localizations = scls(Localization, data.get("name_localizations"))
+        self.value = data["value"]
+
+    def _to_dict(self) -> JSONPayload:
+        return assign_val_dict(
+            {
+                "name": self.name,
+                "value": self.value,
+            },
+            name_localizations=mtd(self.name_localizations)
+        )
+
+    @classmethod
+    def new(
+        cls,
+        *,
+        name: str,
+        value: str | int | float,  # noqa: PYI041
+        name_localizations: Localization = _MISSING,
+    ) -> AutocompleteChoice:
+        return assign_val(
+            cls({"name": name, "value": value}), name_localizations=name_localizations
+        )
+
+
+class ApplicationCommandDataOption:
+    __slots__ = ("focused", "name", "options", "type", "value")
+
+    def __init__(self, data: ApplicationCommandDataOptionPayload):
         self.name = data["name"]
         self.type = CommandOptionType(data["type"])
         self.value = data.get("value")
         self.options = [
-            InvokedApplicationCommandOption(o) for o in data.get("options", [])
+            ApplicationCommandDataOption(o) for o in data.get("options", [])
         ]
         self.focused = data.get("focused", False)
 
 
-class InvokedApplicationCommand:
-    __slots__ = ("id", "name", "type", "resolved", "options", "guild_id", "target_id")
+class ApplicationCommandData:
+    __slots__ = ("guild_id", "id", "name", "options", "resolved", "target_id", "type")
 
-    def __init__(
-        self, data: InvokedApplicationCommandPayload, *, state: ConnectionState
-    ):
+    def __init__(self, data: ApplicationCommandDataPayload, *, state: ConnectionState):
         self.id = Snowflake(data["id"])
         self.name = data["name"]
         self.type = ApplicationCommandType(data["type"])
         self.options = [
-            InvokedApplicationCommandOption(o) for o in data.get("options", [])
+            ApplicationCommandDataOption(o) for o in data.get("options", [])
         ]
         self.guild_id = Snowflake._from_str(data.get("guild_id"))
         self.resolved = ResolvedData(
@@ -85,12 +130,12 @@ class InvokedApplicationCommand:
 
 class InteractionCallback:
     __slots__ = (
-        "id",
-        "type",
         "activity_instance_id",
+        "id",
+        "response_message_ephemeral",
         "response_message_id",
         "response_message_loading",
-        "response_message_ephemeral",
+        "type",
     )
 
     def __init__(self, data: InteractionCallbackPayload):
@@ -103,7 +148,7 @@ class InteractionCallback:
 
 
 class InteractionCallbackResource:
-    __slots__ = ("type", "message")
+    __slots__ = ("message", "type")
 
     def __init__(
         self, data: InteractionCallbackResourcePayload, *, state: ConnectionState
@@ -128,14 +173,14 @@ def parse_interaction_data(
     *,
     guild_id: int | None,
     state: ConnectionState,
-) -> InvokedApplicationCommand | ComponentResponse | ModalResponse:
+) -> ApplicationCommandData | ComponentResponse | ModalResponse:
     match type:
         case (
             InteractionType.APPLICATION_COMMAND
             | InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE
         ):
-            return InvokedApplicationCommand(
-                cast(InvokedApplicationCommandPayload, data), state=state
+            return ApplicationCommandData(
+                cast(ApplicationCommandDataPayload, data), state=state
             )
         case InteractionType.MESSAGE_COMPONENT:
             return parse_component_response(data, resolved_data=None, state=state)  # type: ignore # This is resolved.
@@ -150,10 +195,10 @@ def parse_interaction_data(
 class ResponseHandler:
     __slots__ = (
         "_state",
+        "acknowledged",
+        "application_id",
         "interaction_id",
         "interaction_token",
-        "application_id",
-        "acknowledged",
     )
 
     def __init__(
@@ -195,10 +240,10 @@ class ResponseHandler:
         *,
         tts: bool = False,
         embeds: list[Embed] = _MISSING,
-        allowed_mentions: AllowedMentions = AllowedMentions.new(),
+        allowed_mentions: AllowedMentions = _MISSING,
         files: list[File] = _MISSING,
         components: list[Component] = _MISSING,
-        flags: MessageFlags = MessageFlags(0),
+        flags: MessageFlags = _MISSING,
         ephemeral: bool = False,
         suppress_embeds: bool = False,
         suppress_notifications: bool = False,
@@ -258,24 +303,13 @@ class ResponseHandler:
             raise InteractionResponded()
 
         if any((content, embeds, files, components)):
-            if ephemeral:
-                flags |= MessageFlags.EPHEMERAL
-            if suppress_embeds:
-                flags |= MessageFlags.SUPPRESS_EMBEDS
-            if suppress_notifications:
-                flags |= MessageFlags.SUPPRESS_NOTIFICATIONS
-            if is_components_v2:
-                flags |= MessageFlags.IS_COMPONENTS_V2
-            if is_voice_message:
-                flags |= MessageFlags.IS_VOICE_MESSAGE
-
             resp = InteractionCallbackResponse(
                 await self._post(
                     type=InteractionCallbackType.CHANNEL_MESSAGE_WITH_SOURCE,
                     files=files,
                     data=assign_val_dict(
-                        {"tts": tts, "allowed_mentions": allowed_mentions._to_dict()},
-                        _MISSING,
+                        {"tts": tts},
+                        allowed_mentions=mtd(allowed_mentions),
                         content=content,
                         embeds=maybe_iter(embeds),
                         attachments=maybe_iter(
@@ -283,7 +317,17 @@ class ResponseHandler:
                             enumerate_iter=True,
                             method=lambda i, a: a._to_attachment_dict(i),
                         ),
-                        flags=flags.value,
+                        flags=parse_flags(
+                            {
+                                MessageFlags.EPHEMERAL: ephemeral,
+                                MessageFlags.SUPPRESS_EMBEDS: suppress_embeds,
+                                MessageFlags.SUPPRESS_NOTIFICATIONS: suppress_notifications,
+                                MessageFlags.IS_COMPONENTS_V2: is_components_v2,
+                                MessageFlags.IS_VOICE_MESSAGE: is_voice_message,
+                            },
+                            flag=MessageFlags,
+                            instance=flags,
+                        ),
                         components=maybe_iter(components),
                     ),
                     params={"with_response": "True"},
@@ -324,6 +368,12 @@ class ResponseHandler:
 
         self._state.register_modal(modal)
 
+    async def send_autocomplete_options(self, *choices: AutocompleteChoice):
+        return await self._post(
+            InteractionCallbackType.APPLICATION_COMMAND_AUTOCOMPLETE_RESULT,
+            {"choices": [c._to_dict() for c in choices]},
+        )
+
     async def defer(self, *, ephemeral: bool = False) -> None:
         """
         Defers / Acknowledges the response.
@@ -358,9 +408,9 @@ class ResponseHandler:
         tts: bool = False,
         embeds: list[Embed] = _MISSING,
         components: list[Component] = _MISSING,
-        allowed_mentions: AllowedMentions = AllowedMentions.new(),
+        allowed_mentions: AllowedMentions = _MISSING,
         files: list[File] = _MISSING,
-        flags: MessageFlags = MessageFlags(0),
+        flags: MessageFlags = _MISSING,
         ephemeral: bool = False,
         suppress_embeds: bool = False,
         suppress_notifications: bool = False,
@@ -416,15 +466,6 @@ class ResponseHandler:
             raise InteractionNotResponded()
 
         if any((content, embeds, files, components)):
-            if ephemeral:
-                flags |= MessageFlags.EPHEMERAL
-            if suppress_embeds:
-                flags |= MessageFlags.SUPPRESS_EMBEDS
-            if suppress_notifications:
-                flags |= MessageFlags.SUPPRESS_NOTIFICATIONS
-            if is_components_v2:
-                flags |= MessageFlags.IS_COMPONENTS_V2
-
             message = Message(
                 await self._state.http.request(
                     Path(
@@ -435,10 +476,9 @@ class ResponseHandler:
                     ),
                     files=files,
                     json=assign_val_dict(
-                        InteractionWebhookMessagePayload(
-                            tts=tts, allowed_mentions=allowed_mentions._to_dict()
-                        ),
+                        InteractionWebhookMessagePayload(tts=tts),
                         _MISSING,
+                        allowed_mentions=mtd(allowed_mentions),
                         content=content,
                         embeds=maybe_iter(embeds),
                         components=maybe_iter(components),
@@ -447,7 +487,16 @@ class ResponseHandler:
                             enumerate_iter=True,
                             method=lambda i, a: a._to_attachment_dict(i),
                         ),
-                        flags=flags.value,
+                        flags=parse_flags(
+                            {
+                                MessageFlags.EPHEMERAL: ephemeral,
+                                MessageFlags.SUPPRESS_EMBEDS: suppress_embeds,
+                                MessageFlags.SUPPRESS_NOTIFICATIONS: suppress_notifications,
+                                MessageFlags.IS_COMPONENTS_V2: is_components_v2,
+                            },
+                            flag=MessageFlags,
+                            instance=flags,
+                        ),
                     ),
                 ),
                 state=self._state,
@@ -562,13 +611,6 @@ class ResponseHandler:
         ):
             raise ValueError("No editable fields were passed in editing response.")
 
-        if suppress_embeds is not _MISSING or is_components_v2 is not _MISSING:
-            flags = MessageFlags(0)
-            if suppress_embeds:
-                flags |= MessageFlags.SUPPRESS_EMBEDS
-            if is_components_v2:
-                flags |= MessageFlags.IS_COMPONENTS_V2
-
         message = Message(
             await self._webhook_messages_request(
                 method="PATCH",
@@ -589,7 +631,14 @@ class ResponseHandler:
                         if override_files
                         else _MISSING
                     ),
-                    flags=flags.value if flags is not _MISSING else _MISSING,
+                    flags=parse_flags(
+                        {
+                            MessageFlags.SUPPRESS_EMBEDS: suppress_embeds,
+                            MessageFlags.IS_COMPONENTS_V2: is_components_v2,
+                        },
+                        flag=MessageFlags,
+                        instance=flags,
+                    ),
                 ),
             ),
             state=self._state,
@@ -620,25 +669,25 @@ class Interaction:
 
     __slots__ = (
         "_state",
-        "response",
-        "id",
+        "app_permissions",
         "application_id",
-        "type",
+        "attachment_size_limit",
+        "authorizing_integration_owners",
+        "channel",
+        "channel_id",
+        "context",
         "data",
         "guild",
         "guild_id",
-        "channel",
-        "channel_id",
-        "member",
-        "user",
-        "token",
-        "message",
-        "app_permissions",
-        "locale",
         "guild_locale",
-        "authorizing_integration_owners",
-        "context",
-        "attachment_size_limit",
+        "id",
+        "locale",
+        "member",
+        "message",
+        "response",
+        "token",
+        "type",
+        "user",
     )
 
     id: Snowflake
@@ -656,7 +705,7 @@ class Interaction:
     guild_id: Snowflake | None
     "The ID of the Guild that this interaction was sent from."
 
-    data: InvokedApplicationCommand | ComponentResponse | ModalResponse
+    data: ApplicationCommandData | ComponentResponse | ModalResponse
     "The data of the interaction"
 
     channel: PartialChannel | None

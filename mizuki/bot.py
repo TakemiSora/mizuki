@@ -1,33 +1,31 @@
+import asyncio
+import inspect
+import logging
+from collections.abc import Callable, Coroutine
 from datetime import timedelta
+from typing import Any, Literal, overload
 
 import aiohttp
-import asyncio
-import logging
-import inspect
 
-from typing import overload, Literal
-
+from mizuki._utils import _MISSING, CoroDecorator, CoroFunc
 from mizuki.cache import CacheSettings, CacheStorage
+from mizuki.enums.command import ApplicationCommandType
 from mizuki.enums.event_dispatch import Event
-from mizuki.state import ConnectionState
+from mizuki.enums.interaction import ApplicationIntegrationType, InteractionContextType
 from mizuki.errors import ImproperToken, Unauthorized
 from mizuki.flags import IntentFlags
 from mizuki.gateway import GatewayClient
 from mizuki.http import HTTPClient, Path
-from mizuki._utils import _MISSING, CoroFunc, CoroDecorator
-
-from mizuki.enums.command import ApplicationCommandType
-from mizuki.enums.interaction import InteractionContextType, ApplicationIntegrationType
-
-from mizuki.objects.command import PartialApplicationCommand, Localization
-from mizuki.objects.user import User
-from mizuki.objects.permissions import Permissions
-
 from mizuki.managers.channel import ChannelManager
+from mizuki.managers.command import CommandManager
 from mizuki.managers.guild import GuildManager
 from mizuki.managers.message import MessageManager
 from mizuki.managers.user import UserManager
-from mizuki.managers.command import CommandManager
+from mizuki.objects.command import Localization, PartialApplicationCommand
+from mizuki.objects.interaction import ApplicationCommandData, Interaction
+from mizuki.objects.permissions import Permissions
+from mizuki.objects.user import User
+from mizuki.state import ConnectionState
 
 __all__ = ("Bot",)
 
@@ -75,21 +73,21 @@ class Bot:
     "The User object of the bot."
 
     __slots__ = (
-        "intents",
-        "http",
-        "gateway",
-        "_listeners",
-        "_setup_hook",
         "_commands_data",
-        "_storage",
-        "_state",
-        "users",
-        "messages",
-        "channels",
-        "guilds",
-        "commands",
-        "user",
+        "_listeners",
         "_session",
+        "_setup_hook",
+        "_state",
+        "_storage",
+        "channels",
+        "commands",
+        "gateway",
+        "guilds",
+        "http",
+        "intents",
+        "messages",
+        "user",
+        "users",
     )
 
     def __init__(
@@ -276,6 +274,9 @@ class Bot:
         description_localizations: Localization = _MISSING,
         default_member_permissions: Permissions = _MISSING,
         nsfw: bool = False,
+        autocompletor: Callable[
+            [Interaction, ApplicationCommandData], Coroutine[Any, Any, Any]
+        ] = _MISSING,
     ) -> CoroDecorator: ...
 
     @overload
@@ -293,6 +294,9 @@ class Bot:
         integration_types: list[ApplicationIntegrationType] = _MISSING,
         contexts: list[InteractionContextType] = _MISSING,
         nsfw: bool = False,
+        autocompletor: Callable[
+            [Interaction, ApplicationCommandData], Coroutine[Any, Any, Any]
+        ] = _MISSING,
     ) -> CoroDecorator: ...
 
     @overload
@@ -333,6 +337,9 @@ class Bot:
         integration_types: list[ApplicationIntegrationType] = _MISSING,
         contexts: list[InteractionContextType] = _MISSING,
         nsfw: bool = False,
+        autocompletor: Callable[
+            [Interaction, ApplicationCommandData], Coroutine[Any, Any, Any]
+        ] = _MISSING,
     ) -> CoroDecorator:
         """
         This function is a decorator.
@@ -419,6 +426,7 @@ class Bot:
                     contexts=contexts,
                     type=type,
                     nsfw=nsfw,
+                    autocompletor=autocompletor,
                 ),
             )
 

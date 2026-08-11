@@ -15,8 +15,8 @@ from mizuki.objects.components.common import BaseComponentResponse
 from mizuki.objects.guild import Guild, UnavailableGuild, parse_guild_payload
 from mizuki.objects.interaction import (
     Interaction,
-    InvokedApplicationCommand,
-    InvokedApplicationCommandOption,
+    ApplicationCommandData,
+    ApplicationCommandDataOption,
     ResolvedData,
 )
 from mizuki.objects.modal import ModalResponse
@@ -61,6 +61,7 @@ class EventDispatcher:
             InteractionType.APPLICATION_COMMAND: self._dispatch_commands,
             InteractionType.MESSAGE_COMPONENT: self._dispatch_components,
             InteractionType.MODAL_SUBMIT: self._dispatch_modals,
+            InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE: self._dispatch_autocompletors
         }
 
     def _on_task_done(self, task: asyncio.Task, data: str):
@@ -80,7 +81,7 @@ class EventDispatcher:
             _log.debug("Dispatched %s to function '%s'.", key, f.__name__)
 
     def _parse_option_value(
-        self, resolved: ResolvedData | None, option: InvokedApplicationCommandOption
+        self, resolved: ResolvedData | None, option: ApplicationCommandDataOption
     ) -> Any:
         value = None
         if resolved is not None:
@@ -118,7 +119,7 @@ class EventDispatcher:
         self,
         command_options: dict[str, ApplicationCommandOption],
         resolved: ResolvedData | None,
-        options: list[InvokedApplicationCommandOption],
+        options: list[ApplicationCommandDataOption],
     ) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
         display_to_callback_keys: dict[str, str] = {
@@ -134,12 +135,12 @@ class EventDispatcher:
         return kwargs
 
     async def _dispatch_commands(self, interaction: Interaction):
-        assert isinstance(interaction.data, InvokedApplicationCommand)
+        assert isinstance(interaction.data, ApplicationCommandData)
 
         command_data = self.bot._commands_data.get(interaction.data.name)
         callback = command_data[1]._callback if command_data else None
 
-        if callback and command_data:
+        if callback:
             if interaction.data.type is ApplicationCommandType.CHAT_INPUT:
                 kwargs = self._parse_options(
                     getattr(callback, "__command_options__", {}),
@@ -242,6 +243,37 @@ class EventDispatcher:
             _log.warning(
                 "Recieved modal interaction (InteractionID=%s), but no callback was found for it.",
                 interaction.id,
+            )
+
+    async def _dispatch_autocompletors(self, interaction: Interaction):
+        assert isinstance(interaction.data, ApplicationCommandData)
+
+        command_data = self.bot._commands_data.get(interaction.data.name)
+        autocompletor = command_data[1]._autocompletor if command_data else None
+        name = interaction.data.name
+
+        if autocompletor:
+            asyncio.create_task(
+                autocompletor(interaction, interaction.data)
+            ).add_done_callback(
+                lambda t: self._on_task_done(
+                    t,
+                    f"Autocomplete Handler (InteractionID={interaction.id}, CommandName={name}, Func={autocompletor.__name__}"
+                )
+            )
+
+            _log.debug(
+                "Dispatched autocompletor (InteractionID=%s, CommandName=%s, Func=%s)",
+                interaction.id,
+                name,
+                autocompletor.__name__
+            )
+
+        else:
+            _log.warning(
+                "Recieved autocomplete request (InteractionID=%s, CommandName=%s), but no autocompletor was found for it.",
+                interaction.id,
+                name
             )
 
     async def _handle_guild_create(self, data: GuildPayload | UnavailableGuildPayload):
