@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import inspect
 import types
-from typing import get_origin, get_args
-
-from typing import Any, Literal, Self, overload
+from typing import Any, Literal, Self, overload, get_origin, get_args, TYPE_CHECKING
+from collections.abc import Callable, Coroutine
 
 from mizuki._utils import (
     _MISSING,
@@ -36,6 +35,10 @@ from mizuki.objects.snowflake import Snowflake
 from mizuki.objects.user import User
 from mizuki.objects.channel import PartialGuildChannel, PartialThreadChannel
 from mizuki.objects.role import Role
+
+
+if TYPE_CHECKING:
+    from mizuki.objects.interaction import ApplicationCommandData, Interaction
 
 __all__ = (
     "Mentionable",
@@ -433,10 +436,20 @@ class BaseApplicationCommand:
 
 
 class PartialApplicationCommand(BaseApplicationCommand):
-    __slots__ = ("description", "default_member_permissions", "_callback")
+    __slots__ = (
+        "description",
+        "default_member_permissions",
+        "_callback",
+        "_autocompletor",
+    )
 
     def __init__(
-        self, data: PartialApplicationCommandPayload, callback: CoroFunc | None
+        self,
+        data: PartialApplicationCommandPayload,
+        callback: CoroFunc | None,
+        autocompletor: Callable[
+            [Interaction, ApplicationCommandData], Coroutine[Any, Any, Any]
+        ] | None,
     ):
         super().__init__(data)
         self.description = data.get("description")
@@ -444,6 +457,7 @@ class PartialApplicationCommand(BaseApplicationCommand):
             Permissions, sint(data.get("default_member_permissions"))
         )
         self._callback = callback
+        self._autocompletor = autocompletor
 
     @classmethod
     def new(
@@ -460,9 +474,16 @@ class PartialApplicationCommand(BaseApplicationCommand):
         type: ApplicationCommandType = ApplicationCommandType.CHAT_INPUT,
         nsfw: bool = False,
         callback: CoroFunc = _MISSING,
+        autocompletor: Callable[
+            [Interaction, ApplicationCommandData], Coroutine[Any, Any, Any]
+        ] = _MISSING,
     ) -> Self:
         return assign_val(
-            cls(PartialApplicationCommandPayload(name=name, type=type.value), callback),
+            cls(
+                PartialApplicationCommandPayload(name=name, type=type.value),
+                callback,
+                autocompletor,
+            ),
             name_localizations=name_localizations,
             description=description,
             description_localizations=description_localizations,
@@ -487,6 +508,9 @@ class PartialApplicationCommand(BaseApplicationCommand):
         contexts: list[InteractionContextType] = _MISSING,
         type: ApplicationCommandType = ApplicationCommandType.CHAT_INPUT,
         nsfw: bool = False,
+        autocompletor: Callable[
+            [Interaction, ApplicationCommandData], Coroutine[Any, Any, Any]
+        ] = _MISSING,
     ) -> Self:
         options: list[ApplicationCommandOption] = []
 
@@ -519,6 +543,7 @@ class PartialApplicationCommand(BaseApplicationCommand):
             type=type,
             nsfw=nsfw,
             callback=func,
+            autocompletor=autocompletor,
         )
 
     def _to_dict(self) -> PartialApplicationCommandPayload:

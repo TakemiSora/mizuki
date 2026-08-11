@@ -1,4 +1,5 @@
 from datetime import datetime
+from enum import IntFlag
 from typing import Any, Literal, Never, Protocol, cast, overload
 from collections.abc import Callable, Coroutine, Iterable, Iterator
 
@@ -70,6 +71,47 @@ def maybe_iter[IterableType, ReturnType](
 
     casted_method = cast(Callable[[IterableType], ReturnType], method)
     return [casted_method(item) for item in obj]
+
+
+@overload
+def parse_flags[Flag: IntFlag, DefaultType: Any](
+    data: dict[Flag, bool],
+    *,
+    flag: type[Flag],
+    instance: Flag | None = None,
+    default: DefaultType = _MISSING,
+    to_val: Literal[False],
+) -> Flag | DefaultType: ...
+
+
+@overload
+def parse_flags[Flag: IntFlag, DefaultType: Any](
+    data: dict[Flag, bool],
+    *,
+    flag: type[Flag],
+    instance: Flag | None = None,
+    default: DefaultType = _MISSING,
+    to_val: Literal[True] = True,
+) -> int | DefaultType: ...
+
+
+def parse_flags[Flag: IntFlag, DefaultType: Any](
+    data: dict[Flag, bool],
+    *,
+    flag: type[Flag],
+    instance: Flag | None = None,
+    default: DefaultType = _MISSING,
+    to_val: bool = True,
+) -> int | Flag | DefaultType:
+    to_return = instance or flag(0)
+
+    for key, val in data.items():
+        if val:
+            to_return |= key
+
+    if to_return:
+        return to_return.value if to_val else to_return
+    return default
 
 
 def assign_val_dict[T](d: T, check_against: Any = None, /, **kwargs: Any) -> T:

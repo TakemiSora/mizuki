@@ -1,4 +1,4 @@
-from collections.abc import Sequence
+from __future__ import annotations
 
 import aiohttp
 import asyncio
@@ -22,8 +22,6 @@ from mizuki._utils import _MISSING
 
 if TYPE_CHECKING:
     from mizuki.state import ConnectionState
-    from mizuki.objects.components import Component
-    from mizuki.objects.modal import Modal
 
 _log = logging.getLogger(__name__)
 

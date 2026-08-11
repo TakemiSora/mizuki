@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from typing import Literal, NotRequired, Required, TypedDict
 
 from mizuki.payloads._types import UNIMPLEMENTED, Permissions, Snowflake
@@ -7,16 +8,16 @@ from mizuki.payloads.channel import (
     PartialThreadPayload,
     PrivateChannelPayload,
 )
+from mizuki.payloads.command import LocalizationPayload
 from mizuki.payloads.components import ComponentPayload, ComponentResponsePayload
 from mizuki.payloads.embed import EmbedPayload
 from mizuki.payloads.file import FileUploadPayload
 from mizuki.payloads.guild import GuildPayload
 from mizuki.payloads.member import MemberPayload, PartialMemberPayload
 from mizuki.payloads.message import (
+    AllowedMentionsPayload,
     AttachmentPayload,
     MessagePayload,
-    PartialMessagePayload,
-    AllowedMentionsPayload,
 )
 from mizuki.payloads.modal import ModalPayload
 from mizuki.payloads.role import RolePayload
@@ -32,27 +33,31 @@ class ResolvedDataPayload(TypedDict, total=False):
     attachments: dict[Snowflake, AttachmentPayload]
 
 
-class ApplicationCommandInteractionOptionPayload(TypedDict, total=False):
+class AutocompleteChoicePayload(TypedDict):
+    name: str
+    name_localizations: NotRequired[LocalizationPayload]
+    value: str | int | float
+
+
+class ApplicationCommandDataOptionPayload(TypedDict, total=False):
     name: Required[str]
     type: Required[Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]]
     value: str | int | float | bool
-    options: list[ApplicationCommandInteractionOptionPayload]
+    options: list[ApplicationCommandDataOptionPayload]
     focused: bool
 
 
-class InvokedApplicationCommandPayload(TypedDict, total=False):
+class ApplicationCommandDataPayload(TypedDict, total=False):
     id: Required[Snowflake]
     name: Required[str]
     type: Required[Literal[1, 2, 3, 4]]
     resolved: ResolvedDataPayload
-    options: list[ApplicationCommandInteractionOptionPayload]
+    options: list[ApplicationCommandDataOptionPayload]
     guild_id: Snowflake
     target_id: Snowflake
 
 
-type InteractionDataPayload = (
-    InvokedApplicationCommandPayload | ComponentResponsePayload
-)
+type InteractionDataPayload = ApplicationCommandDataPayload | ComponentResponsePayload
 type AuthorizingIntegrationOwnersDict = dict[Literal[0, 1], Snowflake | Literal[0]]
 
 
@@ -92,8 +97,12 @@ class InteractionMessageCallbackDataPayload(TypedDict, total=False):
     poll: UNIMPLEMENTED
 
 
+class AutocompleteResultPayload(TypedDict):
+    choices: list[AutocompleteChoicePayload]
+
+
 type InteractionCallbackDataPayload = (
-    InteractionMessageCallbackDataPayload | ModalPayload
+    InteractionMessageCallbackDataPayload | ModalPayload | AutocompleteResultPayload
 )
 
 
