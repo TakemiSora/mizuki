@@ -21,7 +21,12 @@ from mizuki.managers.command import CommandManager
 from mizuki.managers.guild import GuildManager
 from mizuki.managers.message import MessageManager
 from mizuki.managers.user import UserManager
-from mizuki.objects.command import Localization, PartialApplicationCommand
+from mizuki.objects.command import (
+    Localization,
+    ApplicationCommandOption,
+    PartialApplicationCommand,
+    PartialSubCommandGroup,
+)
 from mizuki.objects.interaction import ApplicationCommandData, Interaction
 from mizuki.objects.permissions import Permissions
 from mizuki.objects.user import User
@@ -101,7 +106,9 @@ class Bot:
         self.intents = intents
         self._listeners: dict[str, list[CoroFunc]] = {}
         self._setup_hook: CoroFunc | None = None
-        self._commands_data: dict[str, tuple[int, PartialApplicationCommand]] = {}
+        self._commands_data: dict[
+            str, tuple[int, PartialApplicationCommand | PartialSubCommandGroup]
+        ] = {}
         self._storage = CacheStorage(cache_settings or CacheSettings())
         self._state = ConnectionState(
             default_component_timeout=default_component_timeout,
@@ -433,3 +440,36 @@ class Bot:
             return func
 
         return decorator
+
+    def register_command_subgroup(
+        self, subgroup: PartialSubCommandGroup, *, guild_id: int | None = None
+    ) -> None:
+        self._commands_data[subgroup.name] = (guild_id or 0, subgroup)
+
+    def create_command_subgroup(
+        self,
+        *,
+        name: str,
+        name_localizations: Localization = _MISSING,
+        description: str,
+        description_localizations: Localization = _MISSING,
+        default_member_permissions: Permissions = _MISSING,
+        integration_types: list[ApplicationIntegrationType] = _MISSING,
+        contexts: list[InteractionContextType] = _MISSING,
+        nsfw: bool = False,
+        guild_id: int | None = None,
+    ) -> PartialSubCommandGroup:
+        subgroup = PartialSubCommandGroup.new(
+            name=name,
+            name_localizations=name_localizations,
+            description=description,
+            description_localizations=description_localizations,
+            default_member_permissions=default_member_permissions,
+            integration_types=integration_types,
+            contexts=contexts,
+            nsfw=nsfw,
+        )
+
+        self.register_command_subgroup(subgroup, guild_id=guild_id)
+
+        return subgroup
