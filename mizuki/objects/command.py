@@ -44,21 +44,24 @@ from mizuki.payloads.command import (
     LocalizationPayload,
     PartialApplicationCommandPayload,
 )
-from mizuki.payloads.interaction import ApplicationCommandDataOptionPayload
 
 if TYPE_CHECKING:
-    from mizuki.objects.interaction import ApplicationCommandData, Interaction
+    from mizuki.objects.interaction import (
+        ApplicationCommandData,
+        ApplicationCommandDataOption,
+        Interaction,
+    )
 
 __all__ = (
     "ApplicationCommand",
     "ApplicationCommandChoice",
+    "ApplicationCommandGroup",
     "ApplicationCommandOption",
     "Localization",
     "Mentionable",
     "PartialApplicationCommand",
-    "PartialSubCommandGroup",
+    "PartialApplicationCommandGroup",
     "SubCommand",
-    "SubCommandGroup",
 )
 
 
@@ -417,6 +420,8 @@ class PartialApplicationCommand:
         "type",
     )
 
+    _callback: Callable[..., Coroutine[Any, Any, Any]]
+
     def __init__(self, data: PartialApplicationCommandPayload):
         self.type = ApplicationCommandType(data.get("type", 1))
         self.name = data["name"]
@@ -461,7 +466,7 @@ class PartialApplicationCommand:
         return assign_val(
             cls(
                 {
-                    "type": 1,
+                    "type": type.value,
                     "name": name,
                     "description": description or "",
                     "default_member_permissions": getattr(
@@ -573,12 +578,15 @@ class SubCommand:
     type: CommandOptionType = CommandOptionType.SUB_COMMAND
 
     __slots__ = (
+        "_callback",
         "description",
         "description_localizations",
         "name",
         "name_localizations",
         "options",
     )
+
+    _callback: Callable[..., Coroutine[Any, Any, Any]]
 
     def __init__(self, data: ApplicationCommandOptionPayload) -> None:
         self.name = data["name"]
@@ -610,12 +618,14 @@ class SubCommand:
         description: str,
         description_localizations: Localization = _MISSING,
         options: list[ApplicationCommandOption] = _MISSING,
+        callback: Callable[..., Coroutine[Any, Any, Any]] = _MISSING,
     ) -> SubCommand:
         return assign_val(
             cls({"type": cls.type.value, "name": name, "description": description}),
             name_localizations=name_localizations,
             description_localizations=description_localizations,
             options=options,
+            _callback=callback,
         )
 
     @classmethod
@@ -652,10 +662,108 @@ class SubCommand:
             description=description,
             description_localizations=description_localizations,
             options=options,
+            callback=func,
         )
 
 
-class PartialSubCommandGroup:
+class NestedApplicationCommandGroup:
+    type: CommandOptionType = CommandOptionType.SUB_COMMAND_GROUP
+
+    __slots__ = (
+        "description",
+        "description_localizations",
+        "name",
+        "name_localizations",
+        "options",
+    )
+
+    name: str
+    name_localizations: Localization | None
+    description: str
+    description_localizations: Localization | None
+    options: list[SubCommand]
+
+    def __init__(self, data: ApplicationCommandOptionPayload) -> None:
+        self.name = data["name"]
+        self.name_localizations = scls(Localization, data.get("name_localizations"))
+        self.description = data["description"]
+        self.description_localizations = scls(
+            Localization, data.get("description_localizations")
+        )
+        self.options = [SubCommand(o) for o in data.get("options", [])]
+
+    def _to_dict(self) -> JSONPayload:
+        return assign_val_dict(
+            {
+                "type": self.type.value,
+                "name": self.name,
+                "description": self.description,
+                "options": maybe_iter(self.options),
+            },
+            name_localizations=mtd(self.name_localizations),
+            description_localizations=mtd(self.description_localizations),
+        )
+
+    def _get_response_data(
+        self, data_options: list[ApplicationCommandDataOption]
+    ) -> tuple[Callable[..., Coroutine[Any, Any, Any]], ApplicationCommandDataOption]:
+        for option in self.options:
+            if option.name == data_options[0].name:
+                return getattr(option, "_callback", None), data_options[0].options
+
+    def command(
+        self,
+        *,
+        name: str,
+        name_localizations: Localization = _MISSING,
+        description: str,
+        description_localizations: Localization = _MISSING,
+    ) -> CoroDecorator:
+        def decorator(func: CoroFunc) -> CoroFunc:
+            if not inspect.iscoroutinefunction(func):
+                raise TypeError(
+                    f"Command callback for '{name}:{func.__name__}' has to be a coroutine function."
+                )
+
+            self.options.append(
+                SubCommand._from_function(
+                    func,
+                    name=name,
+                    name_localizations=name_localizations,
+                    description=description,
+                    description_localizations=description_localizations,
+                )
+            )
+
+            return func
+
+        return decorator
+
+    @classmethod
+    def new(
+        cls,
+        *,
+        name: str,
+        name_localizations: Localization = _MISSING,
+        description: str,
+        description_localizations: Localization = _MISSING,
+        options: list[SubCommand] = _MISSING,
+    ) -> NestedApplicationCommandGroup:
+        return assign_val(
+            cls(
+                {
+                    "type": cls.type.value,
+                    "name": name,
+                    "description": description,
+                }
+            ),
+            name_localizations=name_localizations,
+            description_localizations=description_localizations,
+            options=options,
+        )
+
+
+class PartialApplicationCommandGroup:
     type: ApplicationCommandType = ApplicationCommandType.CHAT_INPUT
 
     __slots__ = (
@@ -677,12 +785,12 @@ class PartialSubCommandGroup:
         self.description_localizations = scls(
             Localization, data.get("description_localizations")
         )
-        self.options: list[PartialSubCommandGroup | SubCommand] = []
+        self.options: list[NestedApplicationCommandGroup | SubCommand] = []
         for option in data.get("options", []):
             if option["type"] == CommandOptionType.SUB_COMMAND:
                 self.options.append(SubCommand(option))
             elif option["type"] == CommandOptionType.SUB_COMMAND_GROUP:
-                self.options.append(PartialSubCommandGroup(option))
+                self.options.append(NestedApplicationCommandGroup(option))
         self.nsfw = data.get("nsfw", False)
         self.integration_types = [
             ApplicationIntegrationType(a) for a in data.get("integration_types", [])
@@ -710,7 +818,9 @@ class PartialSubCommandGroup:
             description_localizations=mtd(self.description_localizations),
             options=maybe_iter(self.options),
             nsfw=self.nsfw,
-            integration_types=[i.value for i in self.integration_types] if self.integration_types else None,
+            integration_types=[i.value for i in self.integration_types]
+            if self.integration_types
+            else None,
             contexts=(
                 maybe_iter(self.contexts, lambda x: x.value) if self.contexts else None
             ),
@@ -744,6 +854,19 @@ class PartialSubCommandGroup:
 
         return decorator
 
+    def _get_response_data(
+        self, data_options: tuple[ApplicationCommandDataOption, ...]
+    ) -> tuple[
+        Callable[..., Coroutine[Any, Any, Any]] | None,
+        tuple[ApplicationCommandDataOption, ...],
+    ]:
+        for option in self.options:
+            if option.name == data_options[0].name:
+                if isinstance(option, SubCommand):
+                    return getattr(option, "_callback", None), data_options[0].options
+                else:
+                    return option._get_response_data(data_options[0].options)
+
     @staticmethod
     def new(
         *,
@@ -751,14 +874,14 @@ class PartialSubCommandGroup:
         name_localizations: Localization = _MISSING,
         description: str,
         description_localizations: Localization = _MISSING,
-        options: list[ApplicationCommandOption] = _MISSING,
+        options: list[NestedApplicationCommandGroup | SubCommand] = _MISSING,
         default_member_permissions: Permissions = _MISSING,
         integration_types: list[ApplicationIntegrationType] = _MISSING,
         contexts: list[InteractionContextType] = _MISSING,
         nsfw: bool = False,
-    ) -> PartialSubCommandGroup:
+    ) -> PartialApplicationCommandGroup:
         return assign_val(
-            PartialSubCommandGroup(
+            PartialApplicationCommandGroup(
                 {
                     "type": ApplicationCommandType.CHAT_INPUT.value,
                     "name": name,
@@ -776,12 +899,33 @@ class PartialSubCommandGroup:
             nsfw=nsfw,
         )
 
+    def create_subgroup(
+        self,
+        *,
+        name: str,
+        name_localizations: Localization = _MISSING,
+        description: str,
+        description_localizations: Localization = _MISSING,
+        options: list[SubCommand] = _MISSING,
+    ) -> NestedApplicationCommandGroup:
+        subgroup = NestedApplicationCommandGroup.new(
+            name=name,
+            name_localizations=name_localizations,
+            description=description,
+            description_localizations=description_localizations,
+            options=options,
+        )
+
+        self.options.append(subgroup)
+
+        return subgroup
+
     @property
-    def commands(self) -> list[PartialSubCommandGroup | SubCommand]:
+    def commands(self) -> list[NestedApplicationCommandGroup | SubCommand]:
         return self.options
 
 
-class SubCommandGroup(PartialSubCommandGroup):
+class ApplicationCommandGroup(PartialApplicationCommandGroup):
     __slots__ = (
         "application_id",
         "guild_id",

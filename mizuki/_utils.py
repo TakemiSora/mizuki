@@ -1,7 +1,7 @@
+from collections.abc import Callable, Coroutine, Iterable, Iterator
 from datetime import datetime
 from enum import IntFlag
 from typing import Any, Literal, Never, Protocol, cast, overload
-from collections.abc import Callable, Coroutine, Iterable, Iterator
 
 
 class Missing:
@@ -32,9 +32,10 @@ def assign_val[T](obj: T, check_against: Any = _MISSING, /, **kwargs: Any) -> T:
     return obj
 
 
-def mtd[T](obj: SupportsToDict[T] | Missing | None) -> T | None:
+def mtd[T](obj: SupportsToDict[T] | Missing | None) -> T | Missing | None:
     if obj is not None and not isinstance(obj, Missing):
         return obj._to_dict()
+    return obj
 
 
 @overload

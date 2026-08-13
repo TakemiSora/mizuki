@@ -1,31 +1,28 @@
 from __future__ import annotations
+
 import asyncio
 import logging
-
-from typing import Any, TYPE_CHECKING
+from collections.abc import Callable, Coroutine
+from typing import TYPE_CHECKING, Any
 
 from mizuki._utils import scls
-
 from mizuki.enums.channel import ChannelType
 from mizuki.enums.command import ApplicationCommandType, CommandOptionType
 from mizuki.enums.interaction import InteractionType
-from mizuki.objects.command import ApplicationCommandOption
 from mizuki.objects.channel import ThreadChannel, ThreadMember, parse_channel_payload
+from mizuki.objects.command import ApplicationCommandOption, PartialApplicationCommand
 from mizuki.objects.components.common import BaseComponentResponse
 from mizuki.objects.guild import Guild, UnavailableGuild, parse_guild_payload
 from mizuki.objects.interaction import (
-    Interaction,
     ApplicationCommandData,
     ApplicationCommandDataOption,
+    Interaction,
     ResolvedData,
 )
 from mizuki.objects.modal import ModalResponse
 
 if TYPE_CHECKING:
     from mizuki.bot import Bot
-
-    from mizuki.payloads.guild import GuildPayload, UnavailableGuildPayload
-    from mizuki.payloads.interaction import InteractionPayload
     from mizuki.payloads.channel import (
         GuildChannelPayload,
         PrivateChannelPayload,
@@ -33,6 +30,8 @@ if TYPE_CHECKING:
         ThreadDeletePayload,
         ThreadPayload,
     )
+    from mizuki.payloads.guild import GuildPayload, UnavailableGuildPayload
+    from mizuki.payloads.interaction import InteractionPayload
 
 _log = logging.getLogger(__name__)
 
@@ -61,7 +60,7 @@ class EventDispatcher:
             InteractionType.APPLICATION_COMMAND: self._dispatch_commands,
             InteractionType.MESSAGE_COMPONENT: self._dispatch_components,
             InteractionType.MODAL_SUBMIT: self._dispatch_modals,
-            InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE: self._dispatch_autocompletors
+            InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE: self._dispatch_autocompletors,
         }
 
     def _on_task_done(self, task: asyncio.Task, data: str):
@@ -75,7 +74,8 @@ class EventDispatcher:
         for f in self.bot._listeners.get(key, []):
             asyncio.create_task(f(*args)).add_done_callback(
                 lambda t: self._on_task_done(
-                    t, f"Function {f.__name__} listening to '{key}'"
+                    t,
+                    f"Function {f.__name__} listening to '{key}'",  # noqa: B023
                 )
             )
             _log.debug("Dispatched %s to function '%s'.", key, f.__name__)
@@ -119,7 +119,7 @@ class EventDispatcher:
         self,
         command_options: dict[str, ApplicationCommandOption],
         resolved: ResolvedData | None,
-        options: list[ApplicationCommandDataOption],
+        options: tuple[ApplicationCommandDataOption[str | int | float], ...],
     ) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
         display_to_callback_keys: dict[str, str] = {
@@ -134,55 +134,68 @@ class EventDispatcher:
             #   Attempts to fjnd correct CallbackParameterName, if not defaults to DisplayParameterName
         return kwargs
 
-    async def _dispatch_commands(self, interaction: Interaction):
-        assert isinstance(interaction.data, ApplicationCommandData)
-
+    async def _dispatch_commands(
+        self, interaction: Interaction[ApplicationCommandData]
+    ):
         command_data = self.bot._commands_data.get(interaction.data.name)
-        callback = command_data[1]._callback if command_data else None
 
-        if callback:
-            if interaction.data.type is ApplicationCommandType.CHAT_INPUT:
-                kwargs = self._parse_options(
-                    getattr(callback, "__command_options__", {}),
-                    interaction.data.resolved,
-                    interaction.data.options,
+        if command_data:
+            command = command_data[1]
+
+            callback: Callable[..., Coroutine[Any, Any, Any]] | None
+
+            if isinstance(command, PartialApplicationCommand):
+                callback = getattr(command, "_callback", None)
+                options = interaction.data.options
+            else:
+                callback, options = command._get_response_data(interaction.data.options)
+
+            if callback:
+                if interaction.data.type is ApplicationCommandType.CHAT_INPUT:
+                    kwargs = self._parse_options(
+                        getattr(callback, "__command_options__", {}),
+                        interaction.data.resolved,
+                        options,
+                    )
+
+                    coro = callback(interaction, **kwargs)
+
+                elif interaction.data.type is ApplicationCommandType.USER:
+                    assert interaction.data.target_id is not None
+
+                    coro = callback(
+                        interaction,
+                        interaction.data.resolved.users[interaction.data.target_id],
+                        interaction.data.resolved.members.get(
+                            interaction.data.target_id
+                        ),
+                    )
+
+                elif interaction.data.type is ApplicationCommandType.MESSAGE:
+                    assert interaction.data.target_id is not None
+
+                    coro = callback(
+                        interaction,
+                        interaction.data.resolved.messages[interaction.data.target_id],
+                    )
+
+                asyncio.create_task(coro).add_done_callback(
+                    lambda t: self._on_task_done(
+                        t,
+                        f"Handler Function {callback.__name__} for command '{interaction.data.name}'",  # type: ignore # This is resolved
+                    )
                 )
-
-                coro = callback(interaction, **kwargs)
-
-            elif interaction.data.type is ApplicationCommandType.USER:
-                assert interaction.data.target_id is not None
-
-                coro = callback(
-                    interaction,
-                    interaction.data.resolved.users[interaction.data.target_id],
-                    interaction.data.resolved.members.get(interaction.data.target_id),
+                _log.debug(
+                    "Command %s (func=%s) dispatched.",
+                    interaction.data.name,
+                    callback.__name__,
                 )
+                return
 
-            elif interaction.data.type is ApplicationCommandType.MESSAGE:
-                assert interaction.data.target_id is not None
-
-                coro = callback(
-                    interaction,
-                    interaction.data.resolved.messages[interaction.data.target_id],
-                )
-
-            asyncio.create_task(coro).add_done_callback(
-                lambda t: self._on_task_done(
-                    t,
-                    f"Handler Function {callback.__name__} for command '{interaction.data.name}'",  # type: ignore # This is resolved
-                )
-            )
-            _log.debug(
-                "Command %s (func=%s) dispatched.",
-                interaction.data.name,
-                callback.__name__,
-            )
-        else:
-            _log.warning(
-                "Recieved command %s, but no handler was found for it.",
-                interaction.data.name,
-            )
+        _log.warning(
+            "Recieved command %s, but no handler was found for it.",
+            interaction.data.name,
+        )
 
     async def _dispatch_components(self, interaction: Interaction):
         assert (
@@ -258,7 +271,7 @@ class EventDispatcher:
             ).add_done_callback(
                 lambda t: self._on_task_done(
                     t,
-                    f"Autocomplete Handler (InteractionID={interaction.id}, CommandName={name}, Func={autocompletor.__name__}"
+                    f"Autocomplete Handler (InteractionID={interaction.id}, CommandName={name}, Func={autocompletor.__name__}",
                 )
             )
 
@@ -266,14 +279,14 @@ class EventDispatcher:
                 "Dispatched autocompletor (InteractionID=%s, CommandName=%s, Func=%s)",
                 interaction.id,
                 name,
-                autocompletor.__name__
+                autocompletor.__name__,
             )
 
         else:
             _log.warning(
                 "Recieved autocomplete request (InteractionID=%s, CommandName=%s), but no autocompletor was found for it.",
                 interaction.id,
-                name
+                name,
             )
 
     async def _handle_guild_create(self, data: GuildPayload | UnavailableGuildPayload):
@@ -345,7 +358,6 @@ class EventDispatcher:
     async def _handle_interaction_create(self, data: InteractionPayload):
         guild = self.bot.guilds.get(int(g)) if (g := data.get("guild_id")) else None
         interaction = Interaction(data, guild=guild, state=self.bot._state)
-
         if dispatcher := self._interaction_dispatchers.get(interaction.type):
             await dispatcher(interaction)
 

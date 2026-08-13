@@ -23,9 +23,8 @@ from mizuki.managers.message import MessageManager
 from mizuki.managers.user import UserManager
 from mizuki.objects.command import (
     Localization,
-    ApplicationCommandOption,
     PartialApplicationCommand,
-    PartialSubCommandGroup,
+    PartialApplicationCommandGroup,
 )
 from mizuki.objects.interaction import ApplicationCommandData, Interaction
 from mizuki.objects.permissions import Permissions
@@ -107,7 +106,7 @@ class Bot:
         self._listeners: dict[str, list[CoroFunc]] = {}
         self._setup_hook: CoroFunc | None = None
         self._commands_data: dict[
-            str, tuple[int, PartialApplicationCommand | PartialSubCommandGroup]
+            str, tuple[int, PartialApplicationCommand | PartialApplicationCommandGroup]
         ] = {}
         self._storage = CacheStorage(cache_settings or CacheSettings())
         self._state = ConnectionState(
@@ -442,11 +441,11 @@ class Bot:
         return decorator
 
     def register_command_subgroup(
-        self, subgroup: PartialSubCommandGroup, *, guild_id: int | None = None
+        self, subgroup: PartialApplicationCommandGroup, *, guild_id: int | None = None
     ) -> None:
         self._commands_data[subgroup.name] = (guild_id or 0, subgroup)
 
-    def create_command_subgroup(
+    def create_command_group(
         self,
         *,
         name: str,
@@ -458,8 +457,8 @@ class Bot:
         contexts: list[InteractionContextType] = _MISSING,
         nsfw: bool = False,
         guild_id: int | None = None,
-    ) -> PartialSubCommandGroup:
-        subgroup = PartialSubCommandGroup.new(
+    ) -> PartialApplicationCommandGroup:
+        subgroup = PartialApplicationCommandGroup.new(
             name=name,
             name_localizations=name_localizations,
             description=description,
