@@ -374,7 +374,7 @@ class ResponseHandler:
                     type=InteractionCallbackType.CHANNEL_MESSAGE_WITH_SOURCE,
                     files=files,
                     data=assign_val_dict(
-                        {"tts": tts},
+                        {"tts": tts}, _MISSING,
                         allowed_mentions=mtd(allowed_mentions),
                         content=content,
                         embeds=maybe_iter(embeds),
@@ -697,7 +697,7 @@ class ResponseHandler:
                 method="PATCH",
                 files=files,
                 json=assign_val_dict(
-                    InteractionWebhookMessagePayload(),
+                    {},
                     _MISSING,
                     content=content,
                     embeds=maybe_iter(embeds),
