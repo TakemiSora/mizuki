@@ -404,6 +404,20 @@ class ApplicationCommandOption:
         )
 
 
+type CommandResponseData = tuple[
+    Callable[..., Coroutine[Any, Any, Any]] | None,
+    Callable[
+        [
+            Interaction[ApplicationCommandData.AnyOptionTypesApplicationCommandData],
+            dict[str, ApplicationCommandDataOption[str | int | float]],
+        ],
+        Coroutine[Any, Any, Any],
+    ]
+    | None,
+    ApplicationCommandDataOption.AnyApplicationCommandDataOptions,
+]
+
+
 class PartialApplicationCommand:
     __slots__ = (
         "_autocompletor",
@@ -420,9 +434,24 @@ class PartialApplicationCommand:
         "type",
     )
 
-    _callback: Callable[..., Coroutine[Any, Any, Any]]
+    _autocompletor: (
+        Callable[
+            [
+                Interaction[
+                    ApplicationCommandData.AnyOptionTypesApplicationCommandData
+                ],
+                dict[str, ApplicationCommandDataOption[str | int | float]],
+            ],
+            Coroutine[Any, Any, Any],
+        ]
+        | None
+    )
+    _callback: Callable[..., Coroutine[Any, Any, Any]] | None
 
     def __init__(self, data: PartialApplicationCommandPayload):
+        self._autocompletor = None
+        self._callback = None
+
         self.type = ApplicationCommandType(data.get("type", 1))
         self.name = data["name"]
         self.name_localizations = scls(Localization, data.get("name_localizations"))
@@ -460,7 +489,13 @@ class PartialApplicationCommand:
         nsfw: bool = False,
         callback: CoroFunc = _MISSING,
         autocompletor: Callable[
-            [Interaction, ApplicationCommandData], Coroutine[Any, Any, Any]
+            [
+                Interaction[
+                    ApplicationCommandData.AnyOptionTypesApplicationCommandData
+                ],
+                dict[str, ApplicationCommandDataOption[str | int | float]],
+            ],
+            Coroutine[Any, Any, Any],
         ] = _MISSING,
     ) -> Self:
         return assign_val(
@@ -481,7 +516,7 @@ class PartialApplicationCommand:
             contexts=contexts,
             nsfw=nsfw,
             _callback=callback,
-            autocompletor=autocompletor,
+            _autocompletor=autocompletor,
         )
 
     @classmethod
@@ -499,7 +534,13 @@ class PartialApplicationCommand:
         type: ApplicationCommandType = ApplicationCommandType.CHAT_INPUT,
         nsfw: bool = False,
         autocompletor: Callable[
-            [Interaction, ApplicationCommandData], Coroutine[Any, Any, Any]
+            [
+                Interaction[
+                    ApplicationCommandData.AnyOptionTypesApplicationCommandData
+                ],
+                dict[str, ApplicationCommandDataOption[str | int | float]],
+            ],
+            Coroutine[Any, Any, Any],
         ] = _MISSING,
     ) -> Self:
         options: list[ApplicationCommandOption] = []
@@ -536,7 +577,7 @@ class PartialApplicationCommand:
             autocompletor=autocompletor,
         )
 
-    def _to_dict(self) -> PartialApplicationCommandPayload:
+    def _to_dict(self) -> JSONPayload:
         return assign_val_dict(
             {
                 "type": self.type.value,
@@ -549,11 +590,19 @@ class PartialApplicationCommand:
             name_localizations=mtd(self.name_localizations),
             description_localizations=mtd(self.description_localizations),
             options=[o._to_dict() for o in self.options] if self.options else None,
-            integration_types=[i.value for i in self.integration_types]
-            if self.integration_types
-            else None,
+            integration_types=(
+                [i.value for i in self.integration_types]
+                if self.integration_types
+                else None
+            ),
             contexts=[c.value for c in self.contexts] if self.contexts else None,
         )
+
+    def _get_response_data(
+        self,
+        data_options: ApplicationCommandDataOption.AnyApplicationCommandDataOptions,
+    ) -> CommandResponseData:
+        return self._callback, self._autocompletor, data_options
 
 
 class ApplicationCommand(PartialApplicationCommand):
@@ -578,6 +627,7 @@ class SubCommand:
     type: CommandOptionType = CommandOptionType.SUB_COMMAND
 
     __slots__ = (
+        "_autocompletor",
         "_callback",
         "description",
         "description_localizations",
@@ -586,9 +636,24 @@ class SubCommand:
         "options",
     )
 
-    _callback: Callable[..., Coroutine[Any, Any, Any]]
+    _callback: Callable[..., Coroutine[Any, Any, Any]] | None
+    _autocompletor: (
+        Callable[
+            [
+                Interaction[
+                    ApplicationCommandData.AnyOptionTypesApplicationCommandData
+                ],
+                dict[str, ApplicationCommandDataOption[str | int | float]],
+            ],
+            Coroutine[Any, Any, Any],
+        ]
+        | None
+    )
 
     def __init__(self, data: ApplicationCommandOptionPayload) -> None:
+        self._autocompletor = None
+        self._callback = None
+
         self.name = data["name"]
         self.name_localizations = scls(Localization, data.get("name_localizations"))
         self.description = data["description"]
@@ -619,6 +684,15 @@ class SubCommand:
         description_localizations: Localization = _MISSING,
         options: list[ApplicationCommandOption] = _MISSING,
         callback: Callable[..., Coroutine[Any, Any, Any]] = _MISSING,
+        autocompletor: Callable[
+            [
+                Interaction[
+                    ApplicationCommandData.AnyOptionTypesApplicationCommandData
+                ],
+                dict[str, ApplicationCommandDataOption[str | int | float]],
+            ],
+            Coroutine[Any, Any, Any],
+        ] = _MISSING,
     ) -> SubCommand:
         return assign_val(
             cls({"type": cls.type.value, "name": name, "description": description}),
@@ -626,6 +700,7 @@ class SubCommand:
             description_localizations=description_localizations,
             options=options,
             _callback=callback,
+            _autocompletor=autocompletor,
         )
 
     @classmethod
@@ -637,6 +712,15 @@ class SubCommand:
         name_localizations: Localization = _MISSING,
         description: str,
         description_localizations: Localization = _MISSING,
+        autocompletor: Callable[
+            [
+                Interaction[
+                    ApplicationCommandData.AnyOptionTypesApplicationCommandData
+                ],
+                dict[str, ApplicationCommandDataOption[str | int | float]],
+            ],
+            Coroutine[Any, Any, Any],
+        ] = _MISSING,
     ) -> SubCommand:
         options: list[ApplicationCommandOption] = []
 
@@ -663,6 +747,7 @@ class SubCommand:
             description_localizations=description_localizations,
             options=options,
             callback=func,
+            autocompletor=autocompletor,
         )
 
 
@@ -705,11 +790,18 @@ class NestedApplicationCommandGroup:
         )
 
     def _get_response_data(
-        self, data_options: list[ApplicationCommandDataOption]
-    ) -> tuple[Callable[..., Coroutine[Any, Any, Any]], ApplicationCommandDataOption]:
+        self,
+        data_options: ApplicationCommandDataOption.AnyApplicationCommandDataOptions,
+    ) -> CommandResponseData:
+        callback = None
+        autocompletor = None
+
         for option in self.options:
             if option.name == data_options[0].name:
-                return getattr(option, "_callback", None), data_options[0].options
+                callback = option._callback
+                autocompletor = option._autocompletor
+
+        return callback, autocompletor, data_options[0].options
 
     def command(
         self,
@@ -718,6 +810,15 @@ class NestedApplicationCommandGroup:
         name_localizations: Localization = _MISSING,
         description: str,
         description_localizations: Localization = _MISSING,
+        autocompletor: Callable[
+            [
+                Interaction[
+                    ApplicationCommandData.AnyOptionTypesApplicationCommandData
+                ],
+                dict[str, ApplicationCommandDataOption[str | int | float]],
+            ],
+            Coroutine[Any, Any, Any],
+        ] = _MISSING,
     ) -> CoroDecorator:
         def decorator(func: CoroFunc) -> CoroFunc:
             if not inspect.iscoroutinefunction(func):
@@ -732,6 +833,7 @@ class NestedApplicationCommandGroup:
                     name_localizations=name_localizations,
                     description=description,
                     description_localizations=description_localizations,
+                    autocompletor=autocompletor,
                 )
             )
 
@@ -833,6 +935,15 @@ class PartialApplicationCommandGroup:
         name_localizations: Localization = _MISSING,
         description: str,
         description_localizations: Localization = _MISSING,
+        autocompletor: Callable[
+            [
+                Interaction[
+                    ApplicationCommandData.AnyOptionTypesApplicationCommandData
+                ],
+                dict[str, ApplicationCommandDataOption[str | int | float]],
+            ],
+            Coroutine[Any, Any, Any],
+        ] = _MISSING,
     ) -> CoroDecorator:
         def decorator(func: CoroFunc) -> CoroFunc:
             if not inspect.iscoroutinefunction(func):
@@ -847,6 +958,7 @@ class PartialApplicationCommandGroup:
                     name_localizations=name_localizations,
                     description=description,
                     description_localizations=description_localizations,
+                    autocompletor=autocompletor,
                 )
             )
 
@@ -855,17 +967,21 @@ class PartialApplicationCommandGroup:
         return decorator
 
     def _get_response_data(
-        self, data_options: tuple[ApplicationCommandDataOption, ...]
-    ) -> tuple[
-        Callable[..., Coroutine[Any, Any, Any]] | None,
-        tuple[ApplicationCommandDataOption, ...],
-    ]:
+        self,
+        data_options: ApplicationCommandDataOption.AnyApplicationCommandDataOptions,
+    ) -> CommandResponseData:
+        callback = None
+        autocompletor = None
+
         for option in self.options:
             if option.name == data_options[0].name:
                 if isinstance(option, SubCommand):
-                    return getattr(option, "_callback", None), data_options[0].options
+                    callback = option._callback
+                    autocompletor = option._autocompletor
                 else:
                     return option._get_response_data(data_options[0].options)
+
+        return callback, autocompletor, data_options[0].options
 
     @staticmethod
     def new(
@@ -941,3 +1057,14 @@ class ApplicationCommandGroup(PartialApplicationCommandGroup):
         self.guild_id = Snowflake._from_str(data.get("guild_id"))
         self.version = Snowflake._from_str(data.get("version"))
         self.handler = scls(CommandHandler, data.get("handler"))
+
+
+def parse_application_command(
+    data: ApplicationCommandPayload,
+) -> ApplicationCommand | ApplicationCommandGroup:
+    if data.get("options", [])[0]["type"] in (
+        CommandOptionType.SUB_COMMAND,
+        CommandOptionType.SUB_COMMAND_GROUP,
+    ):
+        return ApplicationCommandGroup(data)
+    return ApplicationCommand(data)

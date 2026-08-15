@@ -26,7 +26,11 @@ from mizuki.objects.command import (
     PartialApplicationCommand,
     PartialApplicationCommandGroup,
 )
-from mizuki.objects.interaction import ApplicationCommandData, Interaction
+from mizuki.objects.interaction import (
+    ApplicationCommandData,
+    ApplicationCommandDataOption,
+    Interaction,
+)
 from mizuki.objects.permissions import Permissions
 from mizuki.objects.user import User
 from mizuki.state import ConnectionState
@@ -281,7 +285,13 @@ class Bot:
         default_member_permissions: Permissions = _MISSING,
         nsfw: bool = False,
         autocompletor: Callable[
-            [Interaction, ApplicationCommandData], Coroutine[Any, Any, Any]
+            [
+                Interaction[
+                    ApplicationCommandData.AnyOptionTypesApplicationCommandData
+                ],
+                dict[str, ApplicationCommandDataOption],
+            ],
+            Coroutine[Any, Any, Any],
         ] = _MISSING,
     ) -> CoroDecorator: ...
 
@@ -301,7 +311,13 @@ class Bot:
         contexts: list[InteractionContextType] = _MISSING,
         nsfw: bool = False,
         autocompletor: Callable[
-            [Interaction, ApplicationCommandData], Coroutine[Any, Any, Any]
+            [
+                Interaction[
+                    ApplicationCommandData.AnyOptionTypesApplicationCommandData
+                ],
+                dict[str, ApplicationCommandDataOption],
+            ],
+            Coroutine[Any, Any, Any],
         ] = _MISSING,
     ) -> CoroDecorator: ...
 
@@ -344,7 +360,13 @@ class Bot:
         contexts: list[InteractionContextType] = _MISSING,
         nsfw: bool = False,
         autocompletor: Callable[
-            [Interaction, ApplicationCommandData], Coroutine[Any, Any, Any]
+            [
+                Interaction[
+                    ApplicationCommandData.AnyOptionTypesApplicationCommandData
+                ],
+                dict[str, ApplicationCommandDataOption],
+            ],
+            Coroutine[Any, Any, Any],
         ] = _MISSING,
     ) -> CoroDecorator:
         """

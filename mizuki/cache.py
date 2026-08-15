@@ -1,14 +1,13 @@
 import asyncio
-
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import cast
 
-from mizuki.objects.user import User
-from mizuki.objects.message import Message
 from mizuki.objects.channel import Channel
-from mizuki.objects.command import ApplicationCommand
+from mizuki.objects.command import ApplicationCommand, ApplicationCommandGroup
 from mizuki.objects.guild import Guild
+from mizuki.objects.message import Message
+from mizuki.objects.user import User
 
 type Cachable = User | Message | Channel | Guild | ApplicationCommand
 
@@ -31,26 +30,37 @@ class CacheSettings:
     ----------
     users : :class:`bool`, optional
         Toggle caching of :class:`User <mizuki.objects.user.User>` objects. Defaults to ``True``.
+
     messages : :class:`bool`, optional
         Toggle caching of :class:`Message <mizuki.objects.message.Message>` objects. Defaults to ``True``.
+
     channels : :class:`bool`, optional
         Toggle caching of :class:`PrivateChannel <mizuki.objects.channel.PrivateChannel>`, :class:`ThreadChannel <mizuki.objects.channel.ThreadChannel>` and :class:`GuildChannel <mizuki.objects.channel.GuildChannel>` objects. Defaults to ``True``.
+
     guilds : :class:`bool`, optional
         Toggle caching of :class:`Guild <mizuki.objects.guild.Guild>` objects. Defaults to ``True``.
+
     commands: :class:`bool`, optional
         Toggle caching of :class:`ApplicationCommand <mizuki.objects.command.ApplicationCommand>` objects. Defaults to ``True``.
+
     cache_invalidation : :class:`bool`, optional
         Toggle if cache should be invalidated based on time. Defaults to ``False``.
+
     invalidation_time : :class:`timedelta <datetime.timedelta>`, optional
         Determines how long a CacheEntry object can live without being invalidated. Defaults to ``timedelta(days=1)``.
+
     cleanup_interval : :class:`timedelta <datetime.timedelta>`, optional
         Determines how often the Cache will be cleaned up. Defaults to ``timedelta(hours=6)``.
+
     max_users_store : :class:`int` | :class:`None`, optional
         Determines the max amount of :class:`User <mizuki.objects.user.User>` objects the cache will store. Defaults to ``None``.
+
     max_messages_store : :class:`int` | :class:`None`, optional
         Determines the max amount of :class:`Message <mizuki.objects.message.Message>` objects the cache will store. Defaults to ``2000``.
+
     max_channels_store : :class:`int` | :class:`None`, optional
         Determines the max amount of :class:`PrivateChannel <mizuki.objects.channel.PrivateChannel>`, :class:`ThreadChannel <mizuki.objects.channel.ThreadChannel>` and :class:`GuildChannel <mizuki.objects.channel.GuildChannel>` objects the cache will store. Defaults to ``None``.
+
     max_guilds_store : :class:`int` | :class:`None`, optional
         Determines the max amount of :class:`Guild <mizuki.objects.guild.Guild>` objects the cache will store. Defaults to ``None``.
     """
@@ -92,18 +102,18 @@ class CacheSettings:
     "The max amount of :class:`Guild <mizuki.objects.guild.Guild>` objects the cache will store."
 
     __slots__ = (
-        "users",
-        "messages",
-        "channels",
-        "guilds",
-        "commands",
         "cache_invalidation",
-        "invalidation_time",
+        "channels",
         "cleanup_interval",
-        "max_users_store",
-        "max_messages_store",
+        "commands",
+        "guilds",
+        "invalidation_time",
         "max_channels_store",
         "max_guilds_store",
+        "max_messages_store",
+        "max_users_store",
+        "messages",
+        "users",
     )
 
     def __init__(
@@ -136,19 +146,17 @@ class CacheSettings:
 
 
 class CacheStorage:
-    ":meta private:"
-
     __slots__ = (
-        "settings",
-        "users",
-        "messages",
-        "channels",
-        "guilds",
-        "commands",
-        "_users_cleanup_task",
-        "_messages_cleanup_task",
         "_channels_cleanup_task",
         "_guilds_cleanup_task",
+        "_messages_cleanup_task",
+        "_users_cleanup_task",
+        "channels",
+        "commands",
+        "guilds",
+        "messages",
+        "settings",
+        "users",
     )
 
     def __init__(self, settings: CacheSettings):
@@ -158,7 +166,9 @@ class CacheStorage:
         self.channels: dict[int, CacheEntry[Channel]] = {}
         self.guilds: dict[int, CacheEntry[Guild]] = {}
 
-        self.commands: dict[int, dict[int, ApplicationCommand]] = {}
+        self.commands: dict[
+            int, dict[int, ApplicationCommand | ApplicationCommandGroup]
+        ] = {}
         # Guild ID (Global 0) ^        ^ Command ID
 
     def start_cleanup_tasks(self) -> None:
@@ -185,7 +195,7 @@ class CacheStorage:
                 cache.pop(next(iter(cache)))
             if data.id in cache:
                 cache.pop(data.id)
-            cache[data.id] = CacheEntry[T](datetime.now(), data)
+            cache[data.id] = CacheEntry[T](datetime.now(UTC), data)
         return data
 
     def update_users(self, user: User) -> User:
@@ -257,7 +267,7 @@ class CacheStorage:
 
     async def _cleanup_cache[T: Cachable](self, cache: dict[int, CacheEntry[T]]):
         while True:
-            now = datetime.now()
+            now = datetime.now(UTC)
             threshold = now - self.settings.invalidation_time
             to_remove: list[int] = []
             for id, item in cache.items():
@@ -272,15 +282,21 @@ class CacheStorage:
             await asyncio.sleep(self.settings.cleanup_interval.total_seconds())
 
     def update_command(
-        self, command: ApplicationCommand, *, guild_id: int = 0
-    ) -> ApplicationCommand:
+        self,
+        command: ApplicationCommand | ApplicationCommandGroup,
+        *,
+        guild_id: int = 0,
+    ) -> ApplicationCommand | ApplicationCommandGroup:
         if self.settings.commands:
             self.commands.setdefault(guild_id, {})[command.id] = command
         return command
 
     def update_commands_bulk(
-        self, commands: list[ApplicationCommand], *, guild_id: int = 0
-    ) -> list[ApplicationCommand]:
+        self,
+        commands: list[ApplicationCommand | ApplicationCommandGroup],
+        *,
+        guild_id: int = 0,
+    ) -> list[ApplicationCommand | ApplicationCommandGroup]:
         if self.settings.commands:
             gcache = self.commands[guild_id] = {}
             # We clear the entire cache here because PUT replaces all commands
@@ -290,15 +306,17 @@ class CacheStorage:
 
     def remove_command(
         self, command_id: int, *, guild_id: int = 0
-    ) -> ApplicationCommand | None:
+    ) -> ApplicationCommand | ApplicationCommandGroup | None:
         if self.settings.commands and guild_id in self.commands:
             return self.commands[guild_id].pop(command_id, None)
 
     def get_command(
         self, command_id: int, *, guild_id: int = 0
-    ) -> ApplicationCommand | None:
+    ) -> ApplicationCommand | ApplicationCommandGroup | None:
         if self.settings.commands and guild_id in self.commands:
             return self.commands[guild_id].get(command_id)
 
-    def get_all_commands(self, *, guild_id: int = 0) -> list[ApplicationCommand]:
+    def get_all_commands(
+        self, *, guild_id: int = 0
+    ) -> list[ApplicationCommand | ApplicationCommandGroup]:
         return list(self.commands.get(guild_id, {}).values())

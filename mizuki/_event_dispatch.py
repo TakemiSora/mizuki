@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from collections.abc import Callable, Coroutine
 from typing import TYPE_CHECKING, Any
 
 from mizuki._utils import scls
@@ -10,7 +9,7 @@ from mizuki.enums.channel import ChannelType
 from mizuki.enums.command import ApplicationCommandType, CommandOptionType
 from mizuki.enums.interaction import InteractionType
 from mizuki.objects.channel import ThreadChannel, ThreadMember, parse_channel_payload
-from mizuki.objects.command import ApplicationCommandOption, PartialApplicationCommand
+from mizuki.objects.command import ApplicationCommandOption
 from mizuki.objects.components.common import BaseComponentResponse
 from mizuki.objects.guild import Guild, UnavailableGuild, parse_guild_payload
 from mizuki.objects.interaction import (
@@ -84,6 +83,7 @@ class EventDispatcher:
         self, resolved: ResolvedData | None, option: ApplicationCommandDataOption
     ) -> Any:
         value = None
+
         if resolved is not None:
             match option.type:
                 case CommandOptionType.CHANNEL:
@@ -113,13 +113,16 @@ class EventDispatcher:
                         else:
                             value = resolved.users[val]
 
+                case _:
+                    pass
+
         return value or option.value
 
     def _parse_options(
         self,
         command_options: dict[str, ApplicationCommandOption],
         resolved: ResolvedData | None,
-        options: tuple[ApplicationCommandDataOption[str | int | float], ...],
+        options: ApplicationCommandDataOption.AnyApplicationCommandDataOptions,
     ) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
         display_to_callback_keys: dict[str, str] = {
@@ -140,17 +143,13 @@ class EventDispatcher:
         command_data = self.bot._commands_data.get(interaction.data.name)
 
         if command_data:
-            command = command_data[1]
-
-            callback: Callable[..., Coroutine[Any, Any, Any]] | None
-
-            if isinstance(command, PartialApplicationCommand):
-                callback = getattr(command, "_callback", None)
-                options = interaction.data.options
-            else:
-                callback, options = command._get_response_data(interaction.data.options)
+            callback, _, options = command_data[1]._get_response_data(
+                interaction.data.options
+            )
 
             if callback:
+                coro = None
+
                 if interaction.data.type is ApplicationCommandType.CHAT_INPUT:
                     kwargs = self._parse_options(
                         getattr(callback, "__command_options__", {}),
@@ -179,18 +178,19 @@ class EventDispatcher:
                         interaction.data.resolved.messages[interaction.data.target_id],
                     )
 
-                asyncio.create_task(coro).add_done_callback(
-                    lambda t: self._on_task_done(
-                        t,
-                        f"Handler Function {callback.__name__} for command '{interaction.data.name}'",  # type: ignore # This is resolved
+                if coro:
+                    asyncio.create_task(coro).add_done_callback(
+                        lambda t: self._on_task_done(
+                            t,
+                            f"Handler Function {callback.__name__} for command '{interaction.data.name}'",  # type: ignore # This is resolved
+                        )
                     )
-                )
-                _log.debug(
-                    "Command %s (func=%s) dispatched.",
-                    interaction.data.name,
-                    callback.__name__,
-                )
-                return
+                    _log.debug(
+                        "Command %s (func=%s) dispatched.",
+                        interaction.data.name,
+                        callback.__name__,
+                    )
+                    return
 
         _log.warning(
             "Recieved command %s, but no handler was found for it.",
@@ -231,9 +231,7 @@ class EventDispatcher:
                 component_type_val,
             )
 
-    async def _dispatch_modals(self, interaction: Interaction):
-        assert isinstance(interaction.data, ModalResponse)
-
+    async def _dispatch_modals(self, interaction: Interaction[ModalResponse]):
         try:
             callback = self.bot._state.modals_data[interaction.data.custom_id][0]
 
@@ -258,16 +256,31 @@ class EventDispatcher:
                 interaction.id,
             )
 
-    async def _dispatch_autocompletors(self, interaction: Interaction):
-        assert isinstance(interaction.data, ApplicationCommandData)
-
+    async def _dispatch_autocompletors(
+        self,
+        interaction: Interaction[
+            ApplicationCommandData.AnyOptionTypesApplicationCommandData
+        ],
+    ):
         command_data = self.bot._commands_data.get(interaction.data.name)
-        autocompletor = command_data[1]._autocompletor if command_data else None
+
+        if command_data:
+            _, autocompletor, options = command_data[1]._get_response_data(
+                interaction.data.options
+            )
+        else:
+            autocompletor = None
+            options = interaction.data.options
+
         name = interaction.data.name
 
         if autocompletor:
+            dict_options: dict[str, ApplicationCommandDataOption[str | int | float]] = {
+                o.name: o for o in options
+            }
+
             asyncio.create_task(
-                autocompletor(interaction, interaction.data)
+                autocompletor(interaction, dict_options)
             ).add_done_callback(
                 lambda t: self._on_task_done(
                     t,

@@ -48,6 +48,7 @@ from mizuki.payloads.interaction import (
     InteractionCallbackResourcePayload,
     InteractionCallbackResponsePayload,
     InteractionDataPayload,
+    InteractionMessageCallbackDataPayload,
     InteractionPayload,
     InteractionWebhookMessagePayload,
 )
@@ -122,8 +123,12 @@ class AutocompleteChoice:
         )
 
 
-class ApplicationCommandDataOption[ValueType: str | int | float | bool]:
+class ApplicationCommandDataOption[
+    ValueType: str | int | float | bool = str | int | float | bool
+]:
     """Represents an option in a ApplicationCommand that's invoked/being invoked."""
+
+    type AnyApplicationCommandDataOptions = tuple[ApplicationCommandDataOption, ...]
 
     __slots__ = ("focused", "name", "options", "type", "value")
 
@@ -136,7 +141,7 @@ class ApplicationCommandDataOption[ValueType: str | int | float | bool]:
     value: ValueType | None
     "The value for this option that the user inputted."
 
-    options: list[ApplicationCommandDataOption]
+    options: AnyApplicationCommandDataOptions
     "The nested options in this option, non-empty only in a SubGroup or SubGroupCommand type option."
 
     focused: bool
@@ -146,9 +151,9 @@ class ApplicationCommandDataOption[ValueType: str | int | float | bool]:
         self.name = data["name"]
         self.type = CommandOptionType(data["type"])
         self.value = cast(ValueType, data.get("value"))
-        self.options = [
+        self.options = tuple(
             ApplicationCommandDataOption(o) for o in data.get("options", [])
-        ]
+        )
         self.focused = data.get("focused", False)
 
 
@@ -156,6 +161,10 @@ class ApplicationCommandData[*OptionTypes]:
     """Represents an ApplicationCommand that's invoked/being invoked."""
 
     __slots__ = ("guild_id", "id", "name", "options", "resolved", "target_id", "type")
+
+    type AnyOptionTypesApplicationCommandData = ApplicationCommandData[
+        *ApplicationCommandDataOption.AnyApplicationCommandDataOptions
+    ]
 
     id: Snowflake
     "The ID of the command."
@@ -374,7 +383,8 @@ class ResponseHandler:
                     type=InteractionCallbackType.CHANNEL_MESSAGE_WITH_SOURCE,
                     files=files,
                     data=assign_val_dict(
-                        {"tts": tts}, _MISSING,
+                        InteractionMessageCallbackDataPayload(tts=tts),
+                        _MISSING,
                         allowed_mentions=mtd(allowed_mentions),
                         content=content,
                         embeds=maybe_iter(embeds),
@@ -856,7 +866,7 @@ class Interaction[
             Member, data.get("member"), guild_id=self.guild_id, state=state
         )
         if user := scls(User, data.get("user"), state=state) or (
-            self.member and self.member.user
+            self.member if self.member is None else self.member.user
         ):
             self.user = user
         else:

@@ -1,0 +1,5 @@
+infer-with-first-use = false
+
+[errors]
+bad-override = false
+bad-override-mutable-attribute = false
