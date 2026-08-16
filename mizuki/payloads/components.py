@@ -1,5 +1,6 @@
 from __future__ import annotations
-from typing import Literal, NotRequired, Required, TypedDict, TYPE_CHECKING
+
+from typing import TYPE_CHECKING, Literal, NotRequired, Required, TypedDict
 
 from mizuki.payloads._types import Snowflake
 from mizuki.payloads.emoji import PartialEmojiPayload
@@ -245,7 +246,7 @@ type ComponentPayload = (
     | CheckboxPayload
 )
 
-type InteractiveComponentTypeLiteral = Literal[2, 3, 4, 5, 6, 7, 8, 19, 21, 22, 23]
+type InteractiveComponentTypeLiteral = Literal[2, 3, 4, 5, 6, 7, 8, 18, 19, 21, 22, 23]
 
 
 class BaseComponentResponsePayload[T: InteractiveComponentTypeLiteral](
@@ -295,6 +296,24 @@ class CheckboxGroupResponsePayload(BaseComponentResponsePayload[Literal[22]]):
 
 class CheckboxResponsePayload(BaseComponentResponsePayload[Literal[23]]):
     value: bool
+
+
+type LabelChildComponentResponse = (
+    StringSelectResponsePayload
+    | TextInputResponsePayload
+    | UserSelectResponsePayload
+    | RoleSelectResponsePayload
+    | MentionableSelectResponsePayload
+    | ChannelSelectResponsePayload
+    | FileUploadResponsePayload
+    | RadioGroupResponsePayload
+    | CheckboxGroupResponsePayload
+    | CheckboxResponsePayload
+)
+
+
+class LabelResponsePayload(BaseComponentResponsePayload[Literal[18]]):
+    component: LabelChildComponentResponse
 
 
 type ComponentResponsePayload = (

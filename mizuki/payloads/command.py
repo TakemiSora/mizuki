@@ -79,11 +79,11 @@ class PartialApplicationCommandPayload(TypedDict, total=False):
     contexts: list[Literal[0, 1, 2]] | None
     default_member_permissions: Required[Permissions | None]
 
+
 class ApplicationCommandPayload(PartialApplicationCommandPayload, total=False):
     id: Required[Snowflake]
     description: Required[str]
     guild_id: Snowflake
     application_id: Required[Snowflake]
-    version: Snowflake
+    version: Required[Snowflake]
     handler: Literal[1, 2]
-    default_member_permissions: Required[Permissions | None]

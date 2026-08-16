@@ -255,8 +255,11 @@ def parse_interaction_data[*TypeData](
             InteractionType.APPLICATION_COMMAND
             | InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE
         ):
-            return ApplicationCommandData(
-                cast(ApplicationCommandDataPayload, data), state=state
+            return cast(
+                ApplicationCommandData[*TypeData],
+                ApplicationCommandData(
+                    cast(ApplicationCommandDataPayload, data), state=state
+                ),
             )
         case InteractionType.MESSAGE_COMPONENT:
             return parse_component_response(data, resolved_data=None, state=state)  # type: ignore # This is resolved.

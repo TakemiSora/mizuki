@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from mizuki.enums.components import ComponentType
 from mizuki.objects.components.button import ButtonResponse
@@ -18,6 +18,7 @@ from mizuki.objects.components.objectselect import (
     UserSelectResponse,
 )
 from mizuki.objects.components.stringselect import StringSelectResponse
+from mizuki.payloads.components import LabelResponsePayload
 
 if TYPE_CHECKING:
     from mizuki.objects.components import ComponentResponse
@@ -64,9 +65,9 @@ def parse_component_response(
     component_type = ComponentType(resolved_component_type)
 
     if component_type is ComponentType.LABEL:
-        if (component_data := data.get("component")) is None or (
-            child_type := component_data.get("type")
-        ) is None:
+        if (
+            component_data := cast(LabelResponsePayload, data).get("component")
+        ) is None or (child_type := component_data.get("type")) is None:
             raise ValueError("Recieved malformed label component in a response.")
 
         component_type = ComponentType(child_type)

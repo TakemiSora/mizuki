@@ -9,14 +9,13 @@ from mizuki.objects.channel import PartialGuildChannel, PartialThreadChannel
 from mizuki.objects.components.common import BaseComponentResponse, BaseSelect
 from mizuki.objects.member import ResolvedMember
 from mizuki.objects.message import Attachment, PartialMessage
-from mizuki.objects.role import Role
 from mizuki.objects.resolveddata import ResolvedData
+from mizuki.objects.role import Role
 from mizuki.objects.snowflake import Snowflake
 from mizuki.objects.user import User
 from mizuki.public_utils import generate_custom_id
 
 if TYPE_CHECKING:
-    from mizuki.state import ConnectionState
     from mizuki.payloads.components import (
         ChannelSelectPayload,
         DefaultSelectValuePayload,
@@ -24,17 +23,18 @@ if TYPE_CHECKING:
         ObjectSelectResponsePayload,
         ObjectSelectTypeLiteral,
     )
+    from mizuki.state import ConnectionState
 
 __all__ = (
-    "DefaultSelectValue",
-    "UserSelectResponse",
-    "UserSelect",
-    "RoleSelectResponse",
-    "RoleSelect",
-    "MentionableSelectResponse",
-    "MentionableSelect",
-    "ChannelSelectResponse",
     "ChannelSelect",
+    "ChannelSelectResponse",
+    "DefaultSelectValue",
+    "MentionableSelect",
+    "MentionableSelectResponse",
+    "RoleSelect",
+    "RoleSelectResponse",
+    "UserSelect",
+    "UserSelectResponse",
 )
 
 
@@ -102,7 +102,7 @@ class ObjectSelectResponse[T: ObjectSelectTypeLiteral](BaseComponentResponse):
             scls(ResolvedData, data.get("resolved"), state=state) or resolved_data
         )
         if not resolved:
-            raise ValueError(f"Received malformed ObjectSelect response payload.")
+            raise ValueError("Received malformed ObjectSelect response payload.")
 
         self.resolved = resolved
         self.values = self._resolved_parser(data["values"], resolved_data=self.resolved)
@@ -116,8 +116,11 @@ class ObjectSelectResponse[T: ObjectSelectTypeLiteral](BaseComponentResponse):
 class ObjectSelect[
     T: ObjectSelectTypeLiteral,
     DefaultOptionParam: int | DefaultSelectValue,
-    CallbackResponse: ObjectSelectResponse[ObjectSelectTypeLiteral],
+    CallbackResponse: ObjectSelectResponse,
 ](BaseSelect[CallbackResponse]):
+    _TYPE = _MISSING
+    _DEFAULT_OPTION_TYPE = _MISSING
+
     __slots__ = ("default_values",)
 
     default_values: list[DefaultSelectValue]
@@ -187,27 +190,26 @@ class ObjectSelect[
         disabled : :class:`bool`, optional
             Whether this Select is disabled in messages.
         """
-        if _MISSING not in (
-            component_type := getattr(cls, "_TYPE", _MISSING),
-            default_type := getattr(cls, "_DEFAULT_OPTION_TYPE", _MISSING),
-        ):
+        if _MISSING not in (cls._TYPE, cls._DEFAULT_OPTION_TYPE):
             if default_values:
-                if default_type is None:
+                if cls._DEFAULT_OPTION_TYPE is None:
                     raise ValueError(
                         "Cannot auto convert integer IDs to DefaultSelectValue in MentionableSelect."
                     )
 
-                default_values = [
-                    DefaultSelectValue.new(i, type=default_type)
+                parsed_default_values = [
+                    DefaultSelectValue.new(i, type=cls._DEFAULT_OPTION_TYPE)
                     if isinstance(i, int)
                     else i
                     for i in default_values
                 ]
+            else:
+                parsed_default_values = default_values
 
             return assign_val(
                 cls(
                     {
-                        "type": component_type,
+                        "type": cls._TYPE,
                         "custom_id": custom_id or generate_custom_id(),
                     }
                 ),
@@ -215,7 +217,7 @@ class ObjectSelect[
                 placeholder=placeholder,
                 min_values=min_values,
                 max_values=max_values,
-                default_values=default_values,
+                default_values=parsed_default_values,
                 required=required,
                 disabled=disabled,
             )

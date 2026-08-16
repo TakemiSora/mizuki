@@ -1,22 +1,21 @@
-from typing import cast, overload
+from typing import overload
 
-from mizuki.flags import ChannelFlags
-from mizuki.http import Path
-from mizuki._utils import _MISSING, assign_val_dict, mtd
-
-from mizuki.managers._types import BaseManager
-from mizuki.objects.channel import (
-    PartialForumTag,
-    ThreadChannel,
-    GuildChannel,
-    Channel,
-    parse_channel_payload,
-)
+from mizuki._utils import _MISSING, assign_val_dict, maybe_iter, mtd
 from mizuki.enums.channel import (
     ChannelType,
     ForumLayoutType,
     SortOrderType,
     VideoQualityMode,
+)
+from mizuki.flags import ChannelFlags
+from mizuki.http import Path
+from mizuki.managers._types import BaseManager
+from mizuki.objects.channel import (
+    Channel,
+    GuildChannel,
+    PartialForumTag,
+    ThreadChannel,
+    parse_channel_payload,
 )
 from mizuki.objects.emoji import DefaultReaction
 from mizuki.objects.permissions import ChannelPermissionOverwrite
@@ -297,43 +296,31 @@ class ChannelManager(BaseManager):
                 {},
                 _MISSING,
                 name=name,
-                type=(type.value if type is not _MISSING else _MISSING),
+                type=getattr(type, "value", _MISSING),
                 position=position,
                 topic=topic,
                 nsfw=nsfw,
                 rate_limit_per_user=rate_limit_per_user,
                 bitrate=bitrate,
                 user_limit=user_limit,
-                permission_overwrites=(
-                    [p._to_dict() for p in permission_overwrites]
-                    if permission_overwrites not in (_MISSING, None)
-                    else permission_overwrites
+                permission_overwrites=maybe_iter(
+                    permission_overwrites, check_against=(_MISSING, None)
                 ),
                 parent_id=parent_id,
                 rtc_region=rtc_region,
-                video_quality_mode=(
-                    video_quality_mode.value
-                    if video_quality_mode not in (_MISSING, None)
-                    else video_quality_mode
+                video_quality_mode=getattr(
+                    video_quality_mode, "value", video_quality_mode
                 ),
                 default_auto_archive_duration=default_auto_archive_duration,
-                flags=(flags.value if flags is not _MISSING else _MISSING),
-                available_tags=(
-                    [t._to_dict() for t in available_tags]
-                    if available_tags is not _MISSING
-                    else _MISSING
-                ),
+                flags=getattr(flags, "value", flags),
+                available_tags=maybe_iter(available_tags),
                 default_reaction_emoji=mtd(default_reaction_emoji),
                 default_thread_rate_limit_per_user=default_thread_rate_limit_per_user,
-                default_sort_order=(
-                    default_sort_order.value
-                    if default_sort_order not in (_MISSING, None)
-                    else default_sort_order
+                default_sort_order=getattr(
+                    default_sort_order, "value", default_sort_order
                 ),
-                default_forum_layout=(
-                    default_forum_layout.value
-                    if default_forum_layout is not _MISSING
-                    else default_forum_layout
+                default_forum_layout=getattr(
+                    default_forum_layout, "value", default_forum_layout
                 ),
                 archived=archived,
                 auto_archive_duration=auto_archive_duration,
@@ -557,24 +544,21 @@ class ChannelManager(BaseManager):
         :class:`HTTPException`
             A HTTP error occured.
         """
-        return cast(
-            ThreadChannel,
-            await self.edit(
-                thread_id,
-                name=name,
-                archived=archived,
-                auto_archive_duration=auto_archive_duration,
-                invitable=invitable,
-                rate_limit_per_user=rate_limit_per_user,
-                locked=locked,
-                flags=(
-                    (ChannelFlags.PINNED if pinned else ChannelFlags(0))
-                    if pinned is not _MISSING
-                    else _MISSING
-                ),
-                applied_tags=applied_tags,
-                to_update=to_update,
+        return await self.edit(
+            thread_id,
+            name=name,
+            archived=archived,
+            auto_archive_duration=auto_archive_duration,
+            invitable=invitable,
+            rate_limit_per_user=rate_limit_per_user,
+            locked=locked,
+            flags=(
+                (ChannelFlags.PINNED if pinned else ChannelFlags(0))
+                if pinned is not _MISSING
+                else _MISSING
             ),
+            applied_tags=applied_tags,
+            to_update=to_update,
         )
 
     async def set_voice_status(self, channel_id: int, *, status: str | None) -> None:

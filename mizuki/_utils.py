@@ -38,33 +38,50 @@ def mtd[T](obj: SupportsToDict[T] | Missing | None) -> T | Missing | None:
     return obj
 
 
+def call_to_dict[T](obj: SupportsToDict[T]) -> T:
+    return obj._to_dict()
+
+
 @overload
-def maybe_iter[IterableType, ReturnType](
-    obj: Iterable[IterableType] | Missing,
-    method: Callable[[IterableType], ReturnType] = mtd,
+def maybe_iter[IterableType: SupportsToDict, ReturnType, MissingType: None | Missing](
+    obj: Iterable[IterableType] | MissingType,
+    method: Callable[[IterableType], ReturnType] = call_to_dict,
     enumerate_iter: Literal[False] = False,
-    check_against: tuple[Any, ...] = (_MISSING,),
-) -> list[ReturnType] | Missing: ...
+    check_against: tuple[Any, ...] = (),
+) -> list[ReturnType] | MissingType: ...
 
 
 @overload
-def maybe_iter[IterableType, ReturnType](
-    obj: Iterable[IterableType] | Missing,
+def maybe_iter[IterableType, ReturnType, MissingType: None | Missing](
+    obj: Iterable[IterableType] | MissingType,
+    method: Callable[[IterableType], ReturnType],
+    enumerate_iter: Literal[False] = False,
+    check_against: tuple[Any, ...] = (),
+) -> list[ReturnType] | MissingType: ...
+
+
+@overload
+def maybe_iter[IterableType, ReturnType, MissingType: None | Missing](
+    obj: Iterable[IterableType] | MissingType,
     method: Callable[[int, IterableType], ReturnType],
     enumerate_iter: Literal[True],
-    check_against: tuple[Any, ...] = (_MISSING,),
-) -> list[ReturnType] | Missing: ...
+    check_against: tuple[Any, ...] = (),
+) -> list[ReturnType] | MissingType: ...
 
 
-def maybe_iter[IterableType, ReturnType](
-    obj: Iterable[IterableType] | Missing,
+def maybe_iter[
+    IterableType: SupportsToDict | Any,
+    ReturnType,
+    MissingType: None | Missing,
+](
+    obj: Iterable[IterableType] | MissingType,
     method: Callable[[IterableType], ReturnType]
-    | Callable[[int, IterableType], ReturnType] = mtd,
+    | Callable[[int, IterableType], ReturnType] = call_to_dict,
     enumerate_iter: bool = False,
-    check_against: tuple[Any, ...] = (_MISSING,),
-) -> list[ReturnType] | Missing:
-    if obj in check_against or isinstance(obj, Missing):
-        return cast(Missing, obj)
+    check_against: tuple[Any, ...] = (),
+) -> list[ReturnType] | Missing | None:
+    if obj in check_against or obj is None or isinstance(obj, Missing):
+        return cast(MissingType, obj)
 
     if enumerate_iter:
         casted_method = cast(Callable[[int, IterableType], ReturnType], method)

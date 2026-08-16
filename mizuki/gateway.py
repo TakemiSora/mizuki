@@ -1,18 +1,18 @@
 from __future__ import annotations
 
-import sys
 import asyncio
-import aiohttp
-import time
 import json
-import random
 import logging
+import random
+import sys
+import time
+from typing import TYPE_CHECKING, Any
 
-from typing import Any, TYPE_CHECKING
+import aiohttp
 
-from mizuki.flags import IntentFlags
-from mizuki.errors import GatewayError
 from mizuki._event_dispatch import EventDispatcher
+from mizuki.errors import GatewayError
+from mizuki.flags import IntentFlags
 
 if TYPE_CHECKING:
     from mizuki.bot import Bot
@@ -35,29 +35,38 @@ class GatewayClient:
     "The latency (in microseconds) for the gateway connection."
 
     __slots__ = (
-        "token",
+        "_closed",
+        "_dispatcher",
+        "_handlers",
+        "_heartbeat_interval",
+        "_heartbeat_sent_at",
+        "_heartbeat_task",
+        "_last_ack",
+        "_listen_task",
+        "_reconnect_lock",
+        "_resume_ws_url",
+        "_sequence",
+        "_session",
+        "_session_id",
+        "_ws",
         "intents",
         "latency",
-        "_dispatcher",
-        "_ws",
-        "_sequence",
-        "_resume_ws_url",
-        "_session_id",
-        "_last_ack",
-        "_heartbeat_interval",
-        "_heartbeat_task",
-        "_heartbeat_sent_at",
-        "_listen_task",
-        "_session",
-        "_closed",
-        "_reconnect_lock",
-        "_handlers",
+        "token",
     )
 
     _URL = "wss://gateway.discord.gg/?v=10&encoding=json"
-    _RECONNECTABLE_CLOSE_CODES = [4000, 4001, 4002, 4003, 4005, 4007, 4008, 4009]
+    _RECONNECTABLE_CLOSE_CODES: tuple[int, ...] = (
+        4000,
+        4001,
+        4002,
+        4003,
+        4005,
+        4007,
+        4008,
+        4009,
+    )
 
-    _GATEWAY_CODE_MESSAGES = {
+    _GATEWAY_CODE_MESSAGES: dict[int, str] = {  # noqa: RUF012
         4000: "Unknown error: We're not sure what went wrong. Try reconnecting?",
         4001: "Unkown opcode: You sent an invalid Gateway opcode or an invalid payload for an opcode. Don't do that!",
         4002: "Decode error: You sent an invalid payload to Discord. Don't do that!",
@@ -112,8 +121,7 @@ class GatewayClient:
         await self._send({"op": 1, "d": self._sequence})
 
     async def connect(self, resume_url: str | None = None):
-        """
-        Used to connect and start listening to the gateway events.
+        """Used to connect and start listening to the gateway events.
 
         Parameters
         ----------
@@ -135,17 +143,14 @@ class GatewayClient:
             self._closed.set()
 
     async def wait_until_closed(self):
-        """
-        Waits until the gateway connection is closed.
+        """Waits until the gateway connection is closed.
 
         This coroutine blocks until the gateway disconnects. Useful for keeping the bot alive in a main coroutine.
         """
         await self._closed.wait()
 
     async def close(self):
-        """
-        Closes and cleans up the gateway connection.
-        """
+        """Closes and cleans up the gateway connection."""
         self._closed.set()
 
         if self._heartbeat_task:
@@ -309,6 +314,7 @@ class GatewayClient:
             await self._handle_ready(data)
         h = self._dispatcher._dispatch_handlers.get(event)
         if h is not None:
+            # pyrefly: ignore [bad-argument-type]
             await h(data)
         else:
             _log.debug("No handler registered for event %s", event)

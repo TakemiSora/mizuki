@@ -1,6 +1,7 @@
 from __future__ import annotations
-from datetime import datetime, timezone
-from typing import Self, overload, TYPE_CHECKING
+
+from datetime import UTC, datetime
+from typing import TYPE_CHECKING, Self, overload
 
 from mizuki._utils import scls, sint, siso
 from mizuki.flags import GuildMemberFlags
@@ -16,28 +17,29 @@ if TYPE_CHECKING:
     from mizuki.state import ConnectionState
 
 __all__ = (
+    "Member",
     "PartialMember",
     "ResolvedMember",
-    "Member",
 )
 
 
 class PartialMember:
     __slots__ = (
+        "_state",
+        "asset",
+        "avatar_decoration_data",
+        "banner",
+        "communication_disabled_until",
+        "flags",
         "guild_id",
         "id",
-        "nick",
-        "asset",
-        "banner",
-        "roles",
         "joined_at",
-        "premium_since",
-        "flags",
+        "nameplate",
+        "nick",
         "pending",
         "permissions",
-        "communication_disabled_until",
-        "avatar_decoration_data",
-        "nameplate",
+        "premium_since",
+        "roles",
     )
 
     def __init__(
@@ -48,6 +50,8 @@ class PartialMember:
         user_id: int,
         state: ConnectionState,
     ):
+        self._state = state
+
         self.guild_id = Snowflake(guild_id)
         self.id = Snowflake(user_id)
         self.nick = data.get("nick")
@@ -72,7 +76,7 @@ class PartialMember:
     @property
     def is_timed_out(self) -> bool:
         return (
-            datetime.now(timezone.utc) > self.communication_disabled_until
+            datetime.now(UTC) > self.communication_disabled_until
             if self.communication_disabled_until
             else False
         )
@@ -93,6 +97,9 @@ class PartialMember:
 class ResolvedMember(PartialMember):
     __slots__ = ("user",)
 
+    user: User
+    "The user object for this member."
+
     @classmethod
     def _from_partial_member(cls, member: PartialMember, *, user: User) -> Self:
         self = cls.__new__(cls)
@@ -104,9 +111,9 @@ class ResolvedMember(PartialMember):
 
 class Member(PartialMember):
     __slots__ = (
-        "user",
         "deaf",
         "mute",
+        "user",
     )
 
     @overload

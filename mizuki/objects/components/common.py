@@ -55,6 +55,9 @@ class HasCallbackResponse[CallbackResponse: BaseComponentResponse]:
         [Interaction, CallbackResponse], Coroutine[Any, Any, Any]
     ]
 
+    _callback: ComponentCallback
+    _timeout: timedelta | None
+
     def set_callback(self, callback: ComponentCallback) -> Self:
         """
         Sets the callback for this component.
