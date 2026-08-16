@@ -15,7 +15,6 @@ from typing import (
 
 from mizuki._utils import (
     _MISSING,
-    CoroDecorator,
     CoroFunc,
     JSONPayload,
     assign_val,
@@ -1019,7 +1018,7 @@ class SubCommandAddable:
         description: str,
         description_localizations: Localization = _MISSING,
         autocompletor: AutocompletorCallback = _MISSING,
-    ) -> CoroDecorator:
+    ) -> Callable[[CoroFunc], SubCommand]:
         """Creates a subcommand in the command group.
 
         This method is a decorator and transforms the method into a :class:`SubCommand`.
@@ -1046,19 +1045,19 @@ class SubCommandAddable:
             The autocompletor for the command.
         """
 
-        def decorator(func: CoroFunc) -> CoroFunc:
-            self.options.append(
-                SubCommand._from_function(
-                    func,
-                    name=name,
-                    name_localizations=name_localizations,
-                    description=description,
-                    description_localizations=description_localizations,
-                    autocompletor=autocompletor,
-                )
+        def decorator(func: CoroFunc) -> SubCommand:
+            command = SubCommand._from_function(
+                func,
+                name=name,
+                name_localizations=name_localizations,
+                description=description,
+                description_localizations=description_localizations,
+                autocompletor=autocompletor,
             )
 
-            return func
+            self.options.append(command)
+
+            return command
 
         return decorator
 
