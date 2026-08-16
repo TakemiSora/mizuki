@@ -157,7 +157,7 @@ class ApplicationCommandDataOption[
         self.focused = data.get("focused", False)
 
 
-class ApplicationCommandData[*OptionTypes]:
+class ApplicationCommandData[*OptionTypes = *tuple[ApplicationCommandDataOption, ...]]:
     """Represents an ApplicationCommand that's invoked/being invoked."""
 
     __slots__ = ("guild_id", "id", "name", "options", "resolved", "target_id", "type")

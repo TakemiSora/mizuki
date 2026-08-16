@@ -1,9 +1,9 @@
 import asyncio
 import inspect
 import logging
-from collections.abc import Callable, Coroutine
+from collections.abc import Callable
 from datetime import timedelta
-from typing import Any, Literal, overload
+from typing import Literal, overload
 
 import aiohttp
 
@@ -22,14 +22,10 @@ from mizuki.managers.guild import GuildManager
 from mizuki.managers.message import MessageManager
 from mizuki.managers.user import UserManager
 from mizuki.objects.command import (
+    AutocompletorCallback,
     Localization,
     PartialApplicationCommand,
     PartialApplicationCommandGroup,
-)
-from mizuki.objects.interaction import (
-    ApplicationCommandData,
-    ApplicationCommandDataOption,
-    Interaction,
 )
 from mizuki.objects.permissions import Permissions
 from mizuki.objects.user import User
@@ -105,7 +101,7 @@ class Bot:
         cache_settings: CacheSettings | None = None,
         default_component_timeout: timedelta | None = None,
         default_modal_timeout: timedelta | None = None,
-    ):
+    ) -> None:
         self.intents = intents
         self._listeners: dict[str, list[CoroFunc]] = {}
         self._setup_hook: CoroFunc | None = None
@@ -120,8 +116,7 @@ class Bot:
         self._session: aiohttp.ClientSession | None = None
 
     def run(self, token: str) -> None:
-        """
-        A synchronous method to start a event loop and run the :meth:`Bot.start()` method.
+        """A synchronous method to start a event loop and run the :meth:`Bot.start()` method.
 
         Parameters
         ----------
@@ -144,8 +139,7 @@ class Bot:
             raise ImproperToken("Improper token has been passed.")
 
     async def start(self, token: str) -> None:
-        """
-        Verifies the token and connects to the gateway.
+        """Verifies the token and connects to the gateway.
 
         Parameters
         ----------
@@ -191,9 +185,7 @@ class Bot:
             await self.stop()
 
     async def stop(self) -> None:
-        """
-        Disconnects the gateway and closes the session.
-        """
+        """Disconnects the gateway and closes the session."""
         try:
             if self.gateway:
                 await self.gateway.close()
@@ -202,10 +194,9 @@ class Bot:
                 await self._session.close()
 
     def listen(self, event: Event | None = None) -> CoroDecorator:
-        """
-        This function is a decotstor.
+        """Registers an asynchronous listener for a gateway event.
 
-        Registers an asynchronous listener for a gateway event.
+        This function is a decorator.
 
         Parameters
         ----------
@@ -249,10 +240,13 @@ class Bot:
         return decorator
 
     def setup(self) -> CoroDecorator:
-        """
-        This function is a decorator.
+        """Registers a setup hook which runs once after connecting to the gateway.
 
-        Registers a setup hook which runs once after connecting to the gateway.
+        This method is a decorator.
+
+        This decorator should be applied to a method with the following signature:
+
+            `async () -> Any`
 
         Raises
         ------
@@ -270,6 +264,29 @@ class Bot:
 
         return decorator
 
+    def register_command(
+        self,
+        command: PartialApplicationCommand | PartialApplicationCommandGroup,
+        *,
+        guild_id: int | None = None,
+    ) -> None:
+        """Registers an application command or an application command group in this bot instance.
+
+        .. note::
+
+            This does not sync your commands to Discord!
+            Use :method:`CommandManager.sync_all() <mizuki.managers.command.CommandManager.sync_all>` to sync all registered commands.
+
+        Parameters
+        ----------
+        command : :class:`PartialApplicationCommand <mizuki.objects.command.PartialApplicationCommand>` | :class:`PartialApplicationCommandGroup <mizuki.objects.command.PartialApplicationCommandGroup>`
+            The command/group to register.
+
+        guild_id : :class:`int` | :class:`None`, optional
+            The guild ID to register the command
+        """
+        self._commands_data[command.name] = guild_id or 0, command
+
     @overload
     def command(
         self,
@@ -284,16 +301,8 @@ class Bot:
         description_localizations: Localization = _MISSING,
         default_member_permissions: Permissions = _MISSING,
         nsfw: bool = False,
-        autocompletor: Callable[
-            [
-                Interaction[
-                    ApplicationCommandData.AnyOptionTypesApplicationCommandData
-                ],
-                dict[str, ApplicationCommandDataOption],
-            ],
-            Coroutine[Any, Any, Any],
-        ] = _MISSING,
-    ) -> CoroDecorator: ...
+        autocompletor: AutocompletorCallback = _MISSING,
+    ) -> Callable[[CoroFunc], PartialApplicationCommand]: ...
 
     @overload
     def command(
@@ -310,16 +319,8 @@ class Bot:
         integration_types: list[ApplicationIntegrationType] = _MISSING,
         contexts: list[InteractionContextType] = _MISSING,
         nsfw: bool = False,
-        autocompletor: Callable[
-            [
-                Interaction[
-                    ApplicationCommandData.AnyOptionTypesApplicationCommandData
-                ],
-                dict[str, ApplicationCommandDataOption],
-            ],
-            Coroutine[Any, Any, Any],
-        ] = _MISSING,
-    ) -> CoroDecorator: ...
+        autocompletor: AutocompletorCallback = _MISSING,
+    ) -> Callable[[CoroFunc], PartialApplicationCommand]: ...
 
     @overload
     def command(
@@ -332,7 +333,7 @@ class Bot:
         integration_types: list[ApplicationIntegrationType] = _MISSING,
         contexts: list[InteractionContextType] = _MISSING,
         nsfw: bool = False,
-    ) -> CoroDecorator: ...
+    ) -> Callable[[CoroFunc], PartialApplicationCommand]: ...
 
     @overload
     def command(
@@ -344,7 +345,7 @@ class Bot:
         name_localizations: Localization = _MISSING,
         default_member_permissions: Permissions = _MISSING,
         nsfw: bool = False,
-    ) -> CoroDecorator: ...
+    ) -> Callable[[CoroFunc], PartialApplicationCommand]: ...
 
     def command(
         self,
@@ -359,28 +360,50 @@ class Bot:
         integration_types: list[ApplicationIntegrationType] = _MISSING,
         contexts: list[InteractionContextType] = _MISSING,
         nsfw: bool = False,
-        autocompletor: Callable[
-            [
-                Interaction[
-                    ApplicationCommandData.AnyOptionTypesApplicationCommandData
-                ],
-                dict[str, ApplicationCommandDataOption],
-            ],
-            Coroutine[Any, Any, Any],
-        ] = _MISSING,
-    ) -> CoroDecorator:
-        """
-        This function is a decorator.
+        autocompletor: AutocompletorCallback = _MISSING,
+    ) -> Callable[[CoroFunc], PartialApplicationCommand]:
+        """Creates an applciation command object and registers the function the decorator is applied on as the callback for the command.
 
-        Registers a command callback for a slash (application) command.
+        This decorator transforms the function into a :class:`PartialApplicationCommand <mizuki.objects.command.PartialApplicationCommand>` object.
+
+        This decorator should be applied to a method with the following signature:
+
+            `async (Interaction[ApplicationCommandData], ...) -> Any`
 
         Parameters
         ----------
+        type : :class:`ApplicationCommandType <mizuki.enums.command.ApplicationCommandType>`, optional
+            The type of the command to create.
+
+        guild_id : :class:`int` | :class:`None`, optional
+            The ID of the guild if registering the command to be guild-specific.
+
         name : :class:`str`
             The name of the application command.
 
+        name_localizations : :class:`Localization <mizuki.objects.command.Localization>`, optional
+            The localizations for the name of the application command.
+
         description : :class:`str`, optional
             The description of the application command.
+
+        description_localizations : :class:`Localization <mizuki.objects.command.Localization>`, optional
+            The localizations for the description of the application command.
+
+        default_member_permisssions: :class:`Permissions <mizuki.objects.permissions.Permissions>`, optional
+            The default permissions that are required to use this command.
+
+        integration_types : list[:class:`ApplicationIntegrationType <mizuki.enums.interaction.ApplicationIntegrationType>`], optional
+            The installation contexts where this command is available, only allowed for globally-scoped commands.
+
+        contexts : list[:class:`InteractionContextType <mizuki.enums.interaction.InteractionContextType>`], optional
+            The interaction contexts where this command can be used, only allowed for globally-scoped commands.
+
+        nsfw : :class:`bool`, optional
+            Whether this command is age-restricted.
+
+        autocompletor : `async (Interaction[ApplicationCommandData], dict[str, ApplicationCommandDataOption]) -> Any`, optional
+            The autocompletor callback for the command.
 
         Raises
         ------
@@ -435,41 +458,31 @@ class Bot:
 
         """
 
-        def decorator(func: CoroFunc) -> CoroFunc:
-            if not inspect.iscoroutinefunction(func):
-                raise TypeError(
-                    f"Command callback for '{name}:{func.__name__}' has to be a coroutine function."
-                )
-
-            self._commands_data[name] = (
-                guild_id or 0,
-                PartialApplicationCommand._from_command(
-                    func,
-                    name=name,
-                    name_localizations=name_localizations,
-                    description=description,
-                    description_localizations=description_localizations,
-                    default_member_permissions=default_member_permissions,
-                    integration_types=integration_types,
-                    contexts=contexts,
-                    type=type,
-                    nsfw=nsfw,
-                    autocompletor=autocompletor,
-                ),
+        def decorator(func: CoroFunc) -> PartialApplicationCommand:
+            command = PartialApplicationCommand._from_command(
+                func,
+                name=name,
+                name_localizations=name_localizations,
+                description=description,
+                description_localizations=description_localizations,
+                default_member_permissions=default_member_permissions,
+                integration_types=integration_types,
+                contexts=contexts,
+                type=type,
+                nsfw=nsfw,
+                autocompletor=autocompletor,
             )
 
-            return func
+            self.register_command(command, guild_id=guild_id)
+
+            return command
 
         return decorator
-
-    def register_command_subgroup(
-        self, subgroup: PartialApplicationCommandGroup, *, guild_id: int | None = None
-    ) -> None:
-        self._commands_data[subgroup.name] = (guild_id or 0, subgroup)
 
     def create_command_group(
         self,
         *,
+        guild_id: int | None = None,
         name: str,
         name_localizations: Localization = _MISSING,
         description: str,
@@ -478,8 +491,39 @@ class Bot:
         integration_types: list[ApplicationIntegrationType] = _MISSING,
         contexts: list[InteractionContextType] = _MISSING,
         nsfw: bool = False,
-        guild_id: int | None = None,
     ) -> PartialApplicationCommandGroup:
+        """Creates an application command group and registers it to the bot instance.
+
+        Parameters
+        ----------
+        guild_id : :class:`int` | :class:`None`, optional
+            The ID of the guild if registering the command to be guild-specific.
+
+        name : :class:`str`
+            The name of the application command.
+
+        name_localizations : :class:`Localization <mizuki.objects.command.Localization>`, optional
+            The localizations for the name of the application command.
+
+        description : :class:`str`, optional
+            The description of the application command.
+
+        description_localizations : :class:`Localization <mizuki.objects.command.Localization>`, optional
+            The localizations for the description of the application command.
+
+        default_member_permisssions: :class:`Permissions <mizuki.objects.permissions.Permissions>`, optional
+            The default permissions that are required to use this command.
+
+        integration_types : list[:class:`ApplicationIntegrationType <mizuki.enums.interaction.ApplicationIntegrationType>`], optional
+            The installation contexts where this command is available, only allowed for globally-scoped commands.
+
+        contexts : list[:class:`InteractionContextType <mizuki.enums.interaction.InteractionContextType>`], optional
+            The interaction contexts where this command can be used, only allowed for globally-scoped commands.
+
+        nsfw : :class:`bool`, optional
+            Whether this command is age-restricted.
+        """
+
         subgroup = PartialApplicationCommandGroup.new(
             name=name,
             name_localizations=name_localizations,
@@ -491,6 +535,6 @@ class Bot:
             nsfw=nsfw,
         )
 
-        self.register_command_subgroup(subgroup, guild_id=guild_id)
+        self.register_command(subgroup, guild_id=guild_id)
 
         return subgroup

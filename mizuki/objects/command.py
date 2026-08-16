@@ -143,7 +143,18 @@ class Localization:
 
 
 class ApplicationCommandChoice:
+    """Represents a choice in an application command parameter for the user to select."""
+
     __slots__ = ("name", "name_localizations", "value")
+
+    name: str
+    "The name of the choice."
+
+    name_localizations: Localization | None
+    "The localizations for the name of the choice."
+
+    value: str | int | float
+    "The value of the choice."
 
     def __init__(self, data: CommandChoicePayload):
         self.name = data["name"]
@@ -158,6 +169,19 @@ class ApplicationCommandChoice:
         name_localizations: Localization = _MISSING,
         value: str | int | float,  # noqa: PYI041
     ) -> Self:
+        """Returns an instance of an ApplicationCommand choice.
+
+        Parameters
+        ----------
+        name : :class:`str`
+            The name of the choice.
+
+        name_localizations : :class:`Localization`, optional
+            The localizations for the name of the choice.
+
+        value : :class:`str` | :class:`int` | :class:`float`
+            The value of the choice.
+        """
         return assign_val(
             cls(CommandChoicePayload(name=name, value=value)),
             name_localizations=name_localizations,
@@ -170,20 +194,23 @@ class ApplicationCommandChoice:
         )
 
 
-class ApplicationCommandOption:
-    _SLASH_COMMAND_OPTION_TYPE_MAP: dict[Any, CommandOptionType] = {  # noqa: RUF012
-        str: CommandOptionType.STRING,
-        int: CommandOptionType.INTEGER,
-        bool: CommandOptionType.BOOLEAN,
-        float: CommandOptionType.NUMBER,
-        User: CommandOptionType.USER,
-        Role: CommandOptionType.ROLE,
-        PartialGuildChannel: CommandOptionType.CHANNEL,
-        PartialThreadChannel: CommandOptionType.CHANNEL,
-        Mentionable: CommandOptionType.MENTIONABLE,
-    }
+_SLASH_COMMAND_OPTION_TYPE_MAP: dict[Any, CommandOptionType] = {
+    str: CommandOptionType.STRING,
+    int: CommandOptionType.INTEGER,
+    bool: CommandOptionType.BOOLEAN,
+    float: CommandOptionType.NUMBER,
+    User: CommandOptionType.USER,
+    Role: CommandOptionType.ROLE,
+    PartialGuildChannel: CommandOptionType.CHANNEL,
+    PartialThreadChannel: CommandOptionType.CHANNEL,
+    Mentionable: CommandOptionType.MENTIONABLE,
+}
 
-    _VALID_TYPES = list(_SLASH_COMMAND_OPTION_TYPE_MAP)  # noqa: RUF012
+_VALID_TYPES = list(_SLASH_COMMAND_OPTION_TYPE_MAP)
+
+
+class ApplicationCommandOption:
+    """Represents an application command option/parameter."""
 
     __slots__ = (
         "autocomplete",
@@ -202,6 +229,45 @@ class ApplicationCommandOption:
         "type",
     )
 
+    type: CommandOptionType
+    "The type of the option."
+
+    name: str
+    "The name of the option."
+
+    name_localizations: Localization | None
+    "The localizations for the name of the option."
+
+    description: str
+    "The description of the option."
+
+    description_localizations: Localization | None
+    "The localizations for the description of the option."
+
+    required: bool
+    "Whether this option is required."
+
+    choices: list[ApplicationCommandChoice]
+    "The list of choices for the user to select from for this parameter."
+
+    channel_types: list[ChannelType] | None
+    "The channel types to limit the selection of a channel object to."
+
+    min_value: float | int | None
+    "The minimum value the user can enter for an integer or a float."
+
+    max_value: float | int | None
+    "The maximum value the user can enter for an integer or a float."
+
+    min_length: int | None
+    "The minimum amount of characters the user can enter for a string."
+
+    max_length: int | None
+    "The maximum amount of characters the user can enter for a string."
+
+    autocomplete: bool
+    "Whether the option is autocompletable."
+
     def __init__(self, data: ApplicationCommandOptionPayload):
         self.type = CommandOptionType(data["type"])
         self.name = data["name"]
@@ -212,7 +278,6 @@ class ApplicationCommandOption:
         )
         self.required = data.get("required", False)
         self.choices = [ApplicationCommandChoice(a) for a in data.get("choices", [])]
-        self.options = [ApplicationCommandOption(a) for a in data.get("options", [])]
         self.channel_types = (
             [ChannelType(c) for c in d]
             if (d := data.get("channel_types")) is not None
@@ -222,7 +287,7 @@ class ApplicationCommandOption:
         self.max_value = data.get("max_value")
         self.min_length = data.get("min_length")
         self.max_length = data.get("max_length")
-        self.autocomplete = data.get("autocomplete")
+        self.autocomplete = data.get("autocomplete", False)
 
     @overload
     @classmethod
@@ -319,7 +384,6 @@ class ApplicationCommandOption:
         description_localizations: Localization = _MISSING,
         required: bool = False,
         choices: list[ApplicationCommandChoice] = _MISSING,
-        options: list[ApplicationCommandOption] = _MISSING,
         channel_types: list[ChannelType] = _MISSING,
         min_value: int | float = _MISSING,  # noqa: PYI041
         max_value: int | float = _MISSING,  # noqa: PYI041
@@ -327,6 +391,49 @@ class ApplicationCommandOption:
         max_length: int = _MISSING,
         autocomplete: bool = _MISSING,
     ) -> Self:
+        """Returns an instance of an application command option.
+
+        Parameters
+        ----------
+        type : :class:`CommandOptionType <mizuki.enums.command.CommandOptionType>`
+            The type of the option.
+
+        name : :class:`str`
+            The name of the option.
+
+        name_localizations : :class:`Localization`, optional
+            The localizations for the name of the option.
+
+        description : :class:`str`
+            The description of the option.
+
+        description_localizations : :class:`Localization`, optional
+            The localizations for the description of the option.
+
+        required : :class:`bool`, optional
+            Whether this option is required.
+
+        choices : list[:class:`ApplicationCommandChoice`], optional
+            The choices for the user to select from, valid for INTEGER, STRING and NUMBER types.
+
+        channel_types : list[:class:`ChannelType <mizuki.enums.channel.ChannelType>`], optional
+            The channel types the user is limited to when selecting a channel, valid for CHANNEL types.
+
+        min_value : :class:`int` | :class:`float`, optional
+            The minimum value the user can enter, valid for INTEGER and NUMBER types.
+
+        max_values : :class:`int` | :class:`float`, optional
+            The maximum value the user can enter, valid for INTEGER and NUMBER types.
+
+        min_length : :class:`int`, optional
+            The minimum amount of characters the user must enter, valid for STRING types.
+
+        max_values : :class:`int`, optional
+            The maximum amount of characters the user can enter, valid for STRING types.
+
+        autocomplete : :class:`bool`, optional
+            Whether this field will send autocomplete requests, valid for INTEGER, STRING and NUMBER types.
+        """
         return assign_val(
             cls(
                 ApplicationCommandOptionPayload(
@@ -339,7 +446,6 @@ class ApplicationCommandOption:
             name_localizations=name_localizations,
             description_localizations=description_localizations,
             choices=choices,
-            options=options,
             channel_types=channel_types,
             min_value=min_value,
             max_value=max_value,
@@ -366,11 +472,11 @@ class ApplicationCommandOption:
             case None:
                 param_type = annotation
             case _:
-                raise TypeError(f"Parameter type must be one of: {cls._VALID_TYPES}")
+                raise TypeError(f"Parameter type must be one of: {_VALID_TYPES}")
 
-        option_type = cls._SLASH_COMMAND_OPTION_TYPE_MAP.get(param_type)
+        option_type = _SLASH_COMMAND_OPTION_TYPE_MAP.get(param_type)
         if option_type is None:
-            raise TypeError(f"Parameter type must be one of: {cls._VALID_TYPES}")
+            raise TypeError(f"Parameter type must be one of: {_VALID_TYPES}")
 
         return cls(
             ApplicationCommandOptionPayload(
@@ -392,36 +498,131 @@ class ApplicationCommandOption:
             name_localizations=mtd(self.name_localizations),
             description_localizations=mtd(self.description_localizations),
             choices=[c._to_dict() for c in self.choices] if self.choices else None,
-            options=[o._to_dict() for o in self.options] if self.options else None,
-            channel_types=[ct.value for ct in self.channel_types]
-            if self.channel_types
-            else None,
+            channel_types=(
+                [ct.value for ct in self.channel_types] if self.channel_types else None
+            ),
             min_value=self.min_value,
             max_value=self.max_value,
             min_length=self.min_length,
             max_length=self.max_length,
-            autocomplete=self.autocomplete,
+            autocomplete=self.autocomplete or None,
         )
 
 
+type AutocompletorCallback = Callable[
+    [
+        Interaction[ApplicationCommandData],
+        dict[str, ApplicationCommandDataOption],
+    ],
+    Coroutine[Any, Any, Any],
+]
+
 type CommandResponseData = tuple[
-    Callable[..., Coroutine[Any, Any, Any]] | None,
-    Callable[
-        [
-            Interaction[ApplicationCommandData.AnyOptionTypesApplicationCommandData],
-            dict[str, ApplicationCommandDataOption[str | int | float]],
-        ],
-        Coroutine[Any, Any, Any],
-    ]
-    | None,
+    CoroFunc | None,
+    AutocompletorCallback | None,
     ApplicationCommandDataOption.AnyApplicationCommandDataOptions,
 ]
 
 
-class PartialApplicationCommand:
+class CallbackAndAutocompletorSettable:
+    __slots__ = ("_autocompletor", "_callback")
+
+    _autocompletor: AutocompletorCallback | None
+    _callback: CoroFunc | None
+
+    name: str
+
+    def set_callback(self, callback: CoroFunc) -> Self:
+        """Sets the callback method for this application command.
+
+        Parameters
+        ----------
+        callback : `async (Interaction[ApplicationCommandData], ...) -> Any`
+            The callback for the command.
+
+        Raises
+        ------
+        :class:`TypeError`
+            The callback provided was a synchronous function.
+        """
+
+        if not inspect.iscoroutinefunction(callback):
+            raise TypeError(
+                f"Command callback for '{self.name}:{callback.__name__}' has to be a coroutine function."
+            )
+
+        self._callback = callback
+        return self
+
+    def callback(self) -> Callable[[CoroFunc], CoroFunc]:
+        """Sets the callback method for this application command.
+
+        This method is a decorator.
+
+        This decorator should be applied to a method with the following signature:
+
+            `async (Interaction[ApplicationCommandData], ...) -> Any`
+
+        Raises
+        ------
+        :class:`TypeError`
+            The callback provided was a synchronous function.
+        """
+
+        def decorator(func: CoroFunc) -> CoroFunc:
+            self.set_callback(func)
+            return func
+
+        return decorator
+
+    def set_autocompletor(self, autocompletor: AutocompletorCallback) -> Self:
+        """Sets the autocompletor method for this application command.
+
+        Parameters
+        ----------
+        autocompletor : `async (Interaction[ApplicationCommandData], dict[str, ApplicationCommandDataOption]) -> Any`
+            The autocompletor callback for the command.
+
+        Raises
+        ------
+        :class:`TypeError`
+            The autocompletor provided was a synchronous function.
+        """
+
+        if not inspect.iscoroutinefunction(autocompletor):
+            raise TypeError(
+                f"Command autocompletor for '{self.name}:{autocompletor.__name__}' has to be a coroutine function.'"
+            )
+
+        self._autocompletor = autocompletor
+        return self
+
+    def autocompletor(self) -> Callable[[AutocompletorCallback], AutocompletorCallback]:
+        """Sets the autocompletor method for this application command.
+
+        This method is a decorator.
+
+        This decorator should be applied to a method with the following signature:
+
+            `async (Interaction[ApplicationCommandData], dict[str, ApplicationCommandDataOption]) -> Any`
+
+        Raises
+        ------
+        :class:`TypeError`
+            The autocompletor provided was a synchronous function.
+        """
+
+        def decorator(func: AutocompletorCallback) -> AutocompletorCallback:
+            self.set_autocompletor(func)
+            return func
+
+        return decorator
+
+
+class PartialApplicationCommand(CallbackAndAutocompletorSettable):
+    """Represents a locally initialized application command."""
+
     __slots__ = (
-        "_autocompletor",
-        "_callback",
         "contexts",
         "default_member_permissions",
         "description",
@@ -434,19 +635,35 @@ class PartialApplicationCommand:
         "type",
     )
 
-    _autocompletor: (
-        Callable[
-            [
-                Interaction[
-                    ApplicationCommandData.AnyOptionTypesApplicationCommandData
-                ],
-                dict[str, ApplicationCommandDataOption[str | int | float]],
-            ],
-            Coroutine[Any, Any, Any],
-        ]
-        | None
-    )
-    _callback: Callable[..., Coroutine[Any, Any, Any]] | None
+    type: ApplicationCommandType
+    "The type of the command."
+
+    name: str
+    "The name of the command."
+
+    name_localizations: Localization | None
+    "The localizations for the name of the command."
+
+    description: str
+    "The description of the command."
+
+    description_localizations: Localization | None
+    "The localizations for the description of the command."
+
+    options: list[ApplicationCommandOption]
+    "The options/parameters of the command."
+
+    nsfw: bool
+    "Whether the command is NSFW."
+
+    integration_types: list[ApplicationIntegrationType]
+    "The installation contexts where this globally-scoped command is available."
+
+    contexts: list[InteractionContextType] | None
+    "The interaction contexts where this globally-scoped command can be used."
+
+    default_member_permissions: Permissions | None
+    "The default permissions that are required to use this command."
 
     def __init__(self, data: PartialApplicationCommandPayload):
         self._autocompletor = None
@@ -473,9 +690,8 @@ class PartialApplicationCommand:
             Permissions, data["default_member_permissions"]
         )
 
-    @classmethod
+    @staticmethod
     def new(
-        cls,
         *,
         name: str,
         name_localizations: Localization = _MISSING,
@@ -487,19 +703,47 @@ class PartialApplicationCommand:
         contexts: list[InteractionContextType] = _MISSING,
         type: ApplicationCommandType = ApplicationCommandType.CHAT_INPUT,
         nsfw: bool = False,
-        callback: CoroFunc = _MISSING,
-        autocompletor: Callable[
-            [
-                Interaction[
-                    ApplicationCommandData.AnyOptionTypesApplicationCommandData
-                ],
-                dict[str, ApplicationCommandDataOption[str | int | float]],
-            ],
-            Coroutine[Any, Any, Any],
-        ] = _MISSING,
-    ) -> Self:
+    ) -> PartialApplicationCommand:
+        """Returns a locally intialized/partial application command.
+
+        Parameters
+        ----------
+        type : :class:`ApplicationCommandType <mizuki.enums.command.ApplicationCommandType>`, optional
+            The type of the command to create.
+
+        guild_id : :class:`int` | :class:`None`, optional
+            The ID of the guild if registering the command to be guild-specific.
+
+        name : :class:`str`
+            The name of the application command.
+
+        name_localizations : :class:`Localization`, optional
+            The localizations for the name of the application command.
+
+        description : :class:`str`, optional
+            The description of the application command.
+
+        description_localizations : :class:`Localization`, optional
+            The localizations for the description of the application command.
+
+        options: list[:class:`ApplicationCommandOption`], optional
+            The options/parameters for the command.
+
+        default_member_permisssions: :class:`Permissions <mizuki.objects.permissions.Permissions>`, optional
+            The default permissions that are required to use this command.
+
+        integration_types : list[:class:`ApplicationIntegrationType <mizuki.enums.interaction.ApplicationIntegrationType>`], optional
+            The installation contexts where this command is available, only allowed for globally-scoped commands.
+
+        contexts : list[:class:`InteractionContextType <mizuki.enums.interaction.InteractionContextType>`], optional
+            The interaction contexts where this command can be used, only allowed for globally-scoped commands.
+
+        nsfw : :class:`bool`, optional
+            Whether this command is age-restricted.
+
+        """
         return assign_val(
-            cls(
+            PartialApplicationCommand(
                 {
                     "type": type.value,
                     "name": name,
@@ -515,13 +759,10 @@ class PartialApplicationCommand:
             integration_types=integration_types,
             contexts=contexts,
             nsfw=nsfw,
-            _callback=callback,
-            _autocompletor=autocompletor,
         )
 
-    @classmethod
+    @staticmethod
     def _from_command(
-        cls,
         func: CoroFunc,
         *,
         name: str,
@@ -533,16 +774,8 @@ class PartialApplicationCommand:
         contexts: list[InteractionContextType] = _MISSING,
         type: ApplicationCommandType = ApplicationCommandType.CHAT_INPUT,
         nsfw: bool = False,
-        autocompletor: Callable[
-            [
-                Interaction[
-                    ApplicationCommandData.AnyOptionTypesApplicationCommandData
-                ],
-                dict[str, ApplicationCommandDataOption[str | int | float]],
-            ],
-            Coroutine[Any, Any, Any],
-        ] = _MISSING,
-    ) -> Self:
+        autocompletor: AutocompletorCallback = _MISSING,
+    ) -> PartialApplicationCommand:
         options: list[ApplicationCommandOption] = []
 
         if type is ApplicationCommandType.CHAT_INPUT:
@@ -562,7 +795,7 @@ class PartialApplicationCommand:
                 else:
                     options.append(ApplicationCommandOption._from_function_param(param))
 
-        return cls.new(
+        command = PartialApplicationCommand.new(
             name=name,
             name_localizations=name_localizations,
             description=description,
@@ -573,9 +806,12 @@ class PartialApplicationCommand:
             contexts=contexts,
             type=type,
             nsfw=nsfw,
-            callback=func,
-            autocompletor=autocompletor,
-        )
+        ).set_callback(func)
+
+        if autocompletor:
+            command.set_autocompletor(autocompletor)
+
+        return command
 
     def _to_dict(self) -> JSONPayload:
         return assign_val_dict(
@@ -606,6 +842,8 @@ class PartialApplicationCommand:
 
 
 class ApplicationCommand(PartialApplicationCommand):
+    """Represents a full/fetched application command."""
+
     __slots__ = (
         "application_id",
         "guild_id",
@@ -614,21 +852,34 @@ class ApplicationCommand(PartialApplicationCommand):
         "version",
     )
 
+    id: Snowflake
+    "The ID of the command."
+
+    application_id: Snowflake
+    "The ID of the application the command is associated with."
+
+    guild_id: Snowflake | None
+    "The ID of the guild if the command is guild-specific."
+
+    version: Snowflake
+    "The autoincrementing version identifier for the command."
+
+    handler: CommandHandler | None
+    "Determines whether the interaction is handled by the app's interactions or by Discord."
+
     def __init__(self, data: ApplicationCommandPayload):
         super().__init__(data)
         self.id = Snowflake(data["id"])
         self.application_id = Snowflake(data["application_id"])
         self.guild_id = Snowflake._from_str(data.get("guild_id"))
-        self.version = Snowflake._from_str(data.get("version"))
+        self.version = Snowflake(data["version"])
         self.handler = scls(CommandHandler, data.get("handler"))
 
 
-class SubCommand:
-    type: CommandOptionType = CommandOptionType.SUB_COMMAND
+class SubCommand(CallbackAndAutocompletorSettable):
+    """Represents a subcommand in command group."""
 
     __slots__ = (
-        "_autocompletor",
-        "_callback",
         "description",
         "description_localizations",
         "name",
@@ -636,19 +887,23 @@ class SubCommand:
         "options",
     )
 
-    _callback: Callable[..., Coroutine[Any, Any, Any]] | None
-    _autocompletor: (
-        Callable[
-            [
-                Interaction[
-                    ApplicationCommandData.AnyOptionTypesApplicationCommandData
-                ],
-                dict[str, ApplicationCommandDataOption[str | int | float]],
-            ],
-            Coroutine[Any, Any, Any],
-        ]
-        | None
-    )
+    type: Literal[CommandOptionType.SUB_COMMAND] = CommandOptionType.SUB_COMMAND
+    "The type of the option, always `CommandOptionType.SUB_COMMAND`."
+
+    name: str
+    "The name of the command."
+
+    name_localizations: Localization | None
+    "The localizations for the name of the command."
+
+    description: str
+    "The description of the command."
+
+    description_localizations: Localization | None
+    "The localizations for the description of the command."
+
+    options: list[ApplicationCommandOption]
+    "The options/parameters of the command."
 
     def __init__(self, data: ApplicationCommandOptionPayload) -> None:
         self._autocompletor = None
@@ -683,24 +938,31 @@ class SubCommand:
         description: str,
         description_localizations: Localization = _MISSING,
         options: list[ApplicationCommandOption] = _MISSING,
-        callback: Callable[..., Coroutine[Any, Any, Any]] = _MISSING,
-        autocompletor: Callable[
-            [
-                Interaction[
-                    ApplicationCommandData.AnyOptionTypesApplicationCommandData
-                ],
-                dict[str, ApplicationCommandDataOption[str | int | float]],
-            ],
-            Coroutine[Any, Any, Any],
-        ] = _MISSING,
     ) -> SubCommand:
+        """Returns a locally intialized subcommand.
+
+        Parameters
+        ----------
+        name : :class:`str`
+            The name of the application command.
+
+        name_localizations : :class:`Localization`, optional
+            The localizations for the name of the application command.
+
+        description : :class:`str`, optional
+            The description of the application command.
+
+        description_localizations : :class:`Localization`, optional
+            The localizations for the description of the application command.
+
+        options: list[:class:`ApplicationCommandOption`], optional
+            The options/parameters for the command.
+        """
         return assign_val(
             cls({"type": cls.type.value, "name": name, "description": description}),
             name_localizations=name_localizations,
             description_localizations=description_localizations,
             options=options,
-            _callback=callback,
-            _autocompletor=autocompletor,
         )
 
     @classmethod
@@ -712,15 +974,7 @@ class SubCommand:
         name_localizations: Localization = _MISSING,
         description: str,
         description_localizations: Localization = _MISSING,
-        autocompletor: Callable[
-            [
-                Interaction[
-                    ApplicationCommandData.AnyOptionTypesApplicationCommandData
-                ],
-                dict[str, ApplicationCommandDataOption[str | int | float]],
-            ],
-            Coroutine[Any, Any, Any],
-        ] = _MISSING,
+        autocompletor: AutocompletorCallback = _MISSING,
     ) -> SubCommand:
         options: list[ApplicationCommandOption] = []
 
@@ -740,19 +994,77 @@ class SubCommand:
             else:
                 options.append(ApplicationCommandOption._from_function_param(param))
 
-        return cls.new(
+        subcommand = cls.new(
             name=name,
             name_localizations=name_localizations,
             description=description,
             description_localizations=description_localizations,
             options=options,
-            callback=func,
-            autocompletor=autocompletor,
-        )
+        ).set_callback(func)
+
+        if autocompletor:
+            subcommand.set_autocompletor(autocompletor)
+
+        return subcommand
 
 
-class NestedApplicationCommandGroup:
-    type: CommandOptionType = CommandOptionType.SUB_COMMAND_GROUP
+class SubCommandAddable:
+    options: list[SubCommand | NestedApplicationCommandGroup] | list[SubCommand]
+
+    def command(
+        self,
+        *,
+        name: str,
+        name_localizations: Localization = _MISSING,
+        description: str,
+        description_localizations: Localization = _MISSING,
+        autocompletor: AutocompletorCallback = _MISSING,
+    ) -> CoroDecorator:
+        """Creates a subcommand in the command group.
+
+        This method is a decorator and transforms the method into a :class:`SubCommand`.
+
+        This decorator should be applied to a function with the following signature:
+
+            `async (Interaction[ApplicationCommandData], ...) -> Any`
+
+        Parameters
+        ----------
+        name : :class:`str`
+            The name of the application command.
+
+        name_localizations : :class:`Localization`, optional
+            The localizations for the name of the application command.
+
+        description : :class:`str`, optional
+            The description of the application command.
+
+        description_localizations : :class:`Localization`, optional
+            The localizations for the description of the application command.
+
+        autocompletor : `async (Interaction[ApplicationCommandData], dict[str, ApplicationCommandDataOption]) -> Any`
+            The autocompletor for the command.
+        """
+
+        def decorator(func: CoroFunc) -> CoroFunc:
+            self.options.append(
+                SubCommand._from_function(
+                    func,
+                    name=name,
+                    name_localizations=name_localizations,
+                    description=description,
+                    description_localizations=description_localizations,
+                    autocompletor=autocompletor,
+                )
+            )
+
+            return func
+
+        return decorator
+
+
+class NestedApplicationCommandGroup(SubCommandAddable):
+    """Represents a command group nested inside a command group."""
 
     __slots__ = (
         "description",
@@ -762,11 +1074,25 @@ class NestedApplicationCommandGroup:
         "options",
     )
 
+    type: Literal[CommandOptionType.SUB_COMMAND_GROUP] = (
+        CommandOptionType.SUB_COMMAND_GROUP
+    )
+    "The type of the option, always `CommandOptionType.SUB_COMMAND_GROUP`."
+
     name: str
+    "The name of the command group."
+
     name_localizations: Localization | None
+    "The localizations for the name of the command group."
+
     description: str
+    "The description of the command group."
+
     description_localizations: Localization | None
+    "The localizations for the description of the command group."
+
     options: list[SubCommand]
+    "The list of subcommands of this group."
 
     def __init__(self, data: ApplicationCommandOptionPayload) -> None:
         self.name = data["name"]
@@ -803,44 +1129,6 @@ class NestedApplicationCommandGroup:
 
         return callback, autocompletor, data_options[0].options
 
-    def command(
-        self,
-        *,
-        name: str,
-        name_localizations: Localization = _MISSING,
-        description: str,
-        description_localizations: Localization = _MISSING,
-        autocompletor: Callable[
-            [
-                Interaction[
-                    ApplicationCommandData.AnyOptionTypesApplicationCommandData
-                ],
-                dict[str, ApplicationCommandDataOption[str | int | float]],
-            ],
-            Coroutine[Any, Any, Any],
-        ] = _MISSING,
-    ) -> CoroDecorator:
-        def decorator(func: CoroFunc) -> CoroFunc:
-            if not inspect.iscoroutinefunction(func):
-                raise TypeError(
-                    f"Command callback for '{name}:{func.__name__}' has to be a coroutine function."
-                )
-
-            self.options.append(
-                SubCommand._from_function(
-                    func,
-                    name=name,
-                    name_localizations=name_localizations,
-                    description=description,
-                    description_localizations=description_localizations,
-                    autocompletor=autocompletor,
-                )
-            )
-
-            return func
-
-        return decorator
-
     @classmethod
     def new(
         cls,
@@ -851,6 +1139,25 @@ class NestedApplicationCommandGroup:
         description_localizations: Localization = _MISSING,
         options: list[SubCommand] = _MISSING,
     ) -> NestedApplicationCommandGroup:
+        """Returns an instance of a sub command group.
+
+        Parameters
+        ----------
+        name : :class:`str`
+            The name of the sub command group.
+
+        name_localizations : :class:`Localization`, optional
+            The localizations for the name of the sub command group.
+
+        description : :class:`str`
+            The description of the sub command group.
+
+        description_localizations : :class:`Localization`, optional
+            The localizations for the description of the sub command group.
+
+        options : list[:class:`SubCommand`], optional
+            The commands of the sub command group.
+        """
         return assign_val(
             cls(
                 {
@@ -865,8 +1172,8 @@ class NestedApplicationCommandGroup:
         )
 
 
-class PartialApplicationCommandGroup:
-    type: ApplicationCommandType = ApplicationCommandType.CHAT_INPUT
+class PartialApplicationCommandGroup(SubCommandAddable):
+    """Represents a locally initialized/partial application command group."""
 
     __slots__ = (
         "contexts",
@@ -879,6 +1186,36 @@ class PartialApplicationCommandGroup:
         "nsfw",
         "options",
     )
+
+    type: Literal[ApplicationCommandType.CHAT_INPUT] = ApplicationCommandType.CHAT_INPUT
+    "The type of the command group, always `ApplicationCommandType.CHAT_INPUT`."
+
+    name: str
+    "The name of the command group."
+
+    name_localizations: Localization | None
+    "The localizations for the name of the command group."
+
+    description: str
+    "The description of the command group."
+
+    description_localizations: Localization | None
+    "The localizations for the description of the command group."
+
+    options: list[SubCommand | NestedApplicationCommandGroup]
+    "The subcommands/subcommand groups of the command group."
+
+    nsfw: bool
+    "Whether the commands in the command group are NSFW."
+
+    integration_types: list[ApplicationIntegrationType]
+    "The installation contexts where the commands in this globally-scoped command group are available."
+
+    contexts: list[InteractionContextType] | None
+    "The interaction contexts where the commands in this globally-scoped command group can be used."
+
+    default_member_permissions: Permissions | None
+    "The default permissions that are required to use the commands in the command group."
 
     def __init__(self, data: PartialApplicationCommandPayload) -> None:
         self.name = data["name"]
@@ -928,44 +1265,6 @@ class PartialApplicationCommandGroup:
             ),
         )
 
-    def command(
-        self,
-        *,
-        name: str,
-        name_localizations: Localization = _MISSING,
-        description: str,
-        description_localizations: Localization = _MISSING,
-        autocompletor: Callable[
-            [
-                Interaction[
-                    ApplicationCommandData.AnyOptionTypesApplicationCommandData
-                ],
-                dict[str, ApplicationCommandDataOption[str | int | float]],
-            ],
-            Coroutine[Any, Any, Any],
-        ] = _MISSING,
-    ) -> CoroDecorator:
-        def decorator(func: CoroFunc) -> CoroFunc:
-            if not inspect.iscoroutinefunction(func):
-                raise TypeError(
-                    f"Command callback for '{name}:{func.__name__}' has to be a coroutine function."
-                )
-
-            self.options.append(
-                SubCommand._from_function(
-                    func,
-                    name=name,
-                    name_localizations=name_localizations,
-                    description=description,
-                    description_localizations=description_localizations,
-                    autocompletor=autocompletor,
-                )
-            )
-
-            return func
-
-        return decorator
-
     def _get_response_data(
         self,
         data_options: ApplicationCommandDataOption.AnyApplicationCommandDataOptions,
@@ -996,6 +1295,37 @@ class PartialApplicationCommandGroup:
         contexts: list[InteractionContextType] = _MISSING,
         nsfw: bool = False,
     ) -> PartialApplicationCommandGroup:
+        """Returns an instance of a locally intialized/partial application command group.
+
+        Parameters
+        ----------
+        name : :class:`str`
+            The name of the command group.
+
+        name_localizations : :class:`Localization`, optional
+            The localizations for the name of the command group.
+
+        description : :class:`str`
+            The description of the command group.
+
+        description_localizations : :class:`Localization`, optional
+            The localizations for the description of the command group.
+
+        options : list[:class:`NestedApplicationCommandGroup` | :class:`SubCommand`], optional
+            The commands/sub command groups of the command group.
+
+        default_member_permissions : :class:`Permissions <mizuki.objects.permissions.Permissions>`, optional
+            The default permissions required to use the commands in this command group.
+
+        integration_types : list[:class:`ApplicationIntegrationType`], optional
+            The installation contexts where the commands in this globally-scoped command group are available.
+
+        contexts : list[:class:`InteractionContextType`], optional
+            The interaction contexts where the commands in this globally-scoped command group can be used.
+
+        nsfw : :class:`bool`, optional
+            Whether the commands in this command group are age-restricted.
+        """
         return assign_val(
             PartialApplicationCommandGroup(
                 {
@@ -1024,6 +1354,25 @@ class PartialApplicationCommandGroup:
         description_localizations: Localization = _MISSING,
         options: list[SubCommand] = _MISSING,
     ) -> NestedApplicationCommandGroup:
+        """Creates a sub command group and adds it to the command group
+
+        Parameters
+        ----------
+        name : :class:`str`
+            The name of the sub command group.
+
+        name_localizations : :class:`Localization`, optional
+            The localizations for the name of the sub command group.
+
+        description : :class:`str`
+            The description of the sub command group.
+
+        description_localizations : :class:`Localization`, optional
+            The localizations for the description of the sub command group.
+
+        options : list[:class:`SubCommand`], optional
+            The commands of the sub command group.
+        """
         subgroup = NestedApplicationCommandGroup.new(
             name=name,
             name_localizations=name_localizations,
@@ -1042,6 +1391,8 @@ class PartialApplicationCommandGroup:
 
 
 class ApplicationCommandGroup(PartialApplicationCommandGroup):
+    """Returns a full/fetched application command group."""
+
     __slots__ = (
         "application_id",
         "guild_id",
@@ -1050,12 +1401,27 @@ class ApplicationCommandGroup(PartialApplicationCommandGroup):
         "version",
     )
 
+    id: Snowflake
+    "The ID of the command group."
+
+    application_id: Snowflake
+    "The ID of the application the command group is associated with."
+
+    guild_id: Snowflake | None
+    "The ID of the guild if the command is guild-specific."
+
+    version: Snowflake
+    "The autoincrementing version identifier for the command."
+
+    handler: CommandHandler | None
+    "Determines whether the interaction is handled by the app's interactions or by Discord."
+
     def __init__(self, data: ApplicationCommandPayload):
         super().__init__(data)
         self.id = Snowflake(data["id"])
         self.application_id = Snowflake(data["application_id"])
         self.guild_id = Snowflake._from_str(data.get("guild_id"))
-        self.version = Snowflake._from_str(data.get("version"))
+        self.version = Snowflake(data["version"])
         self.handler = scls(CommandHandler, data.get("handler"))
 
 
