@@ -1,5 +1,8 @@
+import asyncio
+import base64
 import pathlib
 from typing import Any
+
 from mizuki._utils import _MISSING, assign_val_dict
 
 __all__ = ("File",)
@@ -24,7 +27,7 @@ class File:
         Whether to spoiler the media to send. Only works for media files.
     """
 
-    __slots__ = ("path", "description", "filename", "spoiler", "url")
+    __slots__ = ("description", "filename", "path", "spoiler", "url")
 
     path: pathlib.Path
     "The :class:`pathlib.Path` object for the file provided."
@@ -48,7 +51,7 @@ class File:
         filename: str = _MISSING,
         spoiler: bool = False,
         description: str | None = None,
-    ):
+    ) -> None:
         self.path = pathlib.Path(path)
         self.spoiler = spoiler
         self.description = description
@@ -63,3 +66,10 @@ class File:
             description=self.description,
             is_spoiler=self.spoiler,
         )
+
+    async def encode_to_image_data_uri(self) -> str:
+        image_bytes = await asyncio.to_thread(self.path.read_bytes)
+        base64_encoded = base64.b64encode(image_bytes).decode("ascii")
+        image_extension = self.path.suffix.removeprefix(".")
+
+        return f"data:image/{image_extension};base64,{base64_encoded}"
