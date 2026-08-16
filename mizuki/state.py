@@ -1,20 +1,24 @@
 from __future__ import annotations
-import asyncio
-from collections.abc import Coroutine, Callable, Sequence
-from datetime import datetime, timedelta
-import aiohttp
 
+import asyncio
+from collections.abc import Callable, Coroutine, Sequence
+from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING, Any
 
+import aiohttp
+
 from mizuki.flags import IntentFlags
-from mizuki.http import HTTPClient
 from mizuki.gateway import GatewayClient
+from mizuki.http import HTTPClient
 from mizuki.managers.resource import Managers
 
 if TYPE_CHECKING:
     from mizuki.bot import Bot
     from mizuki.cache import CacheStorage
-    from mizuki.objects.command import PartialApplicationCommand
+    from mizuki.objects.command import (
+        PartialApplicationCommand,
+        PartialApplicationCommandGroup,
+    )
     from mizuki.objects.components import Component
     from mizuki.objects.interaction import Interaction
     from mizuki.objects.modal import Modal, ModalResponse
@@ -22,14 +26,14 @@ if TYPE_CHECKING:
 
 class ConnectionState:
     __slots__ = (
-        "http",
-        "gateway",
-        "managers",
-        "session",
         "components_data",
-        "modals_data",
         "default_component_timeout",
         "default_modal_timeout",
+        "gateway",
+        "http",
+        "managers",
+        "modals_data",
+        "session",
     )
 
     def __init__(
@@ -68,7 +72,9 @@ class ConnectionState:
         *,
         cache_storage: CacheStorage,
         application_id: int,
-        commands_data: dict[str, tuple[int, PartialApplicationCommand]],
+        commands_data: dict[
+            str, tuple[int, PartialApplicationCommand | PartialApplicationCommandGroup]
+        ],
     ) -> Managers:
         assert hasattr(self, "http"), "Init Manager was called without init http"
         self.managers = Managers(
@@ -97,7 +103,7 @@ class ConnectionState:
     ) -> None:
         while True:
             for key, (_, expires_at) in data.copy().items():
-                if expires_at and expires_at < datetime.now():
+                if expires_at and expires_at < datetime.now(UTC):
                     data.pop(key)
             await asyncio.sleep(10)
 
@@ -113,7 +119,7 @@ class ConnectionState:
                 )
                 self.components_data[message_id, custom_id] = (
                     callback,
-                    (datetime.now() + timeout) if timeout else None,
+                    (datetime.now(UTC) + timeout) if timeout else None,
                 )
 
             if child_components := getattr(component, "components", ()):
@@ -126,5 +132,5 @@ class ConnectionState:
             )
             self.modals_data[modal.custom_id] = (
                 callback,
-                (datetime.now() + timeout) if timeout else None,
+                (datetime.now(UTC) + timeout) if timeout else None,
             )

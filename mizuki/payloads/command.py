@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from typing import Literal, NotRequired, Required, TypedDict
 
 from mizuki.payloads._types import Permissions, Snowflake
@@ -49,7 +50,7 @@ class CommandChoicePayload(TypedDict):
     value: str | int | float
 
 
-class CommandOptionPayload(TypedDict, total=False):
+class ApplicationCommandOptionPayload(TypedDict, total=False):
     type: Required[Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]]
     name: Required[str]
     name_localizations: LocalizationPayload | None
@@ -57,7 +58,7 @@ class CommandOptionPayload(TypedDict, total=False):
     description_localizations: LocalizationPayload | None
     required: bool
     choices: list[CommandChoicePayload]
-    options: list[CommandOptionPayload]
+    options: list[ApplicationCommandOptionPayload]
     channel_types: list[Literal[0, 1, 2, 3, 4, 5, 10, 11, 12, 13, 14, 15, 16]]
     min_value: int | float
     max_value: int | float
@@ -66,23 +67,19 @@ class CommandOptionPayload(TypedDict, total=False):
     autocomplete: bool
 
 
-class BaseApplicationCommandPayload(TypedDict, total=False):
+class PartialApplicationCommandPayload(TypedDict, total=False):
     type: Literal[1, 2, 3, 4]
     name: Required[str]
     name_localizations: LocalizationPayload | None
+    description: Required[str]
     description_localizations: LocalizationPayload | None
-    options: list[CommandOptionPayload]
+    options: list[ApplicationCommandOptionPayload]
     nsfw: bool
     integration_types: list[Literal[0, 1]]
     contexts: list[Literal[0, 1, 2]] | None
+    default_member_permissions: Required[Permissions | None]
 
-
-class PartialApplicationCommandPayload(BaseApplicationCommandPayload, total=False):
-    description: str
-    default_member_permissions: Permissions
-
-
-class ApplicationCommandPayload(BaseApplicationCommandPayload, total=False):
+class ApplicationCommandPayload(PartialApplicationCommandPayload, total=False):
     id: Required[Snowflake]
     description: Required[str]
     guild_id: Snowflake

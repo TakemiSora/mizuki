@@ -1,19 +1,22 @@
 from __future__ import annotations
-from typing import Any, overload, TYPE_CHECKING
 
-from mizuki.http import Path
-from mizuki.cache import CacheStorage
+from typing import TYPE_CHECKING, Any, overload
+
 from mizuki._utils import _MISSING, assign_val_dict, mtd
-
+from mizuki.cache import CacheStorage
+from mizuki.enums.interaction import ApplicationIntegrationType, InteractionContextType
+from mizuki.http import Path
 from mizuki.managers._types import BaseManager
 from mizuki.objects.command import (
+    ApplicationCommand,
+    ApplicationCommandGroup,
     ApplicationCommandOption,
     Localization,
-    ApplicationCommand,
     PartialApplicationCommand,
+    PartialApplicationCommandGroup,
+    parse_application_command,
 )
 from mizuki.objects.permissions import Permissions
-from mizuki.enums.interaction import InteractionContextType, ApplicationIntegrationType
 
 if TYPE_CHECKING:
     from mizuki.state import ConnectionState
@@ -31,7 +34,9 @@ class CommandManager(BaseManager):
         state: ConnectionState,
         storage: CacheStorage,
         application_id: int,
-        commands_data: dict[str, tuple[int, PartialApplicationCommand]],
+        commands_data: dict[
+            str, tuple[int, PartialApplicationCommand | PartialApplicationCommandGroup]
+        ],
     ):
         super().__init__(state, storage)
         self._application_id = application_id
@@ -58,7 +63,7 @@ class CommandManager(BaseManager):
 
     async def fetch_all(
         self, *, guild_id: int | None = None, with_localizations: bool = True
-    ) -> list[ApplicationCommand]:
+    ) -> list[ApplicationCommand | ApplicationCommandGroup]:
         """
         Fetches a list of all application commands from the Discord API.
 
@@ -80,7 +85,7 @@ class CommandManager(BaseManager):
         """
         return self._cache_storage.update_commands_bulk(
             [
-                ApplicationCommand(c)
+                parse_application_command(c)
                 for c in await self._command_request(
                     method="GET",
                     guild_id=guild_id,
@@ -90,7 +95,9 @@ class CommandManager(BaseManager):
             guild_id=guild_id or 0,
         )
 
-    def get_all(self, *, guild_id: int | None = None) -> list[ApplicationCommand]:
+    def get_all(
+        self, *, guild_id: int | None = None
+    ) -> list[ApplicationCommand | ApplicationCommandGroup]:
         """
         Gets a list of ApplicationCommand frok the internal cache. Can be empty if the commands are not fetched atleast once.
 
@@ -102,8 +109,11 @@ class CommandManager(BaseManager):
         return self._cache_storage.get_all_commands(guild_id=guild_id or 0)
 
     async def add(
-        self, command: PartialApplicationCommand, *, guild_id: int | None = None
-    ) -> ApplicationCommand:
+        self,
+        command: PartialApplicationCommand | PartialApplicationCommandGroup,
+        *,
+        guild_id: int | None = None,
+    ) -> ApplicationCommand | ApplicationCommandGroup:
         """
         Adds a specific command object to the Application.
 
@@ -124,7 +134,7 @@ class CommandManager(BaseManager):
             A HTTP error occured.
         """
         return self._cache_storage.update_command(
-            ApplicationCommand(
+            parse_application_command(
                 await self._command_request(
                     method="POST", json=command._to_dict(), guild_id=guild_id
                 )
@@ -134,7 +144,7 @@ class CommandManager(BaseManager):
 
     async def fetch(
         self, command_id: int, *, guild_id: int | None = None
-    ) -> ApplicationCommand:
+    ) -> ApplicationCommand | ApplicationCommandGroup:
         """
         Fetches an application command from the Discord API.
 
@@ -158,7 +168,7 @@ class CommandManager(BaseManager):
             A HTTP error occured.
         """
         return self._cache_storage.update_command(
-            ApplicationCommand(
+            parse_application_command(
                 await self._command_request(
                     method="GET", guild_id=guild_id, command_id=command_id
                 )
@@ -166,7 +176,7 @@ class CommandManager(BaseManager):
             guild_id=guild_id or 0,
         )
 
-    async def sync_all(self) -> list[ApplicationCommand]:
+    async def sync_all(self) -> list[ApplicationCommand | ApplicationCommandGroup]:
         """
         Syncs registered commands via :meth:`@Bot.command() <mizuki.objects.bot.Bot.command>` to the Application. This will **override** all commands currently synced.
 
@@ -178,8 +188,12 @@ class CommandManager(BaseManager):
         :class:`HTTPException`
             A HTTP error occured.
         """
-        global_cmds: list[PartialApplicationCommand] = []
-        guild_cmds: dict[int, list[PartialApplicationCommand]] = {}
+        global_cmds: list[
+            PartialApplicationCommand | PartialApplicationCommandGroup
+        ] = []
+        guild_cmds: dict[
+            int, list[PartialApplicationCommand | PartialApplicationCommandGroup]
+        ] = {}
 
         for data in self._commands_data.values():
             id = data[0]
@@ -191,7 +205,7 @@ class CommandManager(BaseManager):
                     guild_cmds[id] = []
                 guild_cmds[id].append(data[1])
 
-        to_return: list[ApplicationCommand] = []
+        to_return: list[ApplicationCommand | ApplicationCommandGroup] = []
         if global_cmds:
             to_return += await self.sync_bulk(global_cmds)
 
@@ -201,8 +215,11 @@ class CommandManager(BaseManager):
         return to_return
 
     async def sync_bulk(
-        self, commands: list[PartialApplicationCommand], *, guild_id: int | None = None
-    ) -> list[ApplicationCommand]:
+        self,
+        commands: list[PartialApplicationCommand | PartialApplicationCommandGroup],
+        *,
+        guild_id: int | None = None,
+    ) -> list[ApplicationCommand | ApplicationCommandGroup]:
         """
         Syncs given commands to the Application. This will **override** all commands currently synced.
 
@@ -224,7 +241,7 @@ class CommandManager(BaseManager):
         """
         return self._cache_storage.update_commands_bulk(
             [
-                ApplicationCommand(c)
+                parse_application_command(c)
                 for c in await self._command_request(
                     method="PUT",
                     guild_id=guild_id,
@@ -279,7 +296,7 @@ class CommandManager(BaseManager):
         integration_types: list[ApplicationIntegrationType] = _MISSING,
         contexts: list[InteractionContextType] = _MISSING,
         nsfw: bool = _MISSING,
-    ) -> ApplicationCommand:
+    ) -> ApplicationCommand | ApplicationCommandGroup:
         """
         Edits an application command. All parameters to this method besides ``command_id`` are optional.
 
@@ -357,7 +374,7 @@ class CommandManager(BaseManager):
         )
 
         return self._cache_storage.update_command(
-            ApplicationCommand(
+            parse_application_command(
                 await self._command_request(
                     method="PATCH",
                     command_id=command_id,
