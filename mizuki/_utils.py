@@ -150,3 +150,7 @@ def siso(txt: str | None) -> datetime | None:
 def scls[C](cls: Callable[..., C], *args: Any, **kwargs: Any) -> C | None:
     if args and args[0] is not None:
         return cls(*args, **kwargs)
+
+
+def mgetattr[ObjectType](obj: ObjectType, name: str) -> Any | ObjectType:
+    return getattr(obj, name, obj)

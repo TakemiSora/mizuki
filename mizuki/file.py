@@ -1,3 +1,4 @@
+from mizuki._utils import Missing
 import asyncio
 import base64
 import pathlib
@@ -73,3 +74,11 @@ class File:
         image_extension = self.path.suffix.removeprefix(".")
 
         return f"data:image/{image_extension};base64,{base64_encoded}"
+
+
+async def maybe_encode_file(data: File | str | None | Missing) -> str | None | Missing:
+    return (
+        await (File(data) if isinstance(data, str) else data).encode_to_image_data_uri()
+        if not (data is None or isinstance(data, Missing))
+        else data
+    )
