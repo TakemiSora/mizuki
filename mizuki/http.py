@@ -1,24 +1,24 @@
 from __future__ import annotations
 
-import aiohttp
 import asyncio
 import logging
-
-from typing import Any, TYPE_CHECKING
-from json import dumps
 from contextlib import ExitStack
+from json import dumps
+from typing import TYPE_CHECKING, Any
 from urllib.parse import quote
 
-from mizuki.file import File
+import aiohttp
+
+from mizuki._utils import _MISSING
 from mizuki.errors import (
     BadRequest,
-    NotFound,
-    HTTPException,
     Forbidden,
+    HTTPException,
+    NotFound,
     Unauthorized,
     _RateLimitedRetry,
 )
-from mizuki._utils import _MISSING
+from mizuki.file import File
 
 if TYPE_CHECKING:
     from mizuki.state import ConnectionState
@@ -71,11 +71,11 @@ class Path:
     ":meta private:"
 
     __slots__ = (
-        "method",
         "_raw_url",
-        "url",
         "channel_id",
         "guild_id",
+        "method",
+        "url",
         "webhook_id",
         "webhook_token",
     )
@@ -120,7 +120,7 @@ class Path:
 class RateLimitBucket:
     ":meta private:"
 
-    __slots__ = ("remaining", "reset_after", "lock")
+    __slots__ = ("lock", "remaining", "reset_after")
 
     def __init__(self, remaining: int, reset_after: float):
         self.remaining = remaining
@@ -139,7 +139,7 @@ class HTTPClient:
     The Client that is used to interact with the Discord REST API. This should **not** be constructed by the user.
     """
 
-    __slots__ = ("_state", "_global_ratelimit", "_buckets_keys", "_buckets")
+    __slots__ = ("_buckets", "_buckets_keys", "_global_ratelimit", "_state")
 
     def __init__(self, state: ConnectionState):
         self._state = state
@@ -158,56 +158,56 @@ class HTTPClient:
         bucket = self._buckets.get(bucket_id) if bucket_id else None
 
         try:
-            async with bucket.lock if bucket else asyncio.Lock():
-                async with self._state.session.request(
-                    path.method, path.url, **kwargs
-                ) as resp:
-                    new_bucket_id = resp.headers.get("X-RateLimit-Bucket")
+            async with (
+                bucket.lock if bucket else asyncio.Lock(),
+                self._state.session.request(path.method, path.url, **kwargs) as resp,
+            ):
+                new_bucket_id = resp.headers.get("X-RateLimit-Bucket")
 
-                    if new_bucket_id is not None:
-                        if new_bucket_id not in self._buckets:
-                            self._buckets[new_bucket_id] = RateLimitBucket(1, 0)
-                        self._buckets[new_bucket_id].update_bucket(resp)
-                        self._buckets_keys[path._bucket_key] = new_bucket_id
+                if new_bucket_id is not None:
+                    if new_bucket_id not in self._buckets:
+                        self._buckets[new_bucket_id] = RateLimitBucket(1, 0)
+                    self._buckets[new_bucket_id].update_bucket(resp)
+                    self._buckets_keys[path._bucket_key] = new_bucket_id
 
-                    if resp.status == 429:
-                        data = await resp.json()
-                        retry_after = float(data["retry_after"])
-                        limit_scope = resp.headers.get("X-RateLimit-Scope")
+                if resp.status == 429:
+                    data = await resp.json()
+                    retry_after = float(data["retry_after"])
+                    limit_scope = resp.headers.get("X-RateLimit-Scope")
 
-                        raise _RateLimitedRetry(
-                            data, retry_after, limit_scope, new_bucket_id or bucket_id
+                    raise _RateLimitedRetry(
+                        data, retry_after, limit_scope, new_bucket_id or bucket_id
+                    )
+
+                if resp.status >= 400:
+                    data = await resp.json()
+                    if resp.status == 400:
+                        raise BadRequest(data)
+
+                    message = data.get("message", "")
+                    match resp.status:
+                        case 401:
+                            raise Unauthorized(message)
+                        case 403:
+                            raise Forbidden(message)
+                        case 404:
+                            raise NotFound(message)
+                        case _:
+                            raise HTTPException(message)
+
+                if new_bucket_id:
+                    bucket = self._buckets.get(new_bucket_id)
+                    if bucket and bucket.remaining == 0:
+                        _log.debug(
+                            "Pre-emptively waiting for bucket reset on BucketID = %s on URL = %s. Continuing in %.2f seconds.",
+                            new_bucket_id,
+                            path.url,
+                            bucket.reset_after,
                         )
+                        await asyncio.sleep(bucket.reset_after)
 
-                    if resp.status >= 400:
-                        data = await resp.json()
-                        if resp.status == 400:
-                            raise BadRequest(data)
-
-                        message = data.get("message", "")
-                        match resp.status:
-                            case 401:
-                                raise Unauthorized(message)
-                            case 403:
-                                raise Forbidden(message)
-                            case 404:
-                                raise NotFound(message)
-                            case _:
-                                raise HTTPException(message)
-
-                    if new_bucket_id:
-                        bucket = self._buckets.get(new_bucket_id)
-                        if bucket and bucket.remaining == 0:
-                            _log.debug(
-                                "Pre-emptively waiting for bucket reset on BucketID = %s on URL = %s. Continuing in %.2f seconds.",
-                                new_bucket_id,
-                                path.url,
-                                bucket.reset_after,
-                            )
-                            await asyncio.sleep(bucket.reset_after)
-
-                    if "application/json" in resp.headers.get("Content-Type", ""):
-                        return await resp.json()
+                if "application/json" in resp.headers.get("Content-Type", ""):
+                    return await resp.json()
 
         except _RateLimitedRetry as e:
             if e.limit_scope == "global":
@@ -235,6 +235,9 @@ class HTTPClient:
         *,
         files: list[File] = _MISSING,
         json: Any = _MISSING,
+        params: dict[str, str | int | float] = _MISSING,
+        audit_log_reason: str = _MISSING,
+        headers: dict[str, str] = _MISSING,
         **kwargs: Any,
     ) -> Any:
         """
@@ -250,6 +253,15 @@ class HTTPClient:
 
         json : dict[:class:`str`, :class:`Any <typing.Any>`], optional
             The JSON payload for the request, is added under ``payload_json`` in the FormData if files is also provided.
+
+        params : dict[:class:`str`, :class:`str` | :class:`int` | :class`float`], optional
+            The query string parameters for this request.
+
+        audit_log_reason : :class:`str`, optional
+            The audit log reason sent with the `X-Audit-Log-Reason` header.
+
+        headers : dict[:class:`str`, :class:`str`], optional
+            The headers for the request, audit log_reason is also added here if sent.
 
         **kwargs : :class:`Any <typing.Any>`
             The keyword arguments for the request. These are passed directly to :meth:`aiohttp.ClientSession.request()` method.
@@ -268,14 +280,26 @@ class HTTPClient:
         :class:`HTTPException`
             An HTTP error occured.
         """
-        request_data = {}
+        request_data: dict[str, Any] = {}
+
+        if params:
+            request_data["params"] = params
+
+        if audit_log_reason:
+            headers = headers or {}
+            headers["X-Audit-Log-Reason"] = audit_log_reason
+
+        if headers:
+            request_data["headers"] = headers
 
         with ExitStack() as stack:
             if files:
                 request_data["data"] = data = aiohttp.FormData()
 
                 for i, file in enumerate(files):
-                    file_bytes = stack.enter_context(open(file.path, "rb"))
+                    file_bytes = stack.enter_context(
+                        await asyncio.to_thread(open, file.path, "rb")
+                    )
                     data.add_field(f"files[{i}]", file_bytes, filename=file.filename)
 
                 data.add_field("payload_json", dumps(json))
