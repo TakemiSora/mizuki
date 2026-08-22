@@ -1,10 +1,25 @@
 from __future__ import annotations
+
+from dataclasses import dataclass
 from datetime import datetime
-from typing import cast, overload, TYPE_CHECKING
+from typing import TYPE_CHECKING, cast, overload
 
-from mizuki.flags import SystemChannelFlags
-from mizuki._utils import scls, siso, _MISSING
-
+from mizuki._utils import _MISSING, JSONPayload, assign_val_dict, mgetattr, scls, siso
+from mizuki.enums.guild import (
+    EventRecurrenceRuleFrequency,
+    EventRecurrenceRuleMonth,
+    EventRecurrenceRuleWeekday,
+    GuildExplicitContentLevel,
+    GuildFeature,
+    GuildMFALevel,
+    GuildNotificationLevel,
+    GuildNSFWLevel,
+    GuildPremiumTier,
+    GuildScheduledEventEntityType,
+    GuildScheduledEventStatus,
+    GuildVerificationLevel,
+)
+from mizuki.flags import ChannelFlags, SystemChannelFlags
 from mizuki.objects.asset import Asset
 from mizuki.objects.channel import ThreadChannel, parse_channel_payload
 from mizuki.objects.emoji import Emoji
@@ -14,10 +29,11 @@ from mizuki.objects.role import Role
 from mizuki.objects.snowflake import Snowflake
 from mizuki.objects.sticker import Sticker
 from mizuki.objects.user import User
-
 from mizuki.payloads.guild import (
     EntityMetadataPayload,
+    GuildBanPayload,
     GuildPayload,
+    GuildPreviewPayload,
     GuildScheduledEventPayload,
     GuildScheduledEventRecurrenceRulePayload,
     RecurrenceRuleNWeekdayPayload,
@@ -25,29 +41,10 @@ from mizuki.payloads.guild import (
     UnavailableGuildPayload,
 )
 
-from mizuki.enums.guild import (
-    EventRecurrenceRuleFrequency,
-    EventRecurrenceRuleMonth,
-    EventRecurrenceRuleWeekday,
-    GuildExplicitContentLevel,
-    GuildFeature,
-    GuildMFALevel,
-    GuildNSFWLevel,
-    GuildNotificationLevel,
-    GuildPremiumTier,
-    GuildScheduledEventEntityType,
-    GuildScheduledEventStatus,
-    GuildVerificationLevel,
-)
-
 if TYPE_CHECKING:
     from mizuki.state import ConnectionState
 
-__all__ = (
-    "UnavailableGuild",
-    "GuildScheduledEvent",
-    "Guild",
-)
+__all__ = ("ChannelPositionChange", "Guild", "GuildScheduledEvent", "UnavailableGuild")
 
 
 class UnavailableGuild:
@@ -59,7 +56,7 @@ class UnavailableGuild:
 
 
 class StageInstance:
-    __slots__ = ("id", "guild_id", "channel_id", "topic", "guild_scheduled_event_id")
+    __slots__ = ("channel_id", "guild_id", "guild_scheduled_event_id", "id", "topic")
 
     def __init__(self, data: StageInstancePayload):
         self.id = Snowflake(data["id"])
@@ -79,7 +76,7 @@ class EntityMetadata:
 
 
 class RecurrenceRuleNWeekday:
-    __slots__ = ("n", "day")
+    __slots__ = ("day", "n")
 
     def __init__(self, data: RecurrenceRuleNWeekdayPayload):
         self.n = data["n"]
@@ -88,16 +85,16 @@ class RecurrenceRuleNWeekday:
 
 class GuildScheduledEventRecurrenceRule:
     __slots__ = (
-        "start",
+        "by_month",
+        "by_month_day",
+        "by_n_weekday",
+        "by_weekday",
+        "by_year_day",
+        "count",
         "end",
         "frequency",
         "interval",
-        "by_weekday",
-        "by_n_weekday",
-        "by_month",
-        "by_month_day",
-        "by_year_day",
-        "count",
+        "start",
     )
 
     def __init__(self, data: GuildScheduledEventRecurrenceRulePayload):
@@ -118,23 +115,23 @@ class GuildScheduledEventRecurrenceRule:
 
 class GuildScheduledEvent:
     __slots__ = (
-        "id",
-        "guild_id",
         "channel_id",
+        "creator",
         "creator_id",
-        "name",
         "description",
-        "scheduled_start_time",
-        "scheduled_end_time",
-        "privacy_level",
-        "status",
-        "entity_type",
         "entity_id",
         "entity_metadata",
-        "creator",
-        "user_count",
+        "entity_type",
+        "guild_id",
+        "id",
         "image",
+        "name",
+        "privacy_level",
         "recurrence_rule",
+        "scheduled_end_time",
+        "scheduled_start_time",
+        "status",
+        "user_count",
     )
 
     def __init__(self, data: GuildScheduledEventPayload, *, state: ConnectionState):
@@ -159,56 +156,104 @@ class GuildScheduledEvent:
         )
 
 
+class GuildPreview:
+    __slots__ = (
+        "_state",
+        "approximate_member_count",
+        "approximate_presence_count",
+        "description",
+        "discovery_splash",
+        "emojis",
+        "features",
+        "icon",
+        "id",
+        "name",
+        "splash",
+        "stickers",
+    )
+
+    def __init__(self, data: GuildPreviewPayload, *, state: ConnectionState) -> None:
+        self._state = state
+        self.id = Snowflake(data["id"])
+        self.name = data["name"]
+        self.icon = Asset._from_guild_avatar(self.id, data["icon"])
+        self.splash = Asset._from_guild_splash(self.id, data["splash"])
+        self.discovery_splash = Asset._from_guild_discovery_splash(
+            self.id, data["discovery_splash"]
+        )
+        self.emojis = [Emoji(e, state=self._state) for e in data["emojis"]]
+        self.features = [GuildFeature(g) for g in data["features"]]
+        self.approximate_member_count = data["approximate_member_count"]
+        self.approximate_presence_count = data["approximate_presence_count"]
+        self.description = data["description"]
+        self.stickers = [Sticker(s, state=self._state) for s in data["stickers"]]
+
+    def __str__(self) -> str:
+        return self.name
+
+    def __eq__(self, obj: object) -> bool:
+        if isinstance(obj, self.__class__):
+            return self.id == obj.id
+        return NotImplemented
+
+    def __hash__(self) -> int:
+        return self.id
+
+    @property
+    def created_at(self) -> datetime:
+        return self.id.created_at
+
+
 class Guild:
     __slots__ = (
         "_state",
-        "id",
-        "name",
-        "icon",
-        "splash",
-        "discovery_splash",
-        "owner_id",
         "afk_channel_id",
         "afk_timeout",
-        "verification_level",
-        "default_message_notifications",
-        "explicit_level",
-        "roles",
-        "emojis",
-        "features",
-        "mfa_level",
         "application_id",
-        "system_channel_id",
-        "system_channel_flags",
-        "rules_channel_id",
-        "max_presences",
-        "max_members",
-        "vanity_url_code",
-        "description",
-        "banner",
-        "premium_tier",
-        "premium_subscription_count",
-        "preferred_locale",
-        "public_updates_channel_id",
-        "max_video_channel_users",
-        "max_stage_video_channel_users",
         "approximate_member_count",
         "approximate_presence_count",
-        "nsfw_level",
-        "stickers",
-        "premium_progress_bar_enabled",
-        "safety_alerts_channel_id",
+        "banner",
+        "channels",
+        "default_message_notifications",
+        "description",
+        "discovery_splash",
+        "emojis",
+        "explicit_level",
+        "features",
+        "guild_scheduled_events",
+        "icon",
+        "id",
         "joined_at",
         "large",
+        "max_members",
+        "max_presences",
+        "max_stage_video_channel_users",
+        "max_video_channel_users",
         "member_count",
-        "voice_states",
         "members",
-        "channels",
-        "threads",
+        "mfa_level",
+        "name",
+        "nsfw_level",
+        "owner_id",
+        "preferred_locale",
+        "premium_progress_bar_enabled",
+        "premium_subscription_count",
+        "premium_tier",
         "presences",
-        "stage_instances",
-        "guild_scheduled_events",
+        "public_updates_channel_id",
+        "roles",
+        "rules_channel_id",
+        "safety_alerts_channel_id",
         "soundboard_sounds",
+        "splash",
+        "stage_instances",
+        "stickers",
+        "system_channel_flags",
+        "system_channel_id",
+        "threads",
+        "vanity_url_code",
+        "verification_level",
+        "voice_states",
     )
 
     def __init__(self, data: GuildPayload, *, state: ConnectionState):
@@ -230,7 +275,7 @@ class Guild:
         self.explicit_level = GuildExplicitContentLevel(data["explicit_content_filter"])
         self.roles = [Role(r) for r in data["roles"]]
         self.emojis = [Emoji(e, state=state) for e in data["emojis"]]
-        self.features = set(GuildFeature(f) for f in data["features"])
+        self.features = {GuildFeature(f) for f in data["features"]}
         self.mfa_level = GuildMFALevel(data["mfa_level"])
         self.application_id = Snowflake._from_str(data["application_id"])
         self.system_channel_id = Snowflake._from_str(data["system_channel_id"])
@@ -315,3 +360,47 @@ def parse_guild_payload(
         return UnavailableGuild(cast(UnavailableGuildPayload, data))
     else:
         return Guild(cast(GuildPayload, data), state=state)
+
+
+class GuildBan:
+    __slots__ = ("_state", "reason", "user")
+
+    reason: str | None
+    user: User
+
+    def __init__(self, data: GuildBanPayload, *, state: ConnectionState) -> None:
+        self._state = state
+        self.reason = data["reason"]
+        self.user = User(data["user"], state=self._state)
+
+
+@dataclass(slots=True)
+class ChannelPositionChange:
+    id: int
+    position: int | None = _MISSING
+    lock_permissions: bool | None = _MISSING
+    parent_id: int | None = _MISSING
+    flags: ChannelFlags | None = _MISSING
+
+    def _to_dict(self) -> JSONPayload:
+        return assign_val_dict(
+            {"id": self.id},
+            _MISSING,
+            position=self.position,
+            lock_permissions=self.lock_permissions,
+            parent_id=self.parent_id,
+            flags=mgetattr(self.flags, "value"),
+        )
+
+
+@dataclass(slots=True)
+class BulkBanResult:
+    banned_users: list[int]
+    failed_users: list[int]
+
+    @classmethod
+    def _from_dict(cls, data: dict[str, list[str]]) -> BulkBanResult:
+        return cls(
+            banned_users=[int(v) for v in data["banned_users"]],
+            failed_users=[int(v) for v in data["failed_users"]],
+        )

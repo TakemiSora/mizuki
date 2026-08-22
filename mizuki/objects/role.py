@@ -1,20 +1,26 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
 from datetime import datetime
 
-from mizuki._utils import scls
-from mizuki.payloads.role import (
-    RoleColorsPayload,
-    RoleTagsPayload,
-    PartialRolePayload,
-    RolePayload,
-)
+from mizuki._utils import _MISSING, JSONPayload, assign_val_dict, scls
+from mizuki.flags import RoleFlags
 from mizuki.objects.asset import Asset
 from mizuki.objects.permissions import Permissions
 from mizuki.objects.snowflake import Snowflake
-from mizuki.flags import RoleFlags
+from mizuki.payloads.role import (
+    PartialRolePayload,
+    RoleColorsPayload,
+    RolePayload,
+    RoleTagsPayload,
+)
 
 __all__ = (
     "PartialRole",
     "Role",
+    "RoleColors",
+    "RolePositionChange",
+    "RoleTags"
 )
 
 
@@ -26,15 +32,34 @@ class RoleColors:
         self.secondary = data["secondary_color"]
         self.tertiary = data["tertiary_color"]
 
+    @classmethod
+    def new(
+        cls, primary: int, secondary: int | None = None, tertiary: int | None = None
+    ) -> RoleColors:
+        return cls(
+            {
+                "primary_color": primary,
+                "secondary_color": secondary,
+                "tertiary_color": tertiary,
+            }
+        )
+
+    def _to_dict(self) -> JSONPayload:
+        return {
+            "primary_color": self.primary,
+            "secondary_color": self.secondary,
+            "tertiary_color": self.tertiary,
+        }
+
 
 class RoleTags:
     __slots__ = (
+        "available_for_purchase",
         "bot_id",
+        "guild_connections",
         "integration_id",
         "premium_subscriber",
         "subscription_listing_id",
-        "available_for_purchase",
-        "guild_connections",
     )
 
     def __init__(self, data: RoleTagsPayload):
@@ -49,7 +74,7 @@ class RoleTags:
 
 
 class PartialRole:
-    __slots__ = ("id", "name", "colors", "icon", "unicode_emoji", "position")
+    __slots__ = ("colors", "icon", "id", "name", "position", "unicode_emoji")
 
     def __init__(self, data: PartialRolePayload):
         self.id = Snowflake(data["id"])
@@ -73,7 +98,7 @@ class PartialRole:
 
 
 class Role(PartialRole):
-    __slots__ = ("hoist", "permissions", "managed", "mentionable", "tags", "flags")
+    __slots__ = ("flags", "hoist", "managed", "mentionable", "permissions", "tags")
 
     def __init__(self, data: RolePayload):
         super().__init__(data)
@@ -83,3 +108,12 @@ class Role(PartialRole):
         self.mentionable = data["mentionable"]
         self.tags = scls(RoleTags, data.get("tags"))
         self.flags = RoleFlags(data["flags"])
+
+
+@dataclass(slots=True)
+class RolePositionChange:
+    id: int
+    position: int | None = _MISSING
+
+    def _to_dict(self) -> JSONPayload:
+        return assign_val_dict({"id": self.id}, _MISSING, position=self.position)

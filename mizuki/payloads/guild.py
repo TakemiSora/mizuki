@@ -1,12 +1,13 @@
-from typing import NotRequired, TypedDict, Literal
+from typing import Literal, NotRequired, TypedDict
+
+from mizuki.payloads._types import UNIMPLEMENTED, CDNHash, ISO8601Timestamp, Snowflake
+from mizuki.payloads.channel import GuildChannelPayload, ThreadPayload
 from mizuki.payloads.emoji import EmojiPayload
+from mizuki.payloads.member import MemberPayload
+from mizuki.payloads.presence import PresencePayload
 from mizuki.payloads.role import RolePayload
 from mizuki.payloads.sticker import StickerPayload
-from mizuki.payloads._types import UNIMPLEMENTED, ISO8601Timestamp, Snowflake, CDNHash
-from mizuki.payloads.member import MemberPayload
-from mizuki.payloads.channel import GuildChannelPayload, ThreadPayload
 from mizuki.payloads.user import UserPayload
-from mizuki.payloads.presence import PresencePayload
 
 
 class UnavailableGuildPayload(TypedDict):
@@ -68,6 +69,20 @@ class GuildScheduledEventPayload(TypedDict):
     recurrence_rule: GuildScheduledEventRecurrenceRulePayload | None
 
 
+class GuildPreviewPayload(TypedDict):
+    id: Snowflake
+    name: str
+    icon: CDNHash | None
+    splash: CDNHash | None
+    discovery_splash: CDNHash | None
+    emojis: list[EmojiPayload]
+    features: list[str]
+    approximate_member_count: int
+    approximate_presence_count: int
+    description: str | None
+    stickers: list[StickerPayload]
+
+
 class GuildPayload(TypedDict):
     id: Snowflake
     name: str
@@ -118,3 +133,8 @@ class GuildPayload(TypedDict):
     guild_scheduled_events: NotRequired[list[GuildScheduledEventPayload]]
     soundboard_sounds: NotRequired[list[UNIMPLEMENTED]]
     unavailable: NotRequired[Literal[False]]
+
+
+class GuildBanPayload(TypedDict):
+    reason: str | None
+    user: UserPayload

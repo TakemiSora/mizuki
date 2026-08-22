@@ -1,10 +1,10 @@
-from mizuki.objects.channel import PrivateChannel
-from mizuki.objects.member import Member
-from mizuki.objects.guild import Guild
 from mizuki._utils import _MISSING, assign_val_dict
 from mizuki.file import File
 from mizuki.http import Path
 from mizuki.managers._types import BaseManager
+from mizuki.objects.channel import PrivateChannel
+from mizuki.objects.guild import Guild
+from mizuki.objects.member import Member
 from mizuki.objects.user import User
 
 __all__ = ("UserManager",)
@@ -174,7 +174,7 @@ class UserManager(BaseManager):
             self._cache_storage.update_guilds(Guild(g, state=self._state))
             for g in await self._state.http.request(
                 Path("GET", "users/@me/guilds"),
-                parameters=assign_val_dict(
+                params=assign_val_dict(
                     {},
                     _MISSING,
                     before=before,
