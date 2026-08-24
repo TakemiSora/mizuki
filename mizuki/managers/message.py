@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, overload
+from typing import TYPE_CHECKING, Any, cast, overload
 
 from mizuki._utils import _MISSING, assign_val_dict, maybe_iter, mtd
 from mizuki.enums.message import MessageReferenceType, ReactionType
@@ -175,7 +175,7 @@ class MessageManager(BaseManager):
             self._cache_storage.update_messages(Message(m, state=self._state))
             for m in await self._state.http.request(
                 Path("GET", "channels/{channel_id}/messages", channel_id=channel_id),
-                params=assign_val_dict(params, _MISSING, limit=limit),
+                params=cast(dict[str, int], assign_val_dict(params, _MISSING, limit=limit)),
             )
         ]
 

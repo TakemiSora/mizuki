@@ -110,7 +110,7 @@ class UserManager(BaseManager):
         Raises
         ------
         :class:`HTTPException`
-            An HTTP error occured.``
+            An HTTP error occured.
         """
 
         if isinstance(avatar, str):
