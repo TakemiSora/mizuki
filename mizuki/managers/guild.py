@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Literal, cast, overload
 
 from mizuki._utils import _MISSING, assign_val_dict, maybe_iter, mgetattr, mtd
@@ -503,6 +503,23 @@ class GuildManager(BaseManager):
 
         default_thread_rate_limit_per_user : :class:`int`
             The rate limit value that is copied over to newly-created threads.
+
+        flags : :class:`ChannelFlags <mizuki.flags.ChannelFlags>`
+            The flags to set for the channel.
+
+        audit_log_reason : :class:`str`
+            The reason to show in audit log for the creation of this channel.
+
+        Raises
+        ------
+        :class:`NotFound`
+            Could not find a guild with that ID.
+
+        :class:`Forbidden`
+            You are not allowed to create that channel.
+
+        :class:`HTTPException`
+            A HTTP error occured.
         """
         return self._cache_storage.update_channels(
             parse_channel_payload(
@@ -557,6 +574,28 @@ class GuildManager(BaseManager):
     async def edit_channel_positions(
         self, guild_id: int, *changes: ChannelPositionChange
     ) -> None:
+        """Edit the positions of the channels in a guild.
+
+        Parameters
+        ----------
+        guild_id : :class:`int`
+            The ID of the target guild.
+
+        *changes : :class:`ChannelPositionChange <mizuki.objects.guild.ChannelPositionChange>`
+            The channel change objects.
+
+        Raises
+        ------
+        :class:`NotFound`
+            Could not find a guild with that ID.
+
+        :class:`Forbidden`
+            You are not allowed to edit the channel positions.
+
+        :class:`HTTPException`
+            A HTTP error occured.
+        """
+
         await self._state.http.request(
             Path("PATCH", "guilds/{guild_id}/channels", guild_id=guild_id),
             json=maybe_iter(changes),
@@ -565,18 +604,38 @@ class GuildManager(BaseManager):
     async def fetch_active_threads(
         self, guild_id: int
     ) -> tuple[list[ThreadChannel], list[ThreadMember]]:
+        """Fetches the active threads in a guild.
+
+        Returns the list of channel and the list of thread member for the bot if the bot is present in the thread.
+
+        Parameters
+        ----------
+        guild_id : :class:`int`
+            The ID of the target guild.
+
+        Raises
+        ------
+        :class:`NotFound`
+            Could not find a guild with that ID.
+
+        :class:`Forbidden`
+            You are not allowed to fetch the threads of that guild.
+
+        :class:`HTTPException`
+            A HTTP error occured.
+        """
         resp = await self._state.http.request(
             Path("GET", "guilds/{guild_id}/threads/active", guild_id=guild_id),
         )
 
-        threads = [
+        threads: list[ThreadChannel] = [
             self._cache_storage.update_channels(
                 ThreadChannel(t, guild_id=guild_id, state=self._state)
             )
             for t in resp["threads"]
         ]
 
-        members = [
+        members: list[ThreadMember] = [
             ThreadMember(m, guild_id=guild_id, state=self._state)
             for m in resp["members"]
         ]
@@ -584,6 +643,27 @@ class GuildManager(BaseManager):
         return threads, members
 
     async def fetch_guild_member(self, guild_id: int, user_id: int) -> Member:
+        """Fetch the member object of a guild member.
+
+        Parameters
+        ----------
+        guild_id : :class:`int`
+            The ID of the target guild.
+
+        user_id : :class:`int`
+            The ID of the target user.
+
+        Raises
+        ------
+        :class:`NotFound`
+            Could not find a guild or user with that ID.
+
+        :class:`Forbidden`
+            You are not allowed to fetch the threads of that guild.
+
+        :class:`HTTPException`
+            A HTTP error occured.
+        """
         return Member(
             await self._state.http.request(
                 Path(
@@ -605,6 +685,30 @@ class GuildManager(BaseManager):
         after: int = _MISSING,
         limit: int = _MISSING,
     ) -> list[Member]:
+        """Fetch the list of members in the guild.
+
+        Parameters
+        ----------
+        guild_id : :class:`int`
+            The ID of the target guild.
+
+        after : :class:`int`, optional
+            To fetch the members after this ID.
+
+        limit : :class:`int`, optional
+            The max amount of members to return in a list (1-1000, defaults to 1).
+
+        Raises
+        ------
+        :class:`NotFound`
+            Could not find a guild or user with that ID.
+
+        :class:`Forbidden`
+            You are not allowed to fetch the members of that guild.
+
+        :class:`HTTPException`
+            A HTTP error occured.
+        """
         return [
             Member(m, guild_id=guild_id, state=self._state)
             for m in await self._state.http.request(
@@ -620,6 +724,30 @@ class GuildManager(BaseManager):
     async def search_members(
         self, guild_id: int, query: str, *, limit: int = _MISSING
     ) -> list[Member]:
+        """Search through guild members based on their nickname or username.
+
+        Parameters
+        ----------
+        guild_id : :class:`int`
+            The ID of the target guild.
+
+        query : :class:`str`
+            The query to match against the nickname or username.
+
+        limit : :class:`int`, optional
+            The max number of members to return (1-1000, defaults to 1).
+
+        Raises
+        ------
+        :class:`NotFound`
+            Could not find a guild or user with that ID.
+
+        :class:`Forbidden`
+            You are not allowed to fetch the members of that guild.
+
+        :class:`HTTPException`
+            A HTTP error occured.
+        """
         return [
             Member(m, guild_id=guild_id, state=self._state)
             for m in await self._state.http.request(
@@ -641,6 +769,48 @@ class GuildManager(BaseManager):
         communication_disabled_until: datetime | None = _MISSING,
         audit_log_reason: str = _MISSING,
     ) -> Member:
+        """Edit a guild member.
+
+        Parameters
+        ----------
+        guild_id : :class:`int`
+            The ID of the target guild.
+
+        user_id : :class:`int`
+            The ID Of the target user.
+
+        nick : :class:`str` | :obj:`None`, optional
+            The string to change the nickname of the target to.
+
+        roles : list[:class:`int`] | :obj:`None`, optional
+            The array of the ID of roles the user has.
+
+        mute : :class:`bool` | :obj:`None`, optional
+            Whether the member is muted in Voice Channels.
+
+        deaf : :class:`bool` | :obj:`None`, optional
+            Whether the member is deafened in Voice Channels.
+
+        channel_id : :class:`bool` | :obj:`None`, optional
+            The ID of the voice channel to move the member to, disconnects them if set to :obj:`None`.
+
+        communication_disabled_until : :class:`datetime.datetime` | :obj:`None`, optional
+            When the member's timeout will expire, max 28 days into the future.
+
+        audit_log_reason : :class:`str`, optional
+            The audit log reason for this change.
+
+        Raises
+        ------
+        :class:`NotFound`
+            Could not find that guild or user.
+
+        :class:`Forbidden`
+            You are not allowed to edit that user.
+
+        :class:`HTTPException`
+            A HTTP error occured.
+        """
         return Member(
             await self._state.http.request(
                 Path(
@@ -670,6 +840,41 @@ class GuildManager(BaseManager):
             state=self._state,
         )
 
+    async def timeout(
+        self, guild_id: int, user_id: int, *, until: datetime | timedelta | None
+    ) -> Member:
+        """Timeout/Mute a user from chatting.
+
+        Parameters
+        ----------
+        guild_id : :class:`int`
+            The ID of the guild the target is in.
+
+        user_id : :class:`int`
+            The ID of the target user.
+
+        until : :class:`datetime.datetime` | :class:`datetime.timedelta` | :obj:`None`
+            To timeout the user until/for, maximum of 28 days in the future. Set to :obj:`None` to remove timeout.
+
+        Raises
+        ------
+        :class:`NotFound`
+            Could not find that guild or user.
+
+        :class:`Forbidden`
+            You cannot mute that user.
+
+        :class:`HTTPException`
+            A HTTP error occured.
+        """
+        return await self.modify_member(
+            guild_id,
+            user_id,
+            communication_disabled_until=(
+                (datetime.now(UTC) + until) if isinstance(until, timedelta) else until
+            ),
+        )
+
     async def modify_self_member(
         self,
         guild_id: int,
@@ -680,6 +885,39 @@ class GuildManager(BaseManager):
         bio: str | None = _MISSING,
         audit_log_reason: str = _MISSING,
     ) -> Member:
+        """Modify the bot's member in the guild.
+
+        Parameters
+        ----------
+        guild_id : :class:`int`
+            The ID of the guild the bot is in.
+
+        nick : :class:`str`, optional
+            The new nickname for the bot in that guild.
+
+        banner : :class:`File <mizuki.file.File>` | :class:`str` | :obj:`None`, optional
+            The new banner for the bot.
+
+        avatar : :class:`File <mizuki.file.File>` | :class:`str` | :obj:`None`, optional
+            The new avatar for the bot.
+
+        bio : :class:`str` | :obj:`None`, optional
+            The new bio for the bot.
+
+        audit_log_reason : :class:`str`, optional
+            The audit log reason to show for this change.
+
+        Raises
+        ------
+        :class:`NotFound`
+            Could not find a guild with that ID.
+
+        :class:`Forbidden`
+            Could not change that attribute about your profile.
+
+        :class:`HTTPException`
+            A HTTP error occured.
+        """
         return Member(
             await self._state.http.request(
                 Path("PATCH", "/guilds/{guild_id}/members/@me", guild_id=guild_id),
@@ -705,6 +943,33 @@ class GuildManager(BaseManager):
         *,
         audit_log_reason: str = _MISSING,
     ) -> Member:
+        """Add a role to a member.
+
+        Parameters
+        ----------
+        guild_id : :class:`int`
+            The ID of the guild the target member is in.
+
+        user_id : :class:`int`
+            The ID of the target member.
+
+        role_id : :class:`int`
+            The ID of the role to add.
+
+        audit_log_reason : :class:`str`, optional
+            The reason to show in audit log for this change.
+
+        Parameters
+        ----------
+        :class:`NotFound`
+            Could not find that guild, user or role.
+
+        :class:`Forbidden`
+            You are forbidden from editing roles or adding that role.
+
+        :class:`HTTPException`
+            A HTTP error occured.
+        """
         return Member(
             await self._state.http.request(
                 Path(
@@ -729,6 +994,33 @@ class GuildManager(BaseManager):
         *,
         audit_log_reason: str = _MISSING,
     ) -> None:
+        """Removes a role from a member.
+
+        Parameters
+        ----------
+        guild_id : :class:`int`
+            The ID of the guild the target member is in.
+
+        user_id : :class:`int`
+            The ID of the target member.
+
+        role_id : :class:`int`
+            The ID of the role to remove.
+
+        audit_log_reason : :class:`str`, optional
+            The reason to show in audit log for this change.
+
+        Parameters
+        ----------
+        :class:`NotFound`
+            Could not find that guild, user or role.
+
+        :class:`Forbidden`
+            You are forbidden from editing roles or removing that role.
+
+        :class:`HTTPException`
+            A HTTP error occured.
+        """
         await self._state.http.request(
             Path(
                 "DELETE",
@@ -743,6 +1035,30 @@ class GuildManager(BaseManager):
     async def remove_member(
         self, guild_id: int, user_id: int, *, audit_log_reason: str = _MISSING
     ) -> None:
+        """Remove/Kick a member from a guild.
+
+        Parameters
+        ----------
+        guild_id : :class:`int`
+            The ID of the guild the target member is in.
+
+        user_id : :class:`int`
+            The ID of the target member.
+
+        audit_log_reason : :class:`str`, optional
+            The reason to show in audit log for this removal.
+
+        Parameters
+        ----------
+        :class:`NotFound`
+            Could not find that guild or user.
+
+        :class:`Forbidden`
+            You are forbidden from removing that member.
+
+        :class:`HTTPException`
+            A HTTP error occured.
+        """
         await self._state.http.request(
             Path(
                 "DELETE",
@@ -783,6 +1099,33 @@ class GuildManager(BaseManager):
         before: int = _MISSING,
         after: int = _MISSING,
     ) -> list[GuildBan]:
+        """Fetch a list of bans in the guild.
+
+        Parameters
+        ----------
+        guild_id : :class:`int`
+            The ID of the target guild.
+
+        limit : :class:`int`, optional
+            The maximum amount of users to return (1-1000, defaults to 1000).
+
+        before : :class:`int`, optional
+            To return users before this user ID.
+
+        after : :class:`int`, optional
+            To return users after this user ID.
+
+        Raises
+        ------
+        :class:`NotFound`
+            Could not find that guild.
+
+        :class:`Forbidden`
+            You are not allowed to fetch the bans in that guild.
+
+        :class:`HTTPException`
+            A HTTP error occured.
+        """
         return [
             GuildBan(b, state=self._state)
             for b in await self._state.http.request(
@@ -794,6 +1137,27 @@ class GuildManager(BaseManager):
         ]
 
     async def fetch_ban(self, guild_id: int, user_id: int) -> GuildBan:
+        """Fetch a ban for the given user.
+
+        Parameters
+        ----------
+        guild_id : :class:`int`
+            The ID of the guild to fetch ban in.
+
+        user_id : :class:`int`
+            The ID of the target user.
+
+        Raises
+        ------
+        :class:`NotFound`
+            Could not find that guild or a ban for that user.
+
+        :class:`Forbidden`
+            You are missing the required permissions to fetch a ban.
+
+        :class:`HTTPException`
+            A HTTP error occured.
+        """
         return GuildBan(
             await self._state.http.request(
                 Path(
@@ -814,6 +1178,33 @@ class GuildManager(BaseManager):
         delete_message: timedelta | int = _MISSING,
         audit_log_reason: str = _MISSING,
     ) -> None:
+        """Create a new ban/Ban an user.
+
+        Parameters
+        ----------
+        guild_id : :class:`int`
+            The ID of the guild to ban in.
+
+        user_id : :class:`int`
+            The ID of the target user.
+
+        delete_message : :class:`datetime.timedelta` | :class:`int`, optional
+            The amount of time to delete messages of, if an integer is provided it is treated as seconds.
+
+        audit_log_reason : :class:`str`, optional
+            The reason to show in the audit log for this ban.
+
+        Raises
+        ------
+        :class:`NotFound`
+            Could not find that guild or user.
+
+        :class:`Forbidden`
+            You cannot ban that user.
+
+        :class:`HTTPException`
+            A HTTP error occured.
+        """
         await self._state.http.request(
             Path(
                 "PUT",
@@ -830,6 +1221,30 @@ class GuildManager(BaseManager):
     async def remove_ban(
         self, guild_id: int, user_id: int, *, audit_log_reason: str = _MISSING
     ) -> None:
+        """Remove a ban/Unban an user.
+
+        Parameters
+        ----------
+        guild_id : :class:`int`
+            The ID of the guild to unban in.
+
+        user_id : :class:`int`
+            The ID of the target user.
+
+        audit_log_reason : :class:`str`, optional
+            The reason to show in the audit log for this unban.
+
+        Raises
+        ------
+        :class:`NotFound`
+            Could not find that guild or user.
+
+        :class:`Forbidden`
+            You cannot unban that user.
+
+        :class:`HTTPException`
+            A HTTP error occured.
+        """
         await self._state.http.request(
             Path(
                 "DELETE",
@@ -845,22 +1260,67 @@ class GuildManager(BaseManager):
         guild_id: int,
         user_ids: list[int],
         *,
-        delete_message_seconds: int = _MISSING,
+        delete_message: timedelta | int = _MISSING,
         audit_log_reason: str = _MISSING,
     ) -> BulkBanResult:
+        """Bulk a maximum of 200 users from a guild.
+
+        Parameters
+        ----------
+        guild_id : :class:`int`
+            The ID of the guild to bulk ban in.
+
+        user_ids : list[:class:`int`]
+            The list of IDs of the users to ban.
+
+        delete_message : :class:`datetime.timedelta` | :class:`int`, optional
+            The amount of time to delete messages of, if an integer is provided it is treated as seconds.
+
+        audit_log_reason : :class:`str`, optional
+            The reason to show in the audit logs for this bulk ban.
+
+        Raises
+        ------
+        :class:`NotFound`
+            Could not find that guild.
+
+        :class:`Forbidden`
+            You are missing permissions to bulk ban in that guild.
+
+        :class:`HTTPException`
+            A HTTP error occured.
+        """
         return BulkBanResult._from_dict(
             await self._state.http.request(
                 Path("POST", "guilds/{guild_id}/bulk-ban", guild_id=guild_id),
                 json=assign_val_dict(
                     {"user_ids": user_ids},
                     _MISSING,
-                    delete_message_seconds=delete_message_seconds,
+                    delete_message_seconds=mgetattr(delete_message, "seconds"),
                 ),
                 audit_log_reason=audit_log_reason,
             )
         )
 
     async def fetch_roles(self, guild_id: int) -> list[Role]:
+        """Fetch all the roles of a guild.
+
+        Parameters
+        ----------
+        guild_id : :class:`int`
+            The ID of the guild to fetch the roles of.
+
+        Raises
+        ------
+        :class:`NotFound`
+            Could not find that guild.
+
+        :class:`Forbidden`
+            You are missing permissions to fetch roles of that guild.
+
+        :class:`HTTPException`
+            A HTTP error occured.
+        """
         return [
             Role(r)
             for r in await self._state.http.request(
@@ -869,6 +1329,27 @@ class GuildManager(BaseManager):
         ]
 
     async def fetch_role(self, guild_id: int, role_id: int) -> Role:
+        """Fetch all the roles of a guild.
+
+        Parameters
+        ----------
+        guild_id : :class:`int`
+            The ID of the target guild.
+
+        role_id : :class:`int`
+            The ID of the target role.
+
+        Raises
+        ------
+        :class:`NotFound`
+            Could not find that guild.
+
+        :class:`Forbidden`
+            You are missing permissions to fetch roles of that guild.
+
+        :class:`HTTPException`
+            A HTTP error occured.
+        """
         return Role(
             await self._state.http.request(
                 Path(
@@ -881,6 +1362,26 @@ class GuildManager(BaseManager):
         )
 
     async def fetch_role_member_counts(self, guild_id: int) -> dict[int, int]:
+        """Fetch role count for every role in a guild.
+
+        Returns a dictonary with role ID as keys and their member count as values.
+
+        Parameters
+        ----------
+        guild_id : :class:`int`
+            The ID of the target guild.
+
+        Raises
+        ------
+        :class:`NotFound`
+            Could not find that guild.
+
+        :class:`Forbidden`
+            You are missing permissions to fetch roles of that guild.
+
+        :class:`HTTPException`
+            A HTTP error occured.
+        """
         return {
             int(k): v
             for k, v in (
@@ -910,6 +1411,52 @@ class GuildManager(BaseManager):
         mentionable: bool = _MISSING,
         audit_log_reason: str = _MISSING,
     ) -> Role:
+        """Create a new role in a guild.
+
+        .. note::
+
+            All parameters besides ``guild_id`` are optional.
+
+        Parameters
+        ----------
+        guild_id : :class:`int`
+            The ID of the target guild.
+
+        name : :class:`int`
+            The name of the new role, defaults to "new role".
+
+        permissions : :class:`Permissions <mizuki.objects.permissions.Permissions>`
+            The permissions for the new role.
+
+        colors : :class:`RoleColors <mizuki.objects.role.RoleColors>`
+            The colors for the new role.
+
+        hoist : :class:`bool`
+            Whether the role is hoisted/shown separately in member lists.
+
+        icon : :class:`File <mizuki.file.File>` | :class:`str` | :obj:`None`
+            The icon of the new role.
+
+        unicode_emoji : :class:`str` | :obj:`None`
+            The related unicode emoji for the new role.
+
+        mentionable : :class:`bool`
+            Whether the role is mentionable.
+
+        audit_log_reason : :class:`str`
+            The reason to show in the audit log for the creation of this role.
+
+        Raises
+        ------
+        :class:`NotFound`
+            Could not find that guild.
+
+        :class:`Forbidden`
+            You are missing permissions to create roles in that guild.
+
+        :class:`HTTPException`
+            A HTTP error occured.
+        """
         return Role(
             await self._state.http.request(
                 Path("POST", "guilds/{guild_id}/roles", guild_id=guild_id),
@@ -934,6 +1481,30 @@ class GuildManager(BaseManager):
         *changes: RolePositionChange,
         audit_log_reason: str = _MISSING,
     ) -> list[Role]:
+        """Edit role positions in a guild.
+
+        Parameters
+        ----------
+        guild_id : :class:`int`
+            The ID of the target guild.
+
+        *changes : :class:`RolePositionChange <mizuki.objects.role.RolePositionChange>`
+            The changes to be made to the role positions.
+
+        audit_log_reason : :class:`str`, optional
+            The reason to show in the audit log for this change.
+
+        Raises
+        ------
+        :class:`NotFound`
+            Could not find that guild.
+
+        :class:`Forbidden`
+            You are missing permissions to edit role positions in that guild.
+
+        :class:`HTTPException`
+            A HTTP error occured.
+        """
         return [
             Role(d)
             for d in cast(
@@ -960,6 +1531,55 @@ class GuildManager(BaseManager):
         mentionable: bool | None = _MISSING,
         audit_log_reason: str = _MISSING,
     ) -> Role:
+        """Edit a role in a guild.
+
+        .. note::
+
+            All parameters besides ``guild_id`` are optional.
+
+        Parameters
+        ----------
+        guild_id : :class:`int`
+            The ID of the target guild.
+
+        role_id : :class:`int`
+            The ID of the target role.
+
+        name : :class:`int`
+            The name of the role.
+
+        permissions : :class:`Permissions <mizuki.objects.permissions.Permissions>`
+            The permissions for the role.
+
+        colors : :class:`RoleColors <mizuki.objects.role.RoleColors>`
+            The colors for the role.
+
+        hoist : :class:`bool`
+            Whether the role is hoisted/shown separately in member lists.
+
+        icon : :class:`File <mizuki.file.File>` | :class:`str` | :obj:`None`
+            The icon of the role.
+
+        unicode_emoji : :class:`str` | :obj:`None`
+            The related unicode emoji for new role.
+
+        mentionable : :class:`bool`
+            Whether the role is mentionable.
+
+        audit_log_reason : :class:`str`
+            The reason to show in the audit log for the editing of this role.
+
+        Raises
+        ------
+        :class:`NotFound`
+            Could not find that guild.
+
+        :class:`Forbidden`
+            You are missing permissions to edit roles in that guild.
+
+        :class:`HTTPException`
+            A HTTP error occured.
+        """
         return Role(
             cast(
                 RolePayload,
@@ -989,6 +1609,30 @@ class GuildManager(BaseManager):
     async def delete_role(
         self, guild_id: int, role_id: int, *, audit_log_reason: str = _MISSING
     ) -> None:
+        """Delete a role in a guild.
+
+        Parameters
+        ----------
+        guild_id : :class:`int`
+            The ID of the target guild.
+
+        role_id : :class:`int`
+            The ID of the target role.
+
+        audit_log_reason : :class:`str`
+            The reason to show in the audit log for the editing of this role.
+
+        Raises
+        ------
+        :class:`NotFound`
+            Could not find that guild.
+
+        :class:`Forbidden`
+            You are missing permissions to delete that role in that guild.
+
+        :class:`HTTPException`
+            A HTTP error occured.
+        """
         await self._state.http.request(
             Path(
                 "DELETE",
@@ -999,13 +1643,41 @@ class GuildManager(BaseManager):
             audit_log_reason=audit_log_reason,
         )
 
-    async def fetch_guild_prune_count(
+    async def fetch_prune_count(
         self,
         guild_id: int,
         *,
         days: int = _MISSING,
         include_roles: list[int] = _MISSING,
     ) -> int:
+        """Fetch the amount of members that would be removed in a prune operation.
+
+        By default, prune does not remove the users with roles.
+        You can add roles you want to include to be pruned in include_roles.
+        Any inactive user that has a subset of the provided role(s) will be counted in the prune and the users with additional roles will not.
+
+        Parameters
+        ----------
+        guild_id : :class:`int`
+            The ID of the target guild.
+
+        days : :class:`int`, optional
+            The number of days to count the prune for (1-30, defaults to 7).
+
+        include_roles : list[:class:`int`], optional
+            The roles to include in the prune.
+
+        Raises
+        ------
+        :class:`NotFound`
+            Could not find that guild.
+
+        :class:`Forbidden`
+            You are missing the required permissions to run a prune.
+
+        :class:`HTTPException`
+            A HTTP error occured.
+        """
         return (
             cast(
                 dict[str, int],
@@ -1056,6 +1728,42 @@ class GuildManager(BaseManager):
         include_roles: list[int] = _MISSING,
         audit_log_reason: str = _MISSING,
     ) -> int | None:
+        """Start a prune operation.
+
+        For large guilds, it is recommended to set the `compute_prune_count` parameter to `False`, forcing this method to return :obj:`None`.
+
+        By default, prune does not remove the users with roles.
+        You can add roles you want to include to be pruned in include_roles.
+        Any inactive user that has a subset of the provided role(s) will be counted in the prune and the users with additional roles will not.
+
+        Parameters
+        ----------
+        guild_id : :class:`int`
+            The ID of the target guild.
+
+        days : :class:`int`, optional
+            The number of days to count the prune for (1-30, defaults to 7).
+
+        compute_prune_count : :class:`bool`, optional
+            Whether this method will return the amount of people pruned (defaults to `True`).
+
+        include_roles : list[:class:`int`], optional
+            The roles to include in the prune.
+
+        audit_log_reason : :class:`str`, optional
+            The reason to show in the audit log for this prune.
+
+        Raises
+        ------
+        :class:`NotFound`
+            Could not find that guild.
+
+        :class:`Forbidden`
+            You are missing the required permissions to run a prune.
+
+        :class:`HTTPException`
+            A HTTP error occured.
+        """
         return (
             cast(
                 dict[str, int | None],
