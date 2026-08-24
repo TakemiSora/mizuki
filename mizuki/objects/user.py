@@ -149,10 +149,7 @@ class PartialUser:
             A HTTP error occurred.
         """
         return await self._state.managers.messages.create(
-            (
-                mgetattr(self._channel, "id", cast_to=int | None)
-                or (await self.create_dm_channel()).id
-            ),
+            (mgetattr(self._channel, "id") or (await self.create_dm_channel()).id),
             content=content,
             tts=tts,
             embeds=embeds,
