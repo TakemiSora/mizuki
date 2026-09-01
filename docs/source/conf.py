@@ -49,6 +49,7 @@ html_theme = "sphinx_nefertiti"
 
 html_theme_options = {
     "style": "pink",
+    "style_header_neutral": True,
     "header_links": [
         {"text": "Home", "link": "index"},
         {"text": "Installation", "link": "guides/getting_started"},
@@ -72,6 +73,7 @@ html_context = {
 }
 
 html_static_path = ["_static"]
+html_css_files = ["custom.css"]
 
 html_favicon = "_static/logo.png"
 
