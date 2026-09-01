@@ -39,13 +39,32 @@ intersphinx_mapping = {
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = "shibuya"
+html_theme = "sphinx_nefertiti"
+
+# html_theme_options = {
+#     "accent_color": "pink",
+#     "github_url": "https://github.com/TakemiSora/mizuki",
+#     "discord_url": "https://discord.gg/mxQxxxpBsB",
+# }
 
 html_theme_options = {
-    "accent_color": "pink",
-    "github_url": "https://github.com/TakemiSora/mizuki",
-    "discord_url": "https://discord.gg/mxQxxxpBsB",
+    "style": "pink",
+    "header_links": [
+        {"text": "Home", "link": "index"},
+        {"text": "Installation", "link": "guides/getting_started"},
+        {"text": "Quick Example", "link": "guides/quick_example"},
+        {"text": "Discord", "link": "https://discord.gg/mxQxxxpBsB"},
+    ],
+    "repository_url": "https://github.com/TakemiSora/mizuki",
+    "repository_name": "mizuki",
+    "pygments_light_style": "dracula",
+    "pygments_dark_style": "dracula",
+    "project_name_font": "Montserrat",
+    "logo": "logo.png",
+    "logo_width": 24,
+    "logo_height": 24,
 }
+
 html_context = {
     "source_type": "github",
     "source_user": "TakemiSora",

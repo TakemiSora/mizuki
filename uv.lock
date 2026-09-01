@@ -368,11 +368,11 @@ dependencies = [
 
 [package.optional-dependencies]
 docs = [
-    { name = "shibuya" },
     { name = "sphinx" },
     { name = "sphinx-copybutton" },
     { name = "sphinx-design" },
     { name = "sphinx-iconify" },
+    { name = "sphinx-nefertiti" },
 ]
 
 [package.dev-dependencies]
@@ -385,11 +385,11 @@ dev = [
 requires-dist = [
     { name = "aiohttp", specifier = ">=3.13.5" },
     { name = "shibuya", specifier = ">=2026.7.12" },
-    { name = "shibuya", marker = "extra == 'docs'", specifier = ">=2026.5.19" },
     { name = "sphinx", marker = "extra == 'docs'", specifier = ">=9.1.0" },
     { name = "sphinx-copybutton", marker = "extra == 'docs'", specifier = ">=0.5.2" },
     { name = "sphinx-design", marker = "extra == 'docs'", specifier = ">=0.7.0" },
     { name = "sphinx-iconify", marker = "extra == 'docs'", specifier = ">=0.3.0" },
+    { name = "sphinx-nefertiti", marker = "extra == 'docs'", specifier = ">=0.9.9" },
 ]
 provides-extras = ["docs"]
 
@@ -724,6 +724,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/68/4e/498964c2a6025e489b255015d3b5644aa93eb1dd1035324de18179af8abc/sphinx_iconify-0.3.0.tar.gz", hash = "sha256:7824ca694472d6babbe811e72cdcaf52b6e0ff4240e8cfda721f84f867605611", size = 3701, upload-time = "2025-12-18T05:19:03.683Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/57/6f/7dd3097d8ce08109cff3e63a771ca1ad795d8d63d8015eaa6fbd13f784fa/sphinx_iconify-0.3.0-py3-none-any.whl", hash = "sha256:b38ca4a66767c317bea31850a6f540ef79db4394eb4792961918c2d44b4a2c3a", size = 4068, upload-time = "2025-12-18T05:19:01.892Z" },
+]
+
+[[package]]
+name = "sphinx-nefertiti"
+version = "0.9.9"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "sphinx" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/6a/e0/c9252b4caff310cdeebe397f575f77629ea92e24c1c872ef4a8ce155aaf5/sphinx_nefertiti-0.9.9.tar.gz", hash = "sha256:95b5afb967af52318977c02e70eefce9b45a6b8e40f3f1ad0bb65a40c402622b", size = 9485976, upload-time = "2026-07-12T17:27:03.905Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d1/55/73acc5ae0059049a76d382bca2957cac51e46580f85c3f2f391e462a5e81/sphinx_nefertiti-0.9.9-py3-none-any.whl", hash = "sha256:dd0b7a33b8c2f7cbbe9db8c0d886e9e788741744f3e7010fccd405034e0bf4ef", size = 9516610, upload-time = "2026-07-12T17:27:01.873Z" },
 ]
 
 [[package]]
