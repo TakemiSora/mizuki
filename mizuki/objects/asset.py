@@ -13,6 +13,7 @@ class Asset:
     ----------
     url : :class:`str`
         The URL of the Asset.
+        
     animated : :class:`bool`
         Represents if an Asset is animated.
     """
@@ -23,7 +24,7 @@ class Asset:
     animated: bool
     "Represents if an Asset is animated."
 
-    __slots__ = ("url", "animated")
+    __slots__ = ("animated", "url")
 
     CDN_URL = "https://cdn.discordapp.com"
     "The base CDN URL."
@@ -134,7 +135,7 @@ class Asset:
     def _from_sticker(cls, sticker_type: StickerFormatType, sticker_id: int) -> Self:
         is_animated = sticker_type != StickerFormatType.PNG
         return cls(
-            f"{cls.CDN_URL}/stickers/{sticker_id}.{str(sticker_type)}", is_animated
+            f"{cls.CDN_URL}/stickers/{sticker_id}.{sticker_type!s}", is_animated
         )
 
     @classmethod

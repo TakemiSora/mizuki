@@ -1,7 +1,8 @@
 Asset
 =====
 
-.. automodule:: mizuki.objects.asset
+.. autoclass:: mizuki.Asset
    :members:
-   :show-inheritance:
-   :undoc-members:
+
+.. autoclass:: mizuki.MediaProxyAsset
+   :members:
