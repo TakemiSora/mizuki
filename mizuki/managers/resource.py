@@ -6,6 +6,7 @@ from mizuki.managers.channel import ChannelManager
 from mizuki.managers.command import CommandManager
 from mizuki.managers.guild import GuildManager
 from mizuki.managers.message import MessageManager
+from mizuki.managers.role import RoleManager
 from mizuki.managers.user import UserManager
 
 if TYPE_CHECKING:
@@ -18,7 +19,7 @@ if TYPE_CHECKING:
 
 
 class Managers:
-    __slots__ = ("channels", "commands", "guilds", "messages", "users")
+    __slots__ = ("channels", "commands", "guilds", "messages", "roles", "users")
 
     def __init__(
         self,
@@ -29,10 +30,11 @@ class Managers:
         commands_data: dict[
             str, tuple[int, PartialApplicationCommand | PartialApplicationCommandGroup]
         ],
-    ):
+    ) -> None:
         self.users = UserManager(state, cache_storage)
         self.channels = ChannelManager(state, cache_storage)
         self.messages = MessageManager(state, cache_storage)
+        self.roles = RoleManager(state, cache_storage)
         self.guilds = GuildManager(state, cache_storage)
 
         self.commands = CommandManager(

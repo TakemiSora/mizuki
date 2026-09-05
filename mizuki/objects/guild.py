@@ -37,9 +37,9 @@ from mizuki.objects.channel import (
 )
 from mizuki.objects.emoji import DefaultReaction, Emoji
 from mizuki.objects.member import Member
-from mizuki.objects.permissions import ChannelPermissionOverwrite
+from mizuki.objects.permissions import ChannelPermissionOverwrite, Permissions
 from mizuki.objects.presence import Presence
-from mizuki.objects.role import Role
+from mizuki.objects.role import Role, RoleColors, RolePositionChange
 from mizuki.objects.snowflake import Snowflake
 from mizuki.objects.sticker import Sticker
 from mizuki.objects.user import User
@@ -419,7 +419,7 @@ class Guild:
         self.afk_timeout = timedelta(data["afk_timeout"])
         self.verification_level = GuildVerificationLevel(data["verification_level"])
         self.default_message_notifications = GuildNotificationLevel(
-            ["default_message_notifications"]
+            data["default_message_notifications"]
         )
         self.explicit_level = GuildExplicitContentLevel(data["explicit_content_filter"])
         self.roles = [Role(r) for r in data["roles"]]
@@ -571,7 +571,8 @@ class Guild:
             A HTTP error occured.
         """
         return await self._state.managers.guilds.edit_guild(
-            self.id, **{k: v for k, v in locals().items() if k != "self"}
+            self.id,
+            **{k: v for k, v in locals().items() if k != "self"},
         )
 
     async def fetch_channels(self) -> list[GuildChannel]:
@@ -803,7 +804,8 @@ class Guild:
             A HTTP error occured.
         """
         return await self._state.managers.guilds.create_channel(
-            self.id, **{k: v for k, v in locals().items() if k != "self"}
+            self.id,
+            **{k: v for k, v in locals().items() if k != "self"},
         )
 
     async def edit_channel_positions(self, *changes: ChannelPositionChange) -> None:
@@ -981,7 +983,8 @@ class Guild:
             A HTTP error occured.
         """
         return await self._state.managers.guilds.modify_member(
-            self.id, **{k: v for k, v in locals().values() if k != "self"}
+            self.id,
+            **{k: v for k, v in locals().values() if k != "self"},
         )
 
     async def timeout(
@@ -1056,6 +1059,514 @@ class Guild:
             avatar=avatar,
             bio=bio,
             audit_log_reason=audit_log_reason,
+        )
+
+    async def add_member_role(
+        self,
+        user_id: int,
+        role_id: int,
+        *,
+        audit_log_reason: str = _MISSING,
+    ) -> Member:
+        """Add a role to a member.
+
+        Parameters
+        ----------
+        user_id : :class:`int`
+            The ID of the target member.
+
+        role_id : :class:`int`
+            The ID of the role to add.
+
+        audit_log_reason : :class:`str`, optional
+            The reason to show in audit log for this change.
+
+        Parameters
+        ----------
+        :class:`NotFound`
+            Could not find the guild, user or role.
+
+        :class:`Forbidden`
+            You are forbidden from editing roles or adding that role.
+
+        :class:`HTTPException`
+            A HTTP error occured.
+        """
+        return await self._state.managers.roles.add_member_role(
+            self.id, user_id, role_id, audit_log_reason=audit_log_reason
+        )
+
+    async def remove_member_role(
+        self,
+        user_id: int,
+        role_id: int,
+        *,
+        audit_log_reason: str = _MISSING,
+    ) -> None:
+        """Removes a role from a member.
+
+        Parameters
+        ----------
+        user_id : :class:`int`
+            The ID of the target member.
+
+        role_id : :class:`int`
+            The ID of the role to remove.
+
+        audit_log_reason : :class:`str`, optional
+            The reason to show in audit log for this change.
+
+        Parameters
+        ----------
+        :class:`NotFound`
+            Could not find the guild, user or role.
+
+        :class:`Forbidden`
+            You are forbidden from editing roles or removing that role.
+
+        :class:`HTTPException`
+            A HTTP error occured.
+        """
+        return await self._state.managers.roles.remove_member_role(
+            self.id, user_id, role_id, audit_log_reason=audit_log_reason
+        )
+
+    async def remove_member(
+        self, user_id: int, *, audit_log_reason: str = _MISSING
+    ) -> None:
+        """Remove/Kick a member from a guild.
+
+        Parameters
+        ----------
+        user_id : :class:`int`
+            The ID of the target member.
+
+        audit_log_reason : :class:`str`, optional
+            The reason to show in audit log for this removal.
+
+        Parameters
+        ----------
+        :class:`NotFound`
+            Could not find the guild or user.
+
+        :class:`Forbidden`
+            You are forbidden from removing that member.
+
+        :class:`HTTPException`
+            A HTTP error occured.
+        """
+        return await self._state.managers.guilds.remove_member(
+            self.id, user_id, audit_log_reason=audit_log_reason
+        )
+
+    @overload
+    async def fetch_bans(
+        self,
+        *,
+        limit: int = _MISSING,
+        before: int,
+    ) -> list[GuildBan]: ...
+
+    @overload
+    async def fetch_bans(
+        self, *, limit: int = _MISSING, after: int
+    ) -> list[GuildBan]: ...
+
+    @overload
+    async def fetch_bans(
+        self,
+        *,
+        limit: int = _MISSING,
+    ) -> list[GuildBan]: ...
+
+    async def fetch_bans(
+        self,
+        *,
+        limit: int = _MISSING,
+        before: int = _MISSING,
+        after: int = _MISSING,
+    ) -> list[GuildBan]:
+        """Fetch a list of bans in the guild.
+
+        Parameters
+        ----------
+        limit : :class:`int`, optional
+            The maximum amount of users to return (1-1000, defaults to 1000).
+
+        before : :class:`int`, optional
+            To return users before this user ID.
+
+        after : :class:`int`, optional
+            To return users after this user ID.
+
+        Raises
+        ------
+        :class:`NotFound`
+            Could not find the guild.
+
+        :class:`Forbidden`
+            You are not allowed to fetch the bans in that guild.
+
+        :class:`HTTPException`
+            A HTTP error occured.
+        """
+        # pyrefly: ignore [no-matching-overload]
+        return await self._state.managers.guilds.fetch_bans(
+            self.id, limit=limit, before=before, after=after
+        )
+
+    async def fetch_ban(self, user_id: int) -> GuildBan:
+        """Fetch a ban for the given user.
+
+        Parameters
+        ----------
+        user_id : :class:`int`
+            The ID of the target user.
+
+        Raises
+        ------
+        :class:`NotFound`
+            Could not find the guild or a ban for that user.
+
+        :class:`Forbidden`
+            You are missing the required permissions to fetch a ban.
+
+        :class:`HTTPException`
+            A HTTP error occured.
+        """
+        return await self._state.managers.guilds.fetch_ban(self.id, user_id)
+
+    async def ban(
+        self,
+        user_id: int,
+        *,
+        delete_message: timedelta | int = _MISSING,
+        audit_log_reason: str = _MISSING,
+    ) -> None:
+        """Create a new ban/Ban an user.
+
+        Parameters
+        ----------
+        user_id : :class:`int`
+            The ID of the target user.
+
+        delete_message : :class:`datetime.timedelta` | :class:`int`, optional
+            The amount of time to delete messages of, if an integer is provided it is treated as seconds.
+
+        audit_log_reason : :class:`str`, optional
+            The reason to show in the audit log for this ban.
+
+        Raises
+        ------
+        :class:`NotFound`
+            Could not find the guild or user.
+
+        :class:`Forbidden`
+            You cannot ban that user.
+
+        :class:`HTTPException`
+            A HTTP error occured.
+        """
+        return await self._state.managers.guilds.create_ban(
+            self.id,
+            user_id,
+            delete_message=delete_message,
+            audit_log_reason=audit_log_reason,
+        )
+
+    async def unban(self, user_id: int, *, audit_log_reason: str = _MISSING) -> None:
+        """Remove a ban/Unban an user.
+
+        Parameters
+        ----------
+        user_id : :class:`int`
+            The ID of the target user.
+
+        audit_log_reason : :class:`str`, optional
+            The reason to show in the audit log for this unban.
+
+        Raises
+        ------
+        :class:`NotFound`
+            Could not find the guild or user.
+
+        :class:`Forbidden`
+            You cannot unban that user.
+
+        :class:`HTTPException`
+            A HTTP error occured.
+        """
+        return await self._state.managers.guilds.remove_ban(
+            self.id, user_id, audit_log_reason=audit_log_reason
+        )
+
+    async def bulk_ban(
+        self,
+        user_ids: list[int],
+        *,
+        delete_message: timedelta | int = _MISSING,
+        audit_log_reason: str = _MISSING,
+    ) -> BulkBanResult:
+        """Bulk a maximum of 200 users from a guild.
+
+        Parameters
+        ----------
+        user_ids : :class:`list`[:class:`int`]
+            The list of IDs of the users to ban.
+
+        delete_message : :class:`datetime.timedelta` | :class:`int`, optional
+            The amount of time to delete messages of, if an integer is provided it is treated as seconds.
+
+        audit_log_reason : :class:`str`, optional
+            The reason to show in the audit logs for this bulk ban.
+
+        Raises
+        ------
+        :class:`NotFound`
+            Could not find the guild.
+
+        :class:`Forbidden`
+            You are missing permissions to bulk ban in that guild.
+
+        :class:`HTTPException`
+            A HTTP error occured.
+        """
+        return await self._state.managers.guilds.bulk_ban(
+            self.id,
+            user_ids,
+            delete_message=delete_message,
+            audit_log_reason=audit_log_reason,
+        )
+
+    async def fetch_roles(self) -> list[Role]:
+        """Fetch all the roles of a guild.
+
+        Raises
+        ------
+        :class:`NotFound`
+            Could not find the guild.
+
+        :class:`Forbidden`
+            You are missing permissions to fetch roles of that guild.
+
+        :class:`HTTPException`
+            A HTTP error occured.
+        """
+        return await self._state.managers.roles.fetch_roles(self.id)
+
+    async def fetch_role(self, role_id: int) -> Role:
+        """Fetch all the roles of a guild.
+
+        Parameters
+        ----------
+        role_id : :class:`int`
+            The ID of the target role.
+
+        Raises
+        ------
+        :class:`NotFound`
+            Could not find that guild.
+
+        :class:`Forbidden`
+            You are missing permissions to fetch roles of that guild.
+
+        :class:`HTTPException`
+            A HTTP error occured.
+        """
+        return await self._state.managers.roles.fetch_role(self.id, role_id)
+
+    async def fetch_role_member_counts(self) -> dict[Snowflake, int]:
+        """Fetch role count for every role in a guild.
+
+        Returns a dictonary with role ID as keys and their member count as values.
+
+        Raises
+        ------
+        :class:`NotFound`
+            Could not find the guild.
+
+        :class:`Forbidden`
+            You are missing permissions to fetch roles of that guild.
+
+        :class:`HTTPException`
+            A HTTP error occured.
+        """
+        return await self._state.managers.roles.fetch_role_member_counts(self.id)
+
+    async def create_role(
+        self,
+        *,
+        name: str = _MISSING,
+        permissions: Permissions = _MISSING,
+        colors: RoleColors = _MISSING,
+        hoist: bool = _MISSING,
+        icon: File | str | None = _MISSING,
+        unicode_emoji: str | None = _MISSING,
+        mentionable: bool = _MISSING,
+        audit_log_reason: str = _MISSING,
+    ) -> Role:
+        """Create a new role in a guild.
+
+        All parameters are optional.
+
+        Parameters
+        ----------
+        name : :class:`int`
+            The name of the new role, defaults to "new role".
+
+        permissions : :class:`~mizuki.Permissions`
+            The permissions for the new role.
+
+        colors : :class:`~mizuki.RoleColors`
+            The colors for the new role.
+
+        hoist : :class:`bool`
+            Whether the role is hoisted/shown separately in member lists.
+
+        icon : :class:`~mizuki.File` | :class:`str` | :obj:`None`
+            The icon of the new role.
+
+        unicode_emoji : :class:`str` | :obj:`None`
+            The related unicode emoji for the new role.
+
+        mentionable : :class:`bool`
+            Whether the role is mentionable.
+
+        audit_log_reason : :class:`str`
+            The reason to show in the audit log for the creation of this role.
+
+        Raises
+        ------
+        :class:`NotFound`
+            Could not find the guild.
+
+        :class:`Forbidden`
+            You are missing permissions to create roles in that guild.
+
+        :class:`HTTPException`
+            A HTTP error occured.
+        """
+        return await self._state.managers.roles.create_role(
+            self.id, **{k: v for k, v in locals().items() if k != "self"}
+        )
+
+    async def edit_role_positions(
+        self,
+        *changes: RolePositionChange,
+        audit_log_reason: str = _MISSING,
+    ) -> list[Role]:
+        """Edit role positions in a guild.
+
+        Parameters
+        ----------
+        *changes : :class:`~mizuki.RolePositionChange`
+            The changes to be made to the role positions.
+
+        audit_log_reason : :class:`str`, optional
+            The reason to show in the audit log for this change.
+
+        Raises
+        ------
+        :class:`NotFound`
+            Could not find the guild.
+
+        :class:`Forbidden`
+            You are missing permissions to edit role positions in that guild.
+
+        :class:`HTTPException`
+            A HTTP error occured.
+        """
+        return await self._state.managers.roles.edit_role_positions(
+            self.id, *changes, audit_log_reason=audit_log_reason
+        )
+
+    async def edit_role(
+        self,
+        role_id: int,
+        *,
+        name: str | None = _MISSING,
+        permissions: Permissions | None = _MISSING,
+        colors: RoleColors | None = _MISSING,
+        hoist: bool | None = _MISSING,
+        icon: File | str | None = _MISSING,
+        unicode_emoji: str | None = _MISSING,
+        mentionable: bool | None = _MISSING,
+        audit_log_reason: str = _MISSING,
+    ) -> Role:
+        """Edit a role in a guild.
+
+        All parameters are optional.
+
+        Parameters
+        ----------
+        role_id : :class:`int`
+            The ID of the target role.
+
+        name : :class:`int`
+            The name of the role.
+
+        permissions : :class:`~mizuki.Permissions`
+            The permissions for the role.
+
+        colors : :class:`~mizuki.RoleColors`
+            The colors for the role.
+
+        hoist : :class:`bool`
+            Whether the role is hoisted/shown separately in member lists.
+
+        icon : :class:`~mizuki.File` | :class:`str` | :obj:`None`
+            The icon of the role.
+
+        unicode_emoji : :class:`str` | :obj:`None`
+            The related unicode emoji for new role.
+
+        mentionable : :class:`bool`
+            Whether the role is mentionable.
+
+        audit_log_reason : :class:`str`
+            The reason to show in the audit log for the editing of this role.
+
+        Raises
+        ------
+        :class:`NotFound`
+            Could not find the guild.
+
+        :class:`Forbidden`
+            You are missing permissions to edit roles in that guild.
+
+        :class:`HTTPException`
+            A HTTP error occured.
+        """
+        return await self._state.managers.roles.edit_role(
+            self.id, **{k: v for k, v in locals().items() if k != "self"}
+        )
+
+    async def delete_role(
+        self, role_id: int, *, audit_log_reason: str = _MISSING
+    ) -> None:
+        """Delete a role in a guild.
+
+        Parameters
+        ----------
+        role_id : :class:`int`
+            The ID of the target role.
+
+        audit_log_reason : :class:`str`
+            The reason to show in the audit log for the editing of this role.
+
+        Raises
+        ------
+        :class:`NotFound`
+            Could not find the guild.
+
+        :class:`Forbidden`
+            You are missing permissions to delete that role in that guild.
+
+        :class:`HTTPException`
+            A HTTP error occured.
+        """
+        return await self._state.managers.roles.delete_role(
+            self.id, role_id, audit_log_reason=audit_log_reason
         )
 
     def __str__(self) -> str:

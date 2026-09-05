@@ -20,6 +20,7 @@ from mizuki.managers.channel import ChannelManager
 from mizuki.managers.command import CommandManager
 from mizuki.managers.guild import GuildManager
 from mizuki.managers.message import MessageManager
+from mizuki.managers.role import RoleManager
 from mizuki.managers.user import UserManager
 from mizuki.objects.command import (
     AutocompletorCallback,
@@ -42,36 +43,21 @@ class Bot:
 
     Parameters
     ----------
-    intents : :class:`IntentFlags <mizuki.flags.IntentFlags>`
+    intents : :class:`~mizuki.IntentFlags`
         The IntentFlags to be passed to the GatewayClient.
 
-    cache_settings : :class:`CacheSettings <mizuki.cache.CacheSettings>`, optional
+    cache_settings : :class:`~mizuki.CacheSettings`, optional
         The CacheSettings for managing the Cache System of the Bot instance. Defaults to ``CacheSettings()``
     """
 
     intents: IntentFlags
-    "The IntentFlags to be passed to the :class:`GatewayClient <mizuki.gateway.GatewayClient>`."
+    "The IntentFlags to be passed to the gateway."
 
     http: HTTPClient
     "The HTTPClient used for the REST API."
 
     gateway: GatewayClient
     "The GatewayClient that manages the Gateway Connection."
-
-    users: UserManager
-    "The UserManager used to managers User objects."
-
-    messages: MessageManager
-    "The MessageManager used to manage Message objects."
-
-    channels: ChannelManager
-    "The ChannelManager used to manage Channel objects."
-
-    guilds: GuildManager
-    "The GuildManager used to manage Guild objects."
-
-    commands: CommandManager
-    "The CommandManager used to manage Commands."
 
     user: User
     "The User object of the bot."
@@ -83,15 +69,10 @@ class Bot:
         "_setup_hook",
         "_state",
         "_storage",
-        "channels",
-        "commands",
         "gateway",
-        "guilds",
         "http",
         "intents",
-        "messages",
         "user",
-        "users",
     )
 
     def __init__(
@@ -114,6 +95,37 @@ class Bot:
             default_modal_timeout=default_modal_timeout,
         )
         self._session: aiohttp.ClientSession | None = None
+
+    @property
+    def channels(self) -> ChannelManager:
+        """The manager used to manage channels."""
+        return self._state.managers.channels
+
+    @property
+    def commands(self) -> CommandManager:
+        """The manager used to manage commands."""
+        return self._state.managers.commands
+
+    @property
+    def guilds(self) -> GuildManager:
+        """The manager used to manage guilds."""
+        return self._state.managers.guilds
+
+    @property
+    def messages(self) -> MessageManager:
+        """The manager used to manage messages."""
+        return self._state.managers.messages
+
+    @property
+    def roles(self) -> RoleManager:
+        """The manager used to manage roles."""
+        return self._state.managers.roles
+
+    @property
+    def users(self) -> UserManager:
+        """The manager used to manage users."""
+        return self._state.managers.users
+    
 
     def run(self, token: str) -> None:
         """A synchronous method to start a event loop and run the :meth:`Bot.start()` method.
@@ -163,16 +175,11 @@ class Bot:
             self.user = await self._verify_token()
             _log.info("Verified token successfully.")
 
-            managers = self._state.init_managers(
+            self._state.init_managers(
                 cache_storage=self._storage,
                 application_id=self.user.id,
                 commands_data=self._commands_data,
             )
-            self.users = managers.users
-            self.channels = managers.channels
-            self.messages = managers.messages
-            self.commands = managers.commands
-            self.guilds = managers.guilds
 
             self.gateway = await self._state.init_gateway(
                 bot=self, token=token, intents=self.intents

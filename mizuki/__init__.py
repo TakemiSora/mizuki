@@ -1,6 +1,6 @@
 import logging
 
-import mizuki.public_utils as utils
+import mizuki.public_utils as utils  # noqa: F401
 
 from .bot import *
 from .cache import *

@@ -1427,7 +1427,7 @@ class ApplicationCommandGroup(PartialApplicationCommandGroup):
 def parse_application_command(
     data: ApplicationCommandPayload,
 ) -> ApplicationCommand | ApplicationCommandGroup:
-    if data.get("options", [])[0]["type"] in (
+    if (options := data.get("options")) and options[0]["type"] in (
         CommandOptionType.SUB_COMMAND,
         CommandOptionType.SUB_COMMAND_GROUP,
     ):
