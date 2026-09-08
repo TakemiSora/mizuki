@@ -21,7 +21,7 @@ class RoleManager(BaseManager):
         role_id: int,
         *,
         audit_log_reason: str = _MISSING,
-    ) -> Member:
+    ) -> None:
         """Add a role to a member.
 
         Parameters
@@ -49,20 +49,15 @@ class RoleManager(BaseManager):
         :class:`HTTPException`
             A HTTP error occured.
         """
-        return Member(
-            await self._state.http.request(
-                Path(
-                    "PUT",
-                    "guilds/{guild_id}/members/{user_id}/roles/{role_id}",
-                    guild_id=guild_id,
-                    user_id=user_id,
-                    role_id=role_id,
-                ),
-                audit_log_reason=audit_log_reason,
+        await self._state.http.request(
+            Path(
+                "PUT",
+                "guilds/{guild_id}/members/{user_id}/roles/{role_id}",
+                guild_id=guild_id,
+                user_id=user_id,
+                role_id=role_id,
             ),
-            guild_id=guild_id,
-            user_id=user_id,
-            state=self._state,
+            audit_log_reason=audit_log_reason,
         )
 
     async def remove_role(

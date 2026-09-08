@@ -358,6 +358,68 @@ class Role(PartialRole):
             self._guild_id, self.id, audit_log_reason=audit_log_reason
         )
 
+    async def add_to(
+        self,
+        user_id: int,
+        *,
+        audit_log_reason: str = _MISSING,
+    ) -> None:
+        """Add a role to a member.
+
+        Parameters
+        ----------
+        user_id : :class:`int`
+            The ID of the target member.
+
+        audit_log_reason : :class:`str`, optional
+            The reason to show in audit log for this change.
+
+        Raises
+        ------
+        :class:`NotFound`
+            Could not find that guild, user or role.
+
+        :class:`Forbidden`
+            You are forbidden from editing roles or adding that role.
+
+        :class:`HTTPException`
+            A HTTP error occured.
+        """
+        await self._state.managers.roles.add_role(
+            self._guild_id, user_id, self.id, audit_log_reason=audit_log_reason
+        )
+
+    async def remove_from(
+        self,
+        user_id: int,
+        *,
+        audit_log_reason: str = _MISSING,
+    ) -> None:
+        """Removes a role from a member.
+
+        Parameters
+        ----------
+        user_id : :class:`int`
+            The ID of the target member.
+
+        audit_log_reason : :class:`str`, optional
+            The reason to show in audit log for this change.
+
+        Raises
+        ------
+        :class:`NotFound`
+            Could not find that guild, user or role.
+
+        :class:`Forbidden`
+            You are forbidden from editing roles or removing that role.
+
+        :class:`HTTPException`
+            A HTTP error occured.
+        """
+        await self._state.managers.roles.remove_role(
+            self._guild_id, user_id, self.id, audit_log_reason=audit_log_reason
+        )
+
 
 @dataclass(slots=True)
 class RolePositionChange:
