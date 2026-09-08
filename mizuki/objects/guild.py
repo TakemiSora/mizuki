@@ -422,7 +422,7 @@ class Guild:
             data["default_message_notifications"]
         )
         self.explicit_level = GuildExplicitContentLevel(data["explicit_content_filter"])
-        self.roles = [Role(r) for r in data["roles"]]
+        self.roles = [Role(r, guild_id=self.id, state=state) for r in data["roles"]]
         self.emojis = [Emoji(e, state=state) for e in data["emojis"]]
         self.features = [GuildFeature(f) for f in data["features"]]
         self.mfa_level = GuildMFALevel(data["mfa_level"])
@@ -1092,7 +1092,7 @@ class Guild:
         :class:`HTTPException`
             A HTTP error occured.
         """
-        return await self._state.managers.roles.add_member_role(
+        return await self._state.managers.roles.add_role(
             self.id, user_id, role_id, audit_log_reason=audit_log_reason
         )
 
@@ -1127,7 +1127,7 @@ class Guild:
         :class:`HTTPException`
             A HTTP error occured.
         """
-        return await self._state.managers.roles.remove_member_role(
+        return await self._state.managers.roles.remove_role(
             self.id, user_id, role_id, audit_log_reason=audit_log_reason
         )
 

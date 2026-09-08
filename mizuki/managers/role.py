@@ -14,7 +14,7 @@ from mizuki.payloads.role import RolePayload
 class RoleManager(BaseManager):
     """Manager used to fetch :class:`~mizuki.Role` objects."""
 
-    async def add_member_role(
+    async def add_role(
         self,
         guild_id: int,
         user_id: int,
@@ -38,8 +38,8 @@ class RoleManager(BaseManager):
         audit_log_reason : :class:`str`, optional
             The reason to show in audit log for this change.
 
-        Parameters
-        ----------
+        Raises
+        ------
         :class:`NotFound`
             Could not find that guild, user or role.
 
@@ -65,7 +65,7 @@ class RoleManager(BaseManager):
             state=self._state,
         )
 
-    async def remove_member_role(
+    async def remove_role(
         self,
         guild_id: int,
         user_id: int,
@@ -89,8 +89,8 @@ class RoleManager(BaseManager):
         audit_log_reason : :class:`str`, optional
             The reason to show in audit log for this change.
 
-        Parameters
-        ----------
+        Raises
+        ------
         :class:`NotFound`
             Could not find that guild, user or role.
 
@@ -131,7 +131,7 @@ class RoleManager(BaseManager):
             A HTTP error occured.
         """
         return [
-            Role(r)
+            Role(r, guild_id=guild_id, state=self._state)
             for r in await self._state.http.request(
                 Path("GET", "guilds/{guild_id}/roles", guild_id=guild_id),
             )
@@ -167,7 +167,9 @@ class RoleManager(BaseManager):
                     guild_id=guild_id,
                     role_id=role_id,
                 ),
-            )
+            ),
+            guild_id=guild_id,
+            state=self._state,
         )
 
     async def fetch_role_member_counts(self, guild_id: int) -> dict[Snowflake, int]:
@@ -279,7 +281,9 @@ class RoleManager(BaseManager):
                     mentionable=mentionable,
                 ),
                 audit_log_reason=audit_log_reason,
-            )
+            ),
+            guild_id=guild_id,
+            state=self._state,
         )
 
     async def edit_role_positions(
@@ -313,7 +317,7 @@ class RoleManager(BaseManager):
             A HTTP error occured.
         """
         return [
-            Role(d)
+            Role(d, guild_id=guild_id, state=self._state)
             for d in cast(
                 list[RolePayload],
                 await self._state.http.request(
@@ -342,7 +346,7 @@ class RoleManager(BaseManager):
 
         .. note::
 
-            All parameters besides ``guild_id`` are optional.
+            All parameters besides ``guild_id``, ``role_id`` are optional.
 
         Parameters
         ----------
@@ -410,7 +414,9 @@ class RoleManager(BaseManager):
                     ),
                     audit_log_reason=audit_log_reason,
                 ),
-            )
+            ),
+            guild_id=guild_id,
+            state=self._state,
         )
 
     async def delete_role(

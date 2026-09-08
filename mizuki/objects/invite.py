@@ -1,16 +1,16 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
+
 from datetime import datetime
+from typing import TYPE_CHECKING, cast
 
-from mizuki.flags import InviteFlags
 from mizuki._utils import scls, siso
-
-from mizuki.payloads.invite import InviteMetadataPayload, InvitePayload
-from mizuki.enums.invite import InviteType, InviteTargetType
+from mizuki.enums.invite import InviteTargetType, InviteType
+from mizuki.flags import InviteFlags
 from mizuki.objects.channel import PartialGuildChannel
-from mizuki.objects.user import User
-from mizuki.objects.role import PartialRole
 from mizuki.objects.guild import Guild, GuildScheduledEvent
+from mizuki.objects.role import PartialRole
+from mizuki.objects.user import User
+from mizuki.payloads.invite import InviteMetadataPayload, InvitePayload
 
 if TYPE_CHECKING:
     from mizuki.state import ConnectionState
@@ -21,19 +21,19 @@ __all__ = ("Invite", "InviteMetadata")
 class Invite:
     __slots__ = (
         "_state",
-        "type",
-        "code",
-        "guild",
+        "approximate_member_count",
+        "approximate_presence_count",
         "channel",
+        "code",
+        "expires_at",
+        "flags",
+        "guild",
+        "guild_scheduled_event",
         "inviter",
+        "roles",
         "target_type",
         "target_user",
-        "approximate_presence_count",
-        "approximate_member_count",
-        "expires_at",
-        "guild_scheduled_event",
-        "flags",
-        "roles",
+        "type",
     )
 
     def __init__(self, data: InvitePayload, *, state: ConnectionState):
@@ -56,11 +56,14 @@ class Invite:
             GuildScheduledEvent, data.get("guild_scheduled_event"), state=state
         )
         self.flags = scls(InviteFlags, data.get("flags"))
-        self.roles = [PartialRole(p) for p in data.get("roles", [])]
+        self.roles = [
+            PartialRole(p, guild_id=cast(Guild, self.guild).id, state=state)
+            for p in data.get("roles", [])
+        ]
 
 
 class InviteMetadata(Invite):
-    __slots__ = ("uses", "max_uses", "max_age", "temporary", "created_at")
+    __slots__ = ("created_at", "max_age", "max_uses", "temporary", "uses")
 
     def __init__(self, data: InviteMetadataPayload, *, state: ConnectionState):
         super().__init__(data, state=state)

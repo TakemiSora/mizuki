@@ -175,7 +175,9 @@ class MessageManager(BaseManager):
             self._cache_storage.update_messages(Message(m, state=self._state))
             for m in await self._state.http.request(
                 Path("GET", "channels/{channel_id}/messages", channel_id=channel_id),
-                params=cast(dict[str, int], assign_val_dict(params, _MISSING, limit=limit)),
+                params=cast(
+                    dict[str, int], assign_val_dict(params, _MISSING, limit=limit)
+                ),
             )
         ]
 

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from mizuki.objects.channel import PartialThreadChannel, parse_channel_payload
 from mizuki.objects.member import PartialMember, ResolvedMember
@@ -46,7 +46,8 @@ class ResolvedData:
         )
 
         self.roles = {
-            int(id): Role(payload) for id, payload in data.get("roles", {}).items()
+            int(id): Role(payload, guild_id=cast(int, guild_id), state=state)
+            for id, payload in data.get("roles", {}).items()
         }
 
         self.channels = {

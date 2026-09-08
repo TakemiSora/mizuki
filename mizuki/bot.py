@@ -125,7 +125,6 @@ class Bot:
     def users(self) -> UserManager:
         """The manager used to manage users."""
         return self._state.managers.users
-    
 
     def run(self, token: str) -> None:
         """A synchronous method to start a event loop and run the :meth:`Bot.start()` method.
