@@ -7,24 +7,20 @@ requires-python = ">=3.13"
 license = "MIT"
 dependencies = [
     "aiohttp>=3.13.5",
-    "shibuya>=2026.7.12",
 ]
 authors = [
     { name = "Sora" }
 ]
 
-[project.optional-dependencies]
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+]
 docs = [
     "sphinx>=9.1.0",
     "sphinx-copybutton>=0.5.2",
     "sphinx-design>=0.7.0",
     "sphinx-iconify>=0.3.0",
     "sphinx-nefertiti>=0.9.9",
-]
-
-
-[dependency-groups]
-dev = [
-    "pytest>=9.1.1",
-    "pytest-asyncio>=1.4.0",
 ]

@@ -13,6 +13,9 @@ class Missing:
     def __iter__(self) -> Iterator[Never]:
         return iter(())
 
+    def __repr__(self) -> str:
+        return "..."
+
 
 _MISSING: Any = Missing()
 
