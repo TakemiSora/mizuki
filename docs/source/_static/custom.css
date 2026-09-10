@@ -1,9 +1,86 @@
 .light {
-  --nftt-docapi-kw-color: #D83CA2;
+    --nftt-docapi-kw-color: #D83CA2;
+    --title-color: #000000;
 }
+
 .dark {
-  --nftt-docapi-kw-color: #FED4FF;
+    --nftt-docapi-kw-color: #FED4FF;
+    --title-color: #FFFFFF;
 }
 .toc a {
-  text-decoration: none;
+    text-decoration: none;
+}
+/* ---- Attribute table (discord.py-style method/attribute overview) ---- */
+
+.py-attribute-table {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin: 1.5rem 0 1.5rem;
+}
+
+.py-attribute-table-column {
+    flex: 1 1 240px;
+    min-width: 200px;
+    background: var(--nftt-secondary-bg);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+}
+
+/* "Attributes" / "Methods" header */
+.py-attribute-table-column > span {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--title-color);
+    margin-bottom: 0.6rem;
+}
+
+.py-attribute-table-column ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.py-attribute-table-column li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.3rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.py-attribute-table-column li:last-child {
+    border-bottom: none;
+}
+
+.py-attribute-table-column li a {
+    font-family: var(--nftt-font-monospace, monospace);
+    font-size: 0.85rem;
+    text-decoration: none;
+}
+
+.py-attribute-table-column li a:hover {
+    color: var(-nftt-link-color);
+    text-decoration: underline;
+}
+
+/* Decorator/property/etc. badges */
+.py-attribute-badge {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.1rem;
+    height: 1.1rem;
+    font-size: 0.65rem;
+    font-weight: 700;
+    line-height: 1;
+    border-radius: 50%;
+    background: rgba(224, 17, 127, 0.15);
+    color: #e0117f !important;
+    cursor: help;
 }

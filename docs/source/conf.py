@@ -22,6 +22,7 @@ extensions = [
     "sphinx_copybutton",
     "sphinx_design",
     "sphinx_iconify",
+    "attributetable",
 ]
 
 autodoc_default_options = {
@@ -82,6 +83,19 @@ import os
 import sys
 
 sys.path.insert(0, os.path.abspath("../../"))
+sys.path.append(os.path.abspath("extensions"))
 
-autodoc_member_order = "bysource"
+autodoc_member_order = "groupwise"
 add_module_names = False
+
+
+def insert_attributetable(app, what, name, obj, options, lines):
+    if what != "class":
+        return
+
+    lines.insert(0, "")
+    lines.insert(0, f".. attributetable:: {name}")
+
+
+def setup(app):
+    app.connect("autodoc-process-docstring", insert_attributetable)
