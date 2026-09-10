@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from mizuki._utils import _MISSING, mgetattr, scls
 from mizuki.enums.user import PremiumType
@@ -58,7 +58,7 @@ class PartialUser:
         return self.id.created_at
 
     async def fetch_full(self) -> User:
-        """Fetches a :class:`User <mizuki.objects.user.User>` from the Discord API.
+        """Fetches a :class:`~mizuki.User` from the Discord API.
 
         Raises
         ------
@@ -72,11 +72,6 @@ class PartialUser:
 
     async def create_dm_channel(self) -> PrivateChannel:
         """Creates a private channel with a user and/or returns the channel.
-
-        Parameters
-        ----------
-        recipient_id : :class:`int`
-            The ID of the user to create the DM channel with.
 
         Raises
         ------
@@ -116,25 +111,25 @@ class PartialUser:
         tts : :class:`bool`
             Whether TTS is enabled for the message.
 
-        embeds : list[:class:`Embed <mizuki.objects.embed.Embed>`]
+        embeds : list[:class:`~mizuki.Embed`]
             The list of embeds to send along the message.
 
-        components : list[:class:`Component <mizuki.objects.component.Component>`]
+        components : list[:class:`~mizuki.Component`]
             The list of components to send in this message.
 
-        allowed_mentions : :class:`AllowedMentions <mizuki.objects.message.AllowedMentions>`
+        allowed_mentions : :class:`~mizuki.AllowedMentions`
             The AllowedMentions object that dictates whether user, role or everyone pings are enabled.
 
-        files : list[:class:`File <mizuki.file.File>`]
+        files : list[:class:`~mizuki.File`]
             The files to upload with the message.
 
-        message_reference : :class:`MessageReference <mizuki.objects.message.MessageReference>`
+        message_reference : :class:`~mizuki.MessageReference`
             The reference message for the new message, if any
 
         sticker_ids : list[:class:`int`]
             The Guild Stickers to send with the message. Max 3.
 
-        flags : :class:`MessageFlags <mizuki.flags.MessageFlags>`
+        flags : :class:`~mizuki.MessageFlags`
             The MessageFlags of the new message.
 
         Raises
@@ -150,7 +145,7 @@ class PartialUser:
         """
         return await self._state.managers.messages.create(
             (
-                mgetattr(self._channel, "id", cast_to=int | None)
+                cast(int | None, mgetattr(self._channel, "id"))
                 or (await self.create_dm_channel()).id
             ),
             content=content,

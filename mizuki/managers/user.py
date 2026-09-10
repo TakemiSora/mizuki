@@ -11,12 +11,16 @@ __all__ = ("UserManager",)
 
 
 class UserManager(BaseManager):
-    """Manager used to fetch :class:`User <mizuki.objects.user.User>` objects."""
+    """Manager used to fetch :class:`~mizuki.User` objects."""
 
     __slots__ = ()
 
     async def fetch_me(self) -> User:
-        """Fetches the user object of the bot. This should generally not be called as it is accessible on startup via :attr:`Bot.user <mizuki.bot.Bot.user>`.
+        """Fetches the user object of the bot.
+
+        .. note::
+
+            You might not need this method as the bot's user is cached on startup in :attr:`Bot.user <mizuki.Bot.user>`.
 
         Raises
         ------
@@ -31,7 +35,7 @@ class UserManager(BaseManager):
         )
 
     def get(self, user_id: int) -> User | None:
-        """Attempts to fetch a :class:`User <mizuki.objects.user.User>` from the internal cache of the bot.
+        """Attempts to fetch a :class:`~mizuki.User` from the internal cache of the bot.
 
         Parameters
         ----------
@@ -41,7 +45,7 @@ class UserManager(BaseManager):
         return self._cache_storage.get_user(user_id)
 
     async def fetch(self, user_id: int) -> User:
-        """Attempts to fetch a :class:`User <mizuki.objects.user.User>` from the Discord API.
+        """Attempts to fetch a :class:`~mizuki.User` from the Discord API.
 
         Parameters
         ----------
@@ -66,17 +70,12 @@ class UserManager(BaseManager):
         )
 
     async def get_or_fetch(self, user_id: int) -> User:
-        """A couroutine function that attempts to fetch a :class:`User <mizuki.objects.user.User>` from internal cache and if not present, makes an API call to discord.
+        """A couroutine function that attempts to fetch a :class:`~mizuki.User` from internal cache and if not present, makes an API call to discord.
 
         Parameters
         ----------
         user_id: :class:`int`
             The user_id of the user to fetch.
-
-        Returns
-        -------
-        :class:`User <mizuki.objects.user.User>`
-            The User object recieved from Discord API or cache.
 
         Raises
         ------
@@ -101,10 +100,10 @@ class UserManager(BaseManager):
         username : :class:`str`, optional
             The username of the bot.
 
-        avatar : :class:`File <mizuki.file.File>` | :class:`str` | :class:`None`, optional
+        avatar : :class:`~mizuki.File` | :class:`str` | :obj:`None`, optional
             The avatar for the bot.
 
-        banner : :class:`File <mizuki.file.File>` | :class:`str` | :class:`None`, optional
+        banner : :class:`~mizuki.File` | :class:`str` | :obj:`None`, optional
             The banner for the bot.
 
         Raises

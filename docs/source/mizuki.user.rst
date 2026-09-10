@@ -4,68 +4,61 @@ Users
 Manager
 -------
 
-.. automodule:: mizuki.managers.user
+.. autoclass:: mizuki.managers.UserManager
    :members:
-   :show-inheritance:
-   :undoc-members:
 
 Users
 -----
 
-.. automodule:: mizuki.objects.user
+.. autoclass:: mizuki.PartialUser
    :members:
-   :show-inheritance:
-   :undoc-members:
 
+.. autoclass:: mizuki.User
+   :members:
+   
 Presences
 ---------
 
-.. automodule:: mizuki.objects.presence
+.. autoclass:: mizuki.Activity
    :members:
-   :show-inheritance:
-   :undoc-members:
+
+.. autoclass:: mizuki.Presence
+   :members:
 
 Primary Guild
 -------------
 
-.. automodule:: mizuki.objects.primary_guild
+.. autoclass:: mizuki.UserPrimaryGuild
    :members:
-   :show-inheritance:
-   :undoc-members:
 
 Decorations
 -----------
 
-.. automodule:: mizuki.objects.avatar_decoration
+.. autoclass:: mizuki.AvatarDecoration
    :members:
-   :show-inheritance:
-   :undoc-members:
 
-.. automodule:: mizuki.objects.collectibles
+.. autoclass:: mizuki.Nameplate
    :members:
-   :show-inheritance:
-   :undoc-members:
 
-Members
--------
-
-.. automodule:: mizuki.objects.member
-   :members:
-   :show-inheritance:
-   :undoc-members:
 
 User Enums
 ----------
 
-.. automodule:: mizuki.enums.user
+.. autoclass:: mizuki.PremiumType
    :members:
-   :undoc-members:
    :no-inherited-members:
 
 Presence Enums
 --------------
 
-.. automodule:: mizuki.enums.presence
+.. autoclass:: mizuki.ActivityType
    :members:
-   :undoc-members:
+   :no-inherited-members:
+
+.. autoclass:: mizuki.StatusDisplayType
+   :members:
+   :no-inherited-members:
+
+.. autoclass:: mizuki.PresenceStatusType
+   :members:
    :no-inherited-members:
