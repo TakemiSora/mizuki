@@ -23,6 +23,8 @@ extensions = [
     "sphinx_design",
     "sphinx_iconify",
     "attributetable",
+    "intflag",
+    "enums"
 ]
 
 autodoc_default_options = {
