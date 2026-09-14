@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from collections.abc import Mapping
 from contextlib import ExitStack
 from json import dumps
 from typing import TYPE_CHECKING, Any
@@ -235,7 +236,7 @@ class HTTPClient:
         *,
         files: list[File] = _MISSING,
         json: Any = _MISSING,
-        params: dict[str, str | int | float] = _MISSING,
+        params: Mapping[str, str | int | float] = _MISSING,
         audit_log_reason: str = _MISSING,
         headers: dict[str, str] = _MISSING,
         **kwargs: Any,
