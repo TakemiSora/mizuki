@@ -18,7 +18,6 @@ from mizuki.payloads.role import (
 
 if TYPE_CHECKING:
     from mizuki.file import File
-    from mizuki.objects import Member
     from mizuki.state import ConnectionState
 
 __all__ = ("PartialRole", "Role", "RoleColors", "RolePositionChange", "RoleTags")
@@ -211,7 +210,7 @@ class Role(PartialRole):
         user_id: int,
         *,
         audit_log_reason: str = _MISSING,
-    ) -> Member:
+    ) -> None:
         """Add a role to a member.
 
         Parameters
@@ -233,7 +232,7 @@ class Role(PartialRole):
         :class:`HTTPException`
             A HTTP error occured.
         """
-        return await self._state.managers.roles.add_role(
+        await self._state.managers.roles.add_role(
             self._guild_id, user_id, self.id, audit_log_reason=audit_log_reason
         )
 

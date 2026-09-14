@@ -1067,7 +1067,7 @@ class Guild:
         role_id: int,
         *,
         audit_log_reason: str = _MISSING,
-    ) -> Member:
+    ) -> None:
         """Add a role to a member.
 
         Parameters
@@ -1092,7 +1092,7 @@ class Guild:
         :class:`HTTPException`
             A HTTP error occured.
         """
-        return await self._state.managers.roles.add_role(
+        await self._state.managers.roles.add_role(
             self.id, user_id, role_id, audit_log_reason=audit_log_reason
         )
 
