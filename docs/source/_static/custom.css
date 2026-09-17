@@ -1,14 +1,17 @@
 .light {
-    --nftt-docapi-kw-color: #D83CA2;
     --title-color: #000000;
 }
 
 .dark {
-    --nftt-docapi-kw-color: #FED4FF;
     --title-color: #FFFFFF;
 }
 .toc a {
     text-decoration: none;
+}
+
+.sig {
+	background-color: var(--pst-color-dark);
+	padding: 10px;
 }
 
 .py-attribute-table {
@@ -21,7 +24,7 @@
 .py-attribute-table-column {
     flex: 1 1 240px;
     min-width: 200px;
-    background: var(--nftt-secondary-bg);
+    background: var(--pst-color-surface);
     border-radius: 8px;
     padding: 1rem 1.25rem;
 }
@@ -56,7 +59,7 @@
 }
 
 .py-attribute-table-column li a {
-    font-family: var(--nftt-font-monospace, monospace);
+    font-family: var(--pst-font-family-monospace, monospace);
     font-size: 0.85rem;
     text-decoration: none;
 }

@@ -110,6 +110,8 @@ class GuildMemberFlags(IntFlag):
 
 
 class ChannelFlags(IntFlag):
+    """The flags for a :class:`~mizuki.Channel`."""
+
     PINNED = 1 << 1
     REQUIRE_TAG = 1 << 4
     HIDE_MEDIA_DOWNLOAD_OPTIONS = 1 << 15

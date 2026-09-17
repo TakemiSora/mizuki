@@ -4,28 +4,64 @@ Channels
 Manager
 -------
 
-.. automodule:: mizuki.managers.channel
+.. autoclass:: mizuki.managers.ChannelManager
    :members:
-   :show-inheritance:
-   :undoc-members:
 
 Objects
 -------
 
-.. automodule:: mizuki.objects.channel
-   :members:
-   :show-inheritance:
-   :undoc-members:
+.. autoclass:: mizuki.ChannelMention
+
+.. autoclass:: mizuki.PartialForumTag
+
+.. autoclass:: mizuki.ForumTag
+
+.. autoclass:: mizuki.PartialGuildChannel
            
+.. autoclass:: mizuki.GuildChannel
+
+.. autoclass:: mizuki.ThreadMember
+
+.. autoclass:: mizuki.ThreadMetaData
+
+.. autoclass:: mizuki.PartialThreadChannel
+
+.. autoclass:: mizuki.ThreadChannel
+
+.. autoclass:: mizuki.PrivateChannel
+
+.. autoclass:: mizuki.ChannelPermissionOverwrite
+
+.. autotype:: mizuki.PartialChannel
+
+.. autotype:: mizuki.Channel
+
 Enums
 -----
 
-.. automodule:: mizuki.enums.channel
-   :members:
-   :undoc-members:
+.. autoenum:: mizuki.ChannelType
+   :no-inherited-members:
+
+.. autoenum:: mizuki.ChannelPermissionOverwriteType
+   :no-inherited-members:
+
+.. autoenum:: mizuki.VideoQualityMode
+   :no-inherited-members:
+
+.. autoenum:: mizuki.SortOrderType
+   :no-inherited-members:
+
+.. autoenum:: mizuki.ForumLayoutType
+   :no-inherited-members:
+
+Flags
+-----
+
+.. autointflag:: mizuki.ChannelFlags
    :no-inherited-members:
 
 Errors
 ------
 
-.. autoclass:: mizuki.errors.UnknownChannelType
+.. autoexception:: mizuki.errors.UnknownChannelType
+   :no-inherited-members:

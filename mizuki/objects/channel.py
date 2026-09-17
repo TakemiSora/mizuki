@@ -40,24 +40,23 @@ if TYPE_CHECKING:
     from mizuki.state import ConnectionState
 
 __all__ = (
-    "ThreadMetaData",
-    "ThreadMember",
-    "PartialForumTag",
+    "Channel",
+    "ChannelMention",
     "ForumTag",
     "GuildChannel",
-    "ThreadChannel",
-    "PrivateChannel",
+    "PartialChannel",
+    "PartialForumTag",
     "PartialGuildChannel",
     "PartialThreadChannel",
-    "ChannelMention",
-    "Channel",
+    "PrivateChannel",
+    "ThreadChannel",
+    "ThreadMember",
+    "ThreadMetaData",
 )
 
 
 class ThreadMetaData:
-    """
-    Represents the metadata of a thread.
-    """
+    """Represents the metadata of a thread."""
 
     archived: bool
     "Represents if the thread is archived."
@@ -78,12 +77,12 @@ class ThreadMetaData:
     "Represents when the thread was created. Will be ``None`` for threads older than 2022-01-09."
 
     __slots__ = (
+        "archive_timestamp",
         "archived",
         "auto_archive_duration",
-        "archive_timestamp",
-        "locked",
-        "invitable",
         "create_timestamp",
+        "invitable",
+        "locked",
     )
 
     def __init__(self, data: ThreadMetaDataPayload):
@@ -96,26 +95,24 @@ class ThreadMetaData:
 
 
 class ThreadMember:
-    """
-    Represents information about an user that has joined a thread.
-    """
+    """Represents information about an user that has joined a thread."""
 
     id: Snowflake | None
-    "The ID of the :class:`Thread <mizuki.objects.channel.ThreadChannel>`. Omitted in :attr:`GUILD_CREATE <mizuki.enums.event_dispatch.Event.GUILD_CREATE>`."
+    "The ID of the :class:`~mizuki.ThreadChannel`. Omitted in :attr:`~mizuki.Event.GUILD_CREATE`."
 
     user_id: Snowflake | None
-    "The ID of the :class:`User <mizuki.objects.user.User>`. Omitted in :attr:`GUILD_CREATE <mizuki.enums.event_dispatch.Event.GUILD_CREATE>`."
+    "The ID of the :class:`~mizuki.User`. Omitted in :attr:`~mizuki.Event.GUILD_CREATE`."
 
     join_timestamp: datetime
     "Time the user last joined the thread."
 
     notifications: bool
-    "Represents if the :class:`User <mizuki.objects.user.User>` has notifications enabled."
+    "Represents if the :class:`~mizuki.User` has notifications enabled."
 
     member: Member | None
-    "The Member Object for the user in the :class:`Guild <mizuki.objects.guild.Guild>`. Omitted in :attr:`GUILD_CREATE <mizuki.enums.event_dispatch.Event.GUILD_CREATE>`."
+    "The Member Object for the user in the :class:`~mizuki.Guild`. Omitted in :attr:`~mizuki.Event.GUILD_CREATE`."
 
-    __slots__ = ("id", "user_id", "join_timestamp", "notifications", "member")
+    __slots__ = ("id", "join_timestamp", "member", "notifications", "user_id")
 
     def __init__(
         self,
@@ -142,9 +139,7 @@ class ThreadMember:
 
 
 class PartialForumTag:
-    """
-    Represents a partial Forum Tag object to be passed for editing the available tags of a channel.
-    """
+    """Represents a partial Forum Tag object to be passed for editing the available tags of a channel."""
 
     name: str
     "The name of the tag. (0-20 characters long)"
@@ -159,8 +154,7 @@ class PartialForumTag:
 
     @classmethod
     def new(cls, *, name: str) -> Self:
-        """
-        Creates a new instance of a partial Forum Tag.
+        """Creates a new instance of a partial Forum Tag.
 
         Parameters
         ----------
@@ -171,27 +165,26 @@ class PartialForumTag:
 
 
 class ForumTag(PartialForumTag):
-    """
-    Represents a Forum Tag which can be applied to Channels of types :attr:`GUILD_FORUM <mizuki.enums.channel.ChannelType.GUILD_FORUM>` and :attr:`GUILD_MEDIA <mizuki.enums.channel.ChannelType.GUILD_MEDIA>`.
+    """Represents a Forum Tag which can be applied to Channels of types :attr:`~mizuki.ChannelType.GUILD_FORUM` and :attr:`~mizuki.ChannelType.GUILD_MEDIA`.
 
     .. note::
 
-        Atleast one of :attr:`emoji_id <mizuki.objects.channel.ForumTag.emoji_id>` and :attr:`emoji_name <mizuki.objects.channel.ForumTag.emoji_name>` will always be present.
+        Atleast one of :attr:`~mizuki.ForumTag.emoji_id` and :attr:`~mizuki.ForumTag.emoji_name` will always be present.
     """
 
     id: Snowflake
     "The ID of the Tag."
 
     moderated: bool
-    "Whether this Tag can only be added to or removed from valid ChannelType by a member with the :attr:`MANAGE_THREADS <mizuki.objects.permissions.Permissions.MANAGE_THREADS>` permission."
+    "Whether this Tag can only be added to or removed from valid ChannelType by a member with the :attr:`~mizuki.Permissions.MANAGE_THREADS` permission."
 
     emoji_id: Snowflake | None
-    "The ID of a :class:`Guild <mizuki.objects.guild.Guild>`’s custom emoji."
+    "The ID of a :class:`~mizuki.Guild`’s custom emoji."
 
     emoji_name: str | None
     "The unicode character of the emoji."
 
-    __slots__ = ("id", "moderated", "emoji_id", "emoji_name")
+    __slots__ = ("emoji_id", "emoji_name", "id", "moderated")
 
     def __init__(self, data: ForumTagPayload):
         super().__init__(data)
@@ -215,15 +208,15 @@ class BaseChannel:
     "The ID of the Channel."
 
     last_message_id: Snowflake | None
-    "The ID of the last message (or :class:`Thread <mizuki.objects.channel.ThreadChannel>` for :attr:`GUILD_FORUM <mizuki.enums.channel.ChannelType.GUILD_FORUM>` and :attr:`GUILD_MEDIA <mizuki.enums.channel.ChannelType.GUILD_MEDIA>`) that was sent in that channel. May or may not point to a valid message."
+    "The ID of the last message (or :class:`~mizuki.ThreadChannel` for :attr:`~mizuki.ChannelType.GUILD_FORUM` and :attr:`~mizuki.ChannelType.GUILD_MEDIA`) that was sent in that channel. May or may not point to a valid message."
 
     flags: ChannelFlags
     "The flags of the Channel."
 
     last_pin_timestamp: datetime | None
-    "The timestamp when the last pinned message was pinned. May be ``None`` if no messages are pinned."
+    "The timestamp when the last pinned message was pinned. May be :obj:`None` if no messages are pinned."
 
-    __slots__ = ("_state", "id", "last_message_id", "flags", "last_pin_timestamp")
+    __slots__ = ("_state", "flags", "id", "last_message_id", "last_pin_timestamp")
 
     def __init__(self, data: BaseChannelPayload, *, state: ConnectionState):
         self._state = state
@@ -245,13 +238,7 @@ class BaseChannel:
 
     @property
     def created_at(self) -> datetime:
-        """
-        The timestamp at which the Channel was created.
-
-        Returns
-        -------
-        :class:`datetime <datetime.datetime>`
-        """
+        """The timestamp at which the Channel was created."""
         return self.id.created_at
 
     async def send(
@@ -267,8 +254,7 @@ class BaseChannel:
         sticker_ids: list[int] = _MISSING,
         flags: MessageFlags = _MISSING,
     ) -> Message:
-        """
-        Creates a new message in the specified channel.
+        """Creates a new message in the specified channel.
 
         .. note::
 
@@ -282,25 +268,25 @@ class BaseChannel:
         tts : :class:`bool`
             Whether TTS is enabled for the message.
 
-        embeds : list[:class:`Embed <mizuki.objects.embed.Embed>`]
+        embeds : list[:class:`~mizuki.Embed`]
             The list of embeds to send along the message.
 
-        components : list[:class:`Component <mizuki.objects.component.Component>`]
+        components : list[:class:`~mizuki.Component`]
             The list of components to send in this message.
 
-        allowed_mentions : :class:`AllowedMentions <mizuki.objects.message.AllowedMentions>`
+        allowed_mentions : :class:`~mizuki.AllowedMentions`
             The AllowedMentions object that dictates whether user, role or everyone pings are enabled.
 
-        files : list[:class:`File <mizuki.file.File>`]
+        files : list[:class:`~mizuki.File`]
             The files to upload with the message.
 
-        message_reference : :class:`MessageReference <mizuki.objects.message.MessageReference>`
+        message_reference : :class:`~mizuki.MessageReference`
             The reference message for the new message, if any
 
         sticker_ids : list[:class:`int`]
             The Guild Stickers to send with the message. Max 3.
 
-        flags : :class:`MessageFlags <mizuki.flags.MessageFlags>`
+        flags : :class:`~mizuki.MessageFlags`
             The MessageFlags of the new message.
 
         Raises
@@ -330,7 +316,7 @@ class BaseChannel:
 
 class BasePublicChannel(BaseChannel):
     guild_id: Snowflake
-    "The :class:`Guild <mizuki.objects.guild.Guild>` ID of the Channel."
+    "The :class:`~mizuki.Guild` ID of the Channel."
 
     name: str
     "The name of the channel"
@@ -339,14 +325,14 @@ class BasePublicChannel(BaseChannel):
     "The amount of time an user has to wait before sending a message (Slowmode). Bots remain unaffected."
 
     permissions: Permissions | None
-    "Computed permissions for the invoking user in the channel, including overwrites, only included when part of the :class:`Resolved Data <mizuki.objects.interaction.ResolvedData>` received on an :class:`Interaction <mizuki.objects.interaction.Interaction>`. This does not include implicit permissions, which may need to be checked separately"
+    "Computed permissions for the invoking user in the channel, including overwrites, only included when part of the :class:`~mizuki.ResolvedData` received on an :class:`~mizuki.Interaction`. This does not include implicit permissions, which may need to be checked separately"
 
     __slots__ = (
         "guild_id",
         "name",
         "parent_id",
-        "rate_limit_per_user",
         "permissions",
+        "rate_limit_per_user",
     )
 
     def __init__(
@@ -372,35 +358,34 @@ class BasePublicChannel(BaseChannel):
 
 
 class GuildChannel(BasePublicChannel):
-    """
-    Represents a Channel/Category in a Guild.
+    """Represents a Channel/Category in a Guild.
 
     Channel Types
     -------------
-    - :attr:`GUILD_TEXT <mizuki.enums.channel.ChannelType.GUILD_TEXT>`
-    - :attr:`GUILD_VOICE <mizuki.enums.channel.ChannelType.GUILD_VOICE>`
-    - :attr:`GUILD_CATEGORY <mizuki.enums.channel.ChannelType.GUILD_CATEGORY>`
-    - :attr:`GUILD_ANNOUNCEMENT <mizuki.enums.channel.ChannelType.GUILD_ANNOUNCEMENT>`
-    - :attr:`GUILD_STAGE_VOICE <mizuki.enums.channel.ChannelType.GUILD_STAGE_VOICE>`
-    - :attr:`GUILD_DIRECTORY <mizuki.enums.channel.ChannelType.GUILD_DIRECTORY>`
-    - :attr:`GUILD_FORUM <mizuki.enums.channel.ChannelType.GUILD_FORUM>`
-    - :attr:`GUILD_MEDIA <mizuki.enums.channel.ChannelType.GUILD_MEDIA>`
+    - :attr:`~mizuki.ChannelType.GUILD_TEXT`
+    - :attr:`~mizuki.ChannelType.GUILD_VOICE`
+    - :attr:`~mizuki.ChannelType.GUILD_CATEGORY`
+    - :attr:`~mizuki.ChannelType.GUILD_ANNOUNCEMENT`
+    - :attr:`~mizuki.ChannelType.GUILD_STAGE_VOICE`
+    - :attr:`~mizuki.ChannelType.GUILD_DIRECTORY`
+    - :attr:`~mizuki.ChannelType.GUILD_FORUM`
+    - :attr:`~mizuki.ChannelType.GUILD_MEDIA`
     """
 
     type: ChannelType
     "The type of this Channel."
 
     parent_id: Snowflake | None
-    "The ID of the category (channel of :attr:`GUILD_CATEGORY <mizuki.enums.channel.ChannelType.GUILD_CATEGORY>`), if any."
+    "The ID of the category (channel of :attr:`~mizuki.ChannelType.GUILD_CATEGORY`), if any."
 
     topic: str | None
-    "The topic of the channel. 0-4096 character limit for :attr:`GUILD_FORUM <mizuki.enums.channel.ChannelType.GUILD_FORUM>` and :attr:`GUILD_MEDIA <mizuki.enums.channel.ChannelType.GUILD_MEDIA>`, 0-1024 for all others."
+    "The topic of the channel. 0-4096 character limit for :attr:`~mizuki.ChannelType.GUILD_FORUM` and :attr:`~mizuki.ChannelType.GUILD_MEDIA`, 0-1024 for all others."
 
     default_auto_archive_duration: timedelta | None
-    "The default amount of time before a newly created :class:`thread <mizuki.objects.channel.ThreadChannel>` is auto-archived. Can only be 60, 1440, 4320, 10080 in terms of minutes."
+    "The default amount of time before a newly created :class:`~mizuki.ThreadChannel` is auto-archived. Can only be 60, 1440, 4320, 10080 in terms of minutes."
 
     default_thread_rate_limit_per_user: int | None
-    "The default rate limit for new :class:`threads <mizuki.objects.channel.ThreadChannel>`. Does not live-update with the channel's rate limit. Bots remain unaffected."
+    "The default rate limit for new :class:`~mizuki.ThreadChannel`. Does not live-update with the channel's rate limit. Bots remain unaffected."
 
     position: int | None
     "Sorting position of the channel (Channels with the same position are sorted by id)"
@@ -412,40 +397,40 @@ class GuildChannel(BasePublicChannel):
     "Whether the channel is NSFW."
 
     available_tags: list[ForumTag]
-    "The list of tags that can be used in :attr:`GUILD_FORUM <mizuki.enums.channel.ChannelType.GUILD_FORUM>` and :attr:`GUILD_MEDIA <mizuki.enums.channel.ChannelType.GUILD_MEDIA>` channels."
+    "The list of tags that can be used in :attr:`~mizuki.ChannelType.GUILD_FORUM` and :attr:`~mizuki.ChannelType.GUILD_MEDIA` channels."
 
     default_sort_order: SortOrderType | None
-    "Default sortorder used when posting in a :attr:`GUILD_FORUM <mizuki.enums.channel.ChannelType.GUILD_FORUM>` and :attr:`GUILD_MEDIA <mizuki.enums.channel.ChannelType.GUILD_MEDIA>` channel. ``None`` indicates that the setting hasn't been set by an admin."
+    "Default sortorder used when posting in a :attr:`~mizuki.ChannelType.GUILD_FORUM` and :attr:`~mizuki.ChannelType.GUILD_MEDIA` channel. ``None`` indicates that the setting hasn't been set by an admin."
 
     default_forum_layout: ForumLayoutType | None
-    "The default ForumLayout used to display posts in :attr:`GUILD_FORUM <mizuki.enums.channel.ChannelType.GUILD_FORUM>` channels."
+    "The default ForumLayout used to display posts in :attr:`~mizuki.ChannelType.GUILD_FORUM` channels."
 
     bitrate: int | None
-    "The bitrate in bits/second for a voice channel. (:attr:`GUILD_VOICE <mizuki.enums.channel.ChannelType.GUILD_VOICE>` and :attr:`GUILD_STAGE_VOICE <mizuki.enums.channel.ChannelType.GUILD_STAGE_VOICE>`)."
+    "The bitrate in bits/second for a voice channel. (:attr:`~mizuki.ChannelType.GUILD_VOICE` and :attr:`~mizuki.ChannelType.GUILD_STAGE_VOICE`)."
 
     user_limit: int | None
-    "The User Limit for a voice channel. (:attr:`GUILD_VOICE <mizuki.enums.channel.ChannelType.GUILD_VOICE>` and :attr:`GUILD_STAGE_VOICE <mizuki.enums.channel.ChannelType.GUILD_STAGE_VOICE>`)."
+    "The User Limit for a voice channel. (:attr:`~mizuki.ChannelType.GUILD_VOICE` and :attr:`~mizuki.ChannelType.GUILD_STAGE_VOICE`)."
 
     rtc_region: str | None
-    "The RTC Region ID for a voice channel. (:attr:`GUILD_VOICE <mizuki.enums.channel.ChannelType.GUILD_VOICE>` and :attr:`GUILD_STAGE_VOICE <mizuki.enums.channel.ChannelType.GUILD_STAGE_VOICE>`)."
+    "The RTC Region ID for a voice channel. (:attr:`~mizuki.ChannelType.GUILD_VOICE` and :attr:`~mizuki.ChannelType.GUILD_STAGE_VOICE`)."
 
     video_quality_mode: VideoQualityMode
-    "The VideoQualityMode of the channel, default :attr:`AUTO <mizuki.enums.channel.VideoQualityMode.AUTO>`."
+    "The VideoQualityMode of the channel, default :attr:`~mizuki.VideoQualityMode.AUTO`."
 
     __slots__ = (
-        "type",
-        "topic",
-        "default_auto_archive_duration",
-        "default_thread_rate_limit_per_user",
-        "position",
-        "permission_overwrites",
-        "nsfw",
         "available_tags",
-        "default_sort_order",
-        "default_forum_layout",
         "bitrate",
-        "user_limit",
+        "default_auto_archive_duration",
+        "default_forum_layout",
+        "default_sort_order",
+        "default_thread_rate_limit_per_user",
+        "nsfw",
+        "permission_overwrites",
+        "position",
         "rtc_region",
+        "topic",
+        "type",
+        "user_limit",
         "video_quality_mode",
     )
 
@@ -509,10 +494,9 @@ class GuildChannel(BasePublicChannel):
         default_sort_order: SortOrderType | None = _MISSING,
         default_forum_layout: ForumLayoutType = _MISSING,
     ) -> GuildChannel:
-        """
-        Modifies a channel.
+        """Modifies a channel.
 
-        Requires the :attr:`MANAGE_CHANNELS <mizuki.objects.permissions.Permissions.MANAGE_CHANNELS>`. Additionally, requires :attr:`MANAGE_ROLES <mizuki.objects.permissions.Permissions.MANAGE_ROLES>` if modifying the permissions.
+        Requires the :attr:`~mizuki.Permissions.MANAGE_CHANNELS`. Additionally, requires :attr:`~mizuki.Permissions.MANAGE_ROLES` if modifying the permissions.
 
         .. note::
 
@@ -523,62 +507,62 @@ class GuildChannel(BasePublicChannel):
         name : :class:`str`
             The name of the channel. (1-100 characters)
 
-        type : :class:`ChannelType <mizuki.enums.channel.ChannelType>`
-            The new type of the channel. Only the conversion between a :attr:`GUILD_TEXT <mizuki.enums.channel.ChannelType.GUILD_TEXT>` channel and a :attr:`GUILD_ANNOUNCEMENT <mizuki.enums.channel.ChannelType.GUILD_ANNOUNCEMENT>` channel is supported.
+        type : :class:`~mizuki.ChannelType`
+            # The new type of the channel. Only the conversion between a :attr:`~mizuki.ChannelType.GUILD_TEXT` channel and a :attr:`~mizuki.ChannelType.GUILD_ANNOUNCEMENT` channel is supported.
 
-        position : :class:`int` | :class:`None`
+        position : :class:`int` | :obj:`None`
             The position of the channel.
 
-        topic : :class:`str` | :class:`None`
-            The topic of the channel. 0-4096 character limit for :attr:`GUILD_FORUM <mizuki.enums.channel.ChannelType.GUILD_FORUM>` and :attr:`GUILD_MEDIA <mizuki.enums.channel.ChannelType.GUILD_MEDIA>`, 0-1024 for all others.
+        topic : :class:`str` | :obj:`None`
+            The topic of the channel. 0-4096 character limit for :attr:`~mizuki.ChannelType.GUILD_FORUM` and :attr:`~mizuki.ChannelType.GUILD_MEDIA`, 0-1024 for all others.
 
-        nsfw : :class:`bool` | :class:`None`
+        nsfw : :class:`bool` | :obj:`None`
             Whether the channel is NSFW.
 
-        rate_limit_per_user : :class:`int` | :class:`None`
+        rate_limit_per_user : :class:`int` | :obj:`None`
             The amount of seconds the user has to wait before sending a message again. (0-21600 seconds)
 
-        bitrate : :class:`int` | :class:`None`
+        bitrate : :class:`int` | :obj:`None`
             The bitrate of the voice or stage channel. Minimum 8000.
 
-        user_limit : :class:`int` | :class:`None`
+        user_limit : :class:`int` | :obj:`None`
             The user limit for the voice or the stage channel. 0 for no limit. Max 99 for voice channels and 10,000 for stage channels.
 
-        permission_overwrites : list[:class:`ChannelPermissionOverwrite <mizuki.objects.permissions.ChannelPermissionOverwrite>`] | :class:`None`
+        permission_overwrites : list[:class:`~mizuki.ChannelPermissionOverwrite`] | :obj:`None`
             The channel or category-specific permissions.
 
-        parent_id : :class:`int` | :class:`None`
+        parent_id : :class:`int` | :obj:`None`
             The ID of the new parent category for a channel.
 
-        rtc_region : :class:`str` | :class:`None`
+        rtc_region : :class:`str` | :obj:`None`
             The voice region of the channel. Sets to automatic when ``None`` is provided.
 
-        video_quality_mode : :class:`VideoQualityMode <mizuki.enums.channel.VideoQualityMode>` | :class:`None`
+        video_quality_mode : :class:`~mizuki.VideoQualityMode` | :obj:`None`
             The camera video quality mode of the channel.
 
         default_auto_archive_duration : :class:`int`
             The default auto archive duration that the clients use for newly created threads in the channel, in minutes.
 
         require_tag : :class:`bool`
-            Whether the :attr:`REQUIRE_TAG <mizuki.flags.ChannelFlags.REQUIRE_TAG>` is added to the flags.
+            Whether the :attr:`~mizuki.ChannelFlags.REQUIRE_TAG` is added to the flags.
 
         hide_media_download_options : :class:`bool`
-            Whether the :attr:`HIDE_MEDIA_DOWNLOAD_OPTIONS <mizuki.flags.ChannelFlags.HIDE_MEDIA_DOWNLOAD_OPTIONS>` is added to the flags.
+            Whether the :attr:`~mizuki.ChannelFlags.HIDE_MEDIA_DOWNLOAD_OPTIONS` is added to the flags.
 
-        available_tags : list[:class:`PartialForumTag <mizuki.objects.channel.PartialForumTag>`]
-            The set of tags that can be used in a :attr:`GUILD_FORUM <mizuki.enums.channel.ChannelType.GUILD_FORUM>` and :attr:`GUILD_MEDIA <mizuki.enums.channel.ChannelType.GUILD_MEDIA>` channel. Max 20.
+        available_tags : list[:class:`~mizuki.PartialForumTag`]
+            The set of tags that can be used in a :attr:`~mizuki.ChannelType.GUILD_FORUM` and :attr:`~mizuki.ChannelType.GUILD_MEDIA` channel. Max 20.
 
-        default_reaction_emoji : :class:`DefaultReaction <mizuki.objects.emoji.DefaultReaction>`
+        default_reaction_emoji : :class:`~mizuki.DefaultReaction`
             The default emoji reaction shown in the add reaction button on threads.
 
         default_thread_rate_limit_per_user : :class:`int`
             The rate limit per user to set on newly created threads. Only synced on creation of thread.
 
-        default_sort_order : :class:`SortOrderType <mizuki.enums.channel.SortOrderType>`
-            The default sort order used for posts in a :attr:`GUILD_FORUM <mizuki.enums.channel.ChannelType.GUILD_FORUM>` and :attr:`GUILD_MEDIA <mizuki.enums.channel.ChannelType.GUILD_MEDIA>` channel.
+        default_sort_order : :class:`~mizuki.SortOrderType`
+            The default sort order used for posts in a :attr:`~mizuki.ChannelType.GUILD_FORUM` and :attr:`~mizuki.ChannelType.GUILD_MEDIA` channel.
 
-        default_forum_layout : :class:`ForumLayoutType <mizuki.enums.channel.ForumLayoutType>`
-            The default forum layout used in :attr:`GUILD_FORUM <mizuki.enums.channel.ChannelType.GUILD_FORUM>` channel.
+        default_forum_layout : :class:`~mizuki.ForumLayoutType`
+            The default forum layout used in :attr:`~mizuki.ChannelType.GUILD_FORUM` channel.
 
         Raises
         ------
@@ -617,14 +601,13 @@ class GuildChannel(BasePublicChannel):
         )
 
     async def set_voice_status(self, status: str | None) -> None:
-        """
-        Set a voice channel's status.
+        """Set a voice channel's status.
 
-        Requires the :attr:`SET_VOICE_CHANNEL_STATUS <mizuki.objects.permissions.Permissions.SET_VOICE_CHANNEL_STATUS>` permission, and additionally the :attr:`MANAGE_CHANNELS <mizuki.objects.permissions.Permissions.MANAGE_CHANNELS>` permission if the current user is not connected to the voice channel.
+        Requires the :attr:`~mizuki.Permissions.SET_VOICE_CHANNEL_STATUS` permission, and additionally the :attr:`~mizuki.Permissions.MANAGE_CHANNELS` permission if the current user is not connected to the voice channel.
 
         Parameters
         ----------
-        status : :class:`str` | :class:`None`
+        status : :class:`str` | :obj:`None`
             The new voice channel status. Max 500 characters.
 
         Raises
@@ -641,10 +624,9 @@ class GuildChannel(BasePublicChannel):
         await self._state.managers.channels.set_voice_status(self.id, status=status)
 
     async def delete(self) -> None:
-        """
-        Deletes a channel.
+        """Deletes a channel.
 
-        Requires the :attr:`MANAGE_CHANNELS <mizuki.objects.permissions.Permissions.MANAGE_CHANNELS>`.
+        Requires the :attr:`~mizuki.Permissions.MANAGE_CHANNELS`.
 
         Deleting a category does not delete its child channels.
 
@@ -662,12 +644,11 @@ class GuildChannel(BasePublicChannel):
         await self._state.managers.channels.delete(self.id)
 
     async def edit_permissions(self, overwrite: ChannelPermissionOverwrite) -> None:
-        """
-        Edits permissions for a role or a user for a channel.
+        """Edits permissions for a role or a user for a channel.
 
         Parameters
         ----------
-        overwrite : :class:`ChannelPermissionOverwrite <mizuki.objects.permissions.ChannelPermissionOverwrite>`
+        overwrite : :class:`~mizuki.ChannelPermissionOverwrite`
             The overwrite object to overwrite with.
 
         Raises
@@ -692,14 +673,13 @@ class GuildChannel(BasePublicChannel):
 
 
 class ThreadChannel(BasePublicChannel):
-    """
-    Represents a Thread Channel in a Guild.
+    """Represents a Thread Channel in a Guild.
 
     Channel Types
     -------------
-    - :attr:`ANNOUNCEMENT_THREAD <mizuki.enums.channel.ChannelType.ANNOUNCEMENT_THREAD>`
-    - :attr:`PUBLIC_THREAD <mizuki.enums.channel.ChannelType.PUBLIC_THREAD>`
-    - :attr:`PRIVATE_THREAD <mizuki.enums.channel.ChannelType.PRIVATE_THREAD>`
+    - :attr:`~mizuki.ChannelType.ANNOUNCEMENT_THREAD`
+    - :attr:`~mizuki.ChannelType.PUBLIC_THREAD`
+    - :attr:`~mizuki.ChannelType.PRIVATE_THREAD`
     """
 
     type: ChannelType
@@ -721,16 +701,16 @@ class ThreadChannel(BasePublicChannel):
     "The total amount of messages ever sent in this thread."
 
     applied_tags: list[Snowflake]
-    "The tags applied to a thead in a :attr:`GUILD_FORUM <mizuki.enums.channel.ChannelType.GUILD_FORUM>` and :attr:`GUILD_MEDIA <mizuki.enums.channel.ChannelType.GUILD_MEDIA>` channel."
+    "The tags applied to a thead in a :attr:`~mizuki.ChannelType.GUILD_FORUM` and :attr:`~mizuki.ChannelType.GUILD_MEDIA` channel."
 
     __slots__ = (
-        "type",
+        "applied_tags",
+        "member_count",
+        "message_count",
         "owner_id",
         "thread_metadata",
-        "message_count",
-        "member_count",
         "total_message_sent",
-        "applied_tags",
+        "type",
     )
 
     def __init__(
@@ -766,10 +746,9 @@ class ThreadChannel(BasePublicChannel):
         pinned: bool = _MISSING,
         applied_tags: list[int] = _MISSING,
     ) -> ThreadChannel:
-        """
-        Modifies a thread.
+        """Modifies a thread.
 
-        Requires the :attr:`MANAGE_THREADS <mizuki.objects.permissions.Permissions.MANAGE_THREADS>`.
+        Requires the :attr:`~mizuki.Permissions.MANAGE_THREADS`.
 
         .. note::
 
@@ -786,20 +765,20 @@ class ThreadChannel(BasePublicChannel):
         auto_archive_duration : :class:`int`
             The minutes of inactivity after which the thread will be archived.
 
-        rate_limit_per_user : :class:`int` | :class:`None`
+        rate_limit_per_user : :class:`int` | :obj:`None`
             The amount of seconds the user has to wait before sending a message again. (0-21600 seconds)
 
         locked : :class:`bool`
-            Whether the thread is locked.
+            Whether the thread locked.
 
         invitable : :class:`bool`
             Whether non-moderators can add other non-moderators to this thread. Only available on private htewads.
 
         pinned : :class:`bool`
-            Whether the :attr:`PINNED <mizuki.flags.ChannelFlags.PINNED>` is added to the flags.
+            Whether the :attr:`~mizuki.ChannelFlags.PINNED` is added to the flags.
 
         applied_tags : list[:class:`int`]
-            The IDs of tags applied to a thread in a :attr:`GUILD_FORUM <mizuki.enums.channel.ChannelType.GUILD_FORUM>` and :attr:`GUILD_MEDIA <mizuki.enums.channel.ChannelType.GUILD_MEDIA>` channel. Max 5.
+            The IDs of tags applied to a thread in a :attr:`~mizuki.ChannelType.GUILD_FORUM` and :attr:`~mizuki.ChannelType.GUILD_MEDIA` channel. Max 5.
 
         Raises
         ------
@@ -826,10 +805,9 @@ class ThreadChannel(BasePublicChannel):
         )
 
     async def delete(self) -> None:
-        """
-        Deletes a thread.
+        """Deletes a thread.
 
-        Requires the :attr:`MANAGE_THREADS <mizuki.objects.permissions.Permissions.MANAGE_THREADS>`
+        Requires the :attr:`~mizuki.Permissions.MANAGE_THREADS`
 
         Raises
         ------
@@ -846,15 +824,13 @@ class ThreadChannel(BasePublicChannel):
 
 
 class PrivateChannel(BaseChannel):
-    """
-    Represents a private (DM) channel.
-    """
+    """Represents a private (DM) channel."""
 
     recipients: list[User]
     "The recipients or the members of the channel."
 
     type: ChannelType
-    "The ChannelType of this Channel. Always :attr:`DM <mizuki.enums.channel.ChannelType.DM>`."
+    "The ChannelType of this Channel. Always :attr:`~mizuki.ChannelType.DM`."
 
     __slots__ = ("recipients", "type")
 
@@ -869,8 +845,7 @@ class PrivateChannel(BaseChannel):
         self.type = ChannelType(data["type"])
 
     async def close(self) -> None:
-        """
-        Closes a private channel.
+        """Closes a private channel.
 
         Raises
         ------
@@ -884,29 +859,28 @@ class PrivateChannel(BaseChannel):
 
 
 class PartialGuildChannel(BasePublicChannel):
-    """
-    Represents a Partial Channel/Category in a Guild.
+    """Represents a Partial Channel/Category in a Guild.
 
     Channel Types
     -------------
-    - :attr:`GUILD_TEXT <mizuki.enums.channel.ChannelType.GUILD_TEXT>`
-    - :attr:`GUILD_VOICE <mizuki.enums.channel.ChannelType.GUILD_VOICE>`
-    - :attr:`GUILD_CATEGORY <mizuki.enums.channel.ChannelType.GUILD_CATEGORY>`
-    - :attr:`GUILD_ANNOUNCEMENT <mizuki.enums.channel.ChannelType.GUILD_ANNOUNCEMENT>`
-    - :attr:`GUILD_STAGE_VOICE <mizuki.enums.channel.ChannelType.GUILD_STAGE_VOICE>`
-    - :attr:`GUILD_DIRECTORY <mizuki.enums.channel.ChannelType.GUILD_DIRECTORY>`
-    - :attr:`GUILD_FORUM <mizuki.enums.channel.ChannelType.GUILD_FORUM>`
-    - :attr:`GUILD_MEDIA <mizuki.enums.channel.ChannelType.GUILD_MEDIA>`
+    - :attr:`~mizuki.ChannelType.GUILD_TEXT`
+    - :attr:`~mizuki.ChannelType.GUILD_VOICE`
+    - :attr:`~mizuki.ChannelType.GUILD_CATEGORY`
+    - :attr:`~mizuki.ChannelType.GUILD_ANNOUNCEMENT`
+    - :attr:`~mizuki.ChannelType.GUILD_STAGE_VOICE`
+    - :attr:`~mizuki.ChannelType.GUILD_DIRECTORY`
+    - :attr:`~mizuki.ChannelType.GUILD_FORUM`
+    - :attr:`~mizuki.ChannelType.GUILD_MEDIA`
     """
 
     type: ChannelType
     "The type of this Channel."
 
     parent_id: Snowflake | None
-    "The ID of the category (channel of :attr:`GUILD_CATEGORY <mizuki.enums.channel.ChannelType.GUILD_CATEGORY>`), if any."
+    "The ID of the category (channel of :attr:`~mizuki.ChannelType.GUILD_CATEGORY`), if any."
 
     topic: str | None
-    "The topic of the channel. 0-4096 character limit for :attr:`GUILD_FORUM <mizuki.enums.channel.ChannelType.GUILD_FORUM>` and :attr:`GUILD_MEDIA <mizuki.enums.channel.ChannelType.GUILD_MEDIA>`, 0-1024 for all others."
+    "The topic of the channel. 0-4096 character limit for :attr:`~mizuki.ChannelType.GUILD_FORUM` and :attr:`~mizuki.ChannelType.GUILD_MEDIA`, 0-1024 for all others."
 
     position: int | None
     "Sorting position of the channel (Channels with the same position are sorted by id)"
@@ -914,7 +888,7 @@ class PartialGuildChannel(BasePublicChannel):
     nsfw: bool
     "Whether the channel is NSFW."
 
-    __slots__ = ("type", "topic", "position", "nsfw")
+    __slots__ = ("nsfw", "position", "topic", "type")
 
     def __init__(
         self,
@@ -936,14 +910,13 @@ class PartialGuildChannel(BasePublicChannel):
 
 
 class PartialThreadChannel(BasePublicChannel):
-    """
-    Represents a Thread Channel in a Guild.
+    """Represents a Thread Channel in a Guild.
 
     Channel Types
     -------------
-    - :attr:`ANNOUNCEMENT_THREAD <mizuki.enums.channel.ChannelType.ANNOUNCEMENT_THREAD>`
-    - :attr:`PUBLIC_THREAD <mizuki.enums.channel.ChannelType.PUBLIC_THREAD>`
-    - :attr:`PRIVATE_THREAD <mizuki.enums.channel.ChannelType.PRIVATE_THREAD>`
+    - :attr:`~mizuki.ChannelType.ANNOUNCEMENT_THREAD`
+    - :attr:`~mizuki.ChannelType.PUBLIC_THREAD`
+    - :attr:`~mizuki.ChannelType.PRIVATE_THREAD`
     """
 
     type: ChannelType
@@ -952,7 +925,7 @@ class PartialThreadChannel(BasePublicChannel):
     thread_metadata: ThreadMetaData
     "Metadata of the thread."
 
-    __slots__ = ("type", "thread_metadata")
+    __slots__ = ("thread_metadata", "type")
 
     def __init__(
         self,
@@ -972,15 +945,13 @@ class PartialThreadChannel(BasePublicChannel):
 
 
 class ChannelMention:
-    """
-    Represents a minimal channel object for :attr:`Message.mention_channels <mizuki.objects.message.Message.mention_channels>`.
-    """
+    """Represents a minimal channel object for :attr:`~mizuki.Message.mention_channels`."""
 
     id: Snowflake
     "The ID of the channel."
 
     guild_id: Snowflake
-    "The :class:`Guild <mizuki.objects.guild.Guild>` ID of the channel."
+    "The :class:`~mizuki.Guild` ID of the channel."
 
     type: ChannelType
     "The type of the channel."
@@ -988,7 +959,7 @@ class ChannelMention:
     name: str
     "The name of the channel."
 
-    __slots__ = ("id", "guild_id", "type", "name")
+    __slots__ = ("guild_id", "id", "name", "type")
 
     def __init__(self, data: ChannelMentionPayload):
         self.id = Snowflake(data["id"])
