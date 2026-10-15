@@ -24,11 +24,11 @@ extensions = [
     "sphinx_iconify",
     "attributetable",
     "intflag",
+    "autodeco",
     "enums",
 ]
 
 autodoc_default_options = {
-    "undoc-members": False,
     "inherited-members": True,
 }
 
@@ -43,7 +43,7 @@ intersphinx_mapping = {
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = "pydata_sphinx_theme"
+html_theme = "shibuya"
 
 # html_theme_options = {
 #     "style": "pink",

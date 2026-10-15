@@ -23,5 +23,5 @@ docs = [
     "sphinx-design>=0.7.0",
     "sphinx-iconify>=0.3.0",
     "sphinx-nefertiti>=0.9.9",
-    "pydata-sphinx-theme>=0.21.0",
+    "shibuya>=2026.7.12",
 ]

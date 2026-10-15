@@ -1,3 +1,4 @@
+
 .light {
     --title-color: #000000;
 }
@@ -83,4 +84,462 @@
     background: rgba(224, 17, 127, 0.15);
     color: #e0117f !important;
     cursor: help;
+}
+
+/*
+ * Shibuya API Style Override
+ * ==========================
+ * Nefertiti-inspired API directive styling for the Shibuya Sphinx theme.
+ *
+ * This CSS overrides Shibuya's default API directive styling to match the
+ * visual approach of sphinx-nefertiti, while remaining compatible with
+ * Shibuya's color system (Radix Colors + semantic variables).
+ *
+ * Key design changes from default Shibuya:
+ *   - Prominent colored background on signature headers (not just on hover)
+ *   - Keyword/property prefix (class, function, etc.) in accent color, italic
+ *   - Field lists use CSS grid layout for cleaner parameter formatting
+ *   - API entries have card-like visual separation
+ *   - Subtle left border accent on definition bodies
+ *   - Smoother hover transitions
+ */
+
+/* ============================================================
+ * 1. CSS Custom Properties
+ *    Override Shibuya's sig-related variables and add new ones.
+ *    These adapt to Shibuya's light/dark mode via Radix Colors.
+ * ============================================================ */
+
+:root {
+  /* Nefertiti-like keyword color for "class", "function", "exception" etc. */
+  --nftt-api-kw-color: var(--accent-11);
+
+  /* Signature header background – uses Shibuya's accent alpha palette */
+  --nftt-api-sig-bg: var(--accent-a3);
+  --nftt-api-sig-hover-bg: var(--accent-a4);
+
+  /* Signature border */
+  --nftt-api-sig-border: var(--accent-a6);
+
+  /* Body accent border (left stripe on dd) */
+  --nftt-api-body-border: var(--accent-a5);
+
+  /* Field list header colors */
+  --nftt-api-field-label: var(--accent-11);
+
+  /* Override Shibuya defaults to make sig-name darker (like Nefertiti's body color) */
+  --sig-property: var(--nftt-api-kw-color);
+  --sig-name: var(--gray-12);
+  --sig-param: var(--gray-11);
+  --sig-typehint: var(--indigo-10);
+}
+
+
+/* ============================================================
+ * 2. Signature Header (dt.sig)
+ *    The main function/class/method definition line.
+ * ============================================================ */
+
+dt.sig {
+  /* Prominent background – the core Nefertiti-style change */
+  background: var(--nftt-api-sig-bg) !important;
+  border: 1px solid var(--nftt-api-sig-border);
+  border-radius: 0.375rem;
+  padding: 0.5rem 0.75rem 0.5rem 3.25rem !important;
+  margin-bottom: 0 !important;
+  font-size: 0.9rem;
+  line-height: 1.65;
+  text-indent: -2.5em;
+
+  /* Smooth transition on hover (like Nefertiti) */
+  transition: background 0.15s ease-out, border-color 0.15s ease-out;
+}
+
+dt.sig:hover {
+  background: var(--nftt-api-sig-hover-bg) !important;
+  border-color: var(--accent-a8);
+}
+
+/* Multiple signatures stacked (e.g. overloads) – remove gap between them */
+dt.sig + dt.sig {
+  margin-top: -1px;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+dt.sig:has(+ dt.sig) {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+
+/* ============================================================
+ * 3. Property Prefix ("class", "function", "exception", etc.)
+ *    Nefertiti uses italic + keyword color for these.
+ * ============================================================ */
+
+dt.sig > em.property:first-child {
+  color: var(--nftt-api-kw-color) !important;
+  font-style: italic !important;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+
+/* ============================================================
+ * 4. Signature Name & Prename
+ *    In Nefertiti style, these use body color (black/white)
+ *    rather than accent color.
+ * ============================================================ */
+
+span.sig-name {
+  color: var(--gray-12) !important;
+  font-weight: 700;
+}
+
+span.sig-prename {
+  color: var(--gray-11) !important;
+  font-weight: 400;
+}
+
+
+/* ============================================================
+ * 5. Parameters
+ *    Keep the muted look but ensure good readability.
+ * ============================================================ */
+
+em.sig-param {
+  font-style: normal;
+  color: var(--gray-11);
+}
+
+em.sig-param .n {
+  color: var(--gray-12);
+}
+
+span.sig-paren {
+  color: var(--gray-10);
+  font-weight: 500;
+}
+
+
+/* ============================================================
+ * 6. Return Type
+ *    Preserve Shibuya's indigo typehint color but bump contrast.
+ * ============================================================ */
+
+span.sig-return-icon {
+  color: var(--gray-9);
+  margin: 0 0.25em;
+}
+
+span.sig-return-typehint,
+span.sig-return-typehint > a {
+  color: var(--indigo-10) !important;
+}
+
+
+/* ============================================================
+ * 7. Source & Permalink Links
+ *    Floating to the right in the signature header, like Nefertiti.
+ * ============================================================ */
+
+dt.sig > a.internal {
+  color: var(--gray-9) !important;
+  font-size: 0.8rem;
+  font-weight: 400;
+  opacity: 0.7;
+  transition: opacity 0.15s ease;
+}
+
+dt.sig > a.internal:hover {
+  opacity: 1;
+}
+
+dt.sig > a.headerlink {
+  color: var(--gray-8) !important;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+dt.sig:hover > a.headerlink {
+  opacity: 0.6;
+}
+
+dt.sig > a.headerlink:hover {
+  opacity: 1;
+  color: var(--accent-9) !important;
+}
+
+
+/* ============================================================
+ * 8. Definition Body (dd after dt.sig)
+ *    Add a left accent border for visual hierarchy,
+ *    like Nefertiti's card approach.
+ * ============================================================ */
+
+dt.sig + dd {
+  margin-left: 0 !important;
+  padding: 1rem 1rem 0.5rem 1.75rem;
+  border-left: 3px solid var(--nftt-api-body-border);
+  margin-bottom: 1.5rem;
+  font-size: 0.92rem;
+}
+
+/* Content spacing within definition body */
+dt.sig + dd > p:first-child {
+  margin-top: 0;
+}
+
+dt.sig + dd > div {
+  margin-bottom: 0.75rem;
+}
+
+
+/* ============================================================
+ * 9. Field Lists (Parameters, Returns, Raises, etc.)
+ *    Nefertiti uses a CSS grid layout for these. We replicate
+ *    that approach while keeping Shibuya compatibility.
+ * ============================================================ */
+
+dt.sig + dd > dl.field-list {
+  display: grid;
+  grid-template-columns: fit-content(30%) 1fr;
+  gap: 0;
+  margin-top: 0.75rem;
+  margin-bottom: 0.5rem;
+  border-top: 1px solid var(--gray-a4);
+  padding-top: 0.5rem;
+}
+
+/* Field list labels ("Parameters:", "Returns:", etc.) */
+dt.sig + dd > dl.field-list > dt {
+  text-transform: uppercase;
+  font-size: 0.72rem !important;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--nftt-api-field-label);
+  padding: 0.5rem 1rem 0.5rem 0;
+  border-bottom: 1px solid var(--gray-a3);
+  margin: 0;
+}
+
+/* Field list values */
+dt.sig + dd > dl.field-list > dd {
+  padding: 0.5rem 0;
+  margin: 0;
+  border-bottom: 1px solid var(--gray-a3);
+  overflow-x: auto;
+}
+
+/* Remove border from last field */
+dt.sig + dd > dl.field-list > dt:last-of-type,
+dt.sig + dd > dl.field-list > dd:last-of-type {
+  border-bottom: none;
+}
+
+/* Parameter names within field lists should be bold */
+dt.sig + dd > dl.field-list dd strong {
+  color: var(--gray-12);
+  font-weight: 600;
+}
+
+/* Field list links (type cross-references) */
+dl.field-list a {
+  font-weight: 400;
+  color: var(--accent-10);
+}
+
+
+/* ============================================================
+ * 10. Nested Definitions (methods inside classes)
+ *     Indent nested API blocks and use slightly lighter styling
+ *     to show hierarchy.
+ * ============================================================ */
+
+/* Methods/attributes nested inside a class body */
+dl.py.class > dd > dl.py {
+  margin-top: 1rem;
+}
+
+dl.py.class > dd > dl.py > dt.sig {
+  /* Slightly less prominent bg for nested items */
+  background: var(--gray-a2) !important;
+  border-color: var(--gray-a5);
+}
+
+dl.py.class > dd > dl.py > dt.sig:hover {
+  background: var(--accent-a3) !important;
+  border-color: var(--accent-a6);
+}
+
+dl.py.class > dd > dl.py > dt.sig + dd {
+  border-left-color: var(--gray-a4);
+}
+
+
+/* ============================================================
+ * 11. Exception Styling
+ *     Exceptions get a subtly different accent (red-ish) to
+ *     visually distinguish them.
+ * ============================================================ */
+
+dl.py.exception > dt.sig {
+  background: var(--red-a2) !important;
+  border-color: var(--red-a5);
+}
+
+dl.py.exception > dt.sig:hover {
+  background: var(--red-a3) !important;
+  border-color: var(--red-a7);
+}
+
+dl.py.exception > dt.sig > em.property:first-child {
+  color: var(--red-10) !important;
+}
+
+dl.py.exception > dt.sig + dd {
+  border-left-color: var(--red-a4);
+}
+
+
+/* ============================================================
+ * 12. Data & Attribute Styling
+ *     Constants/data objects get a neutral gray accent.
+ * ============================================================ */
+
+dl.py.data > dt.sig,
+dl.py.attribute > dt.sig {
+  background: var(--gray-a2) !important;
+  border-color: var(--gray-a5);
+}
+
+dl.py.data > dt.sig:hover,
+dl.py.attribute > dt.sig:hover {
+  background: var(--gray-a3) !important;
+  border-color: var(--gray-a6);
+}
+
+
+/* ============================================================
+ * 13. Rubric Headings (e.g. "Methods" inside a class)
+ *     Style these as small section dividers.
+ * ============================================================ */
+
+dt.sig + dd > p.rubric {
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--gray-11);
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid var(--gray-a4);
+}
+
+
+/* ============================================================
+ * 14. Autosummary Tables inside API blocks
+ *     Tighten spacing for summary tables within class docs.
+ * ============================================================ */
+
+dt.sig + dd .autosummary {
+  margin-top: 0.5rem;
+}
+
+
+/* ============================================================
+ * 15. Deprecated & Version-Changed Admonitions
+ *     Within API blocks, these should be subtler.
+ * ============================================================ */
+
+dt.sig + dd .deprecated,
+dt.sig + dd .versionchanged,
+dt.sig + dd .versionadded {
+  font-size: 0.85rem;
+  margin-top: 0.75rem;
+}
+
+
+/* ============================================================
+ * 16. Dark Mode Adjustments
+ *     Shibuya uses html.dark class. Fine-tune contrast.
+ * ============================================================ */
+
+html.dark {
+  --nftt-api-kw-color: var(--accent-9);
+  --nftt-api-sig-bg: var(--accent-a2);
+  --nftt-api-sig-hover-bg: var(--accent-a3);
+  --nftt-api-sig-border: var(--accent-a4);
+  --nftt-api-body-border: var(--accent-a4);
+  --nftt-api-field-label: var(--accent-9);
+}
+
+/* Dark mode exception overrides */
+html.dark dl.py.exception > dt.sig {
+  background: var(--red-a2) !important;
+  border-color: var(--red-a4);
+}
+
+html.dark dl.py.exception > dt.sig:hover {
+  background: var(--red-a3) !important;
+}
+
+html.dark dl.py.exception > dt.sig > em.property:first-child {
+  color: var(--red-9) !important;
+}
+
+/* Dark mode nested methods */
+html.dark dl.py.class > dd > dl.py > dt.sig {
+  background: var(--gray-a2) !important;
+  border-color: var(--gray-a4);
+}
+
+
+/* ============================================================
+ * 17. Print Styles
+ *     Ensure API blocks look good when printed.
+ * ============================================================ */
+
+@media print {
+  dt.sig {
+    background: #f5f5f5 !important;
+    border: 1px solid #ddd !important;
+    break-inside: avoid;
+  }
+
+  dt.sig + dd {
+    border-left: 2px solid #ddd;
+    break-inside: avoid;
+  }
+}
+
+
+/* ============================================================
+ * 18. Responsive Adjustments
+ *     On small screens, reduce padding and make field-lists
+ *     stack vertically.
+ * ============================================================ */
+
+@media (max-width: 640px) {
+  dt.sig {
+    padding: 0.4rem 0.5rem 0.4rem 2.5rem !important;
+    text-indent: -2em;
+    font-size: 0.82rem;
+  }
+
+  dt.sig + dd {
+    padding-left: 1rem;
+  }
+
+  /* Stack field-list on narrow screens */
+  dt.sig + dd > dl.field-list {
+    grid-template-columns: 1fr;
+  }
+
+  dt.sig + dd > dl.field-list > dt {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
 }
