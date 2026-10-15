@@ -269,8 +269,7 @@ def get_class_results(
                 badge = attributetablebadge("cls", "cls")
                 badge["badge-type"] = _("classmethod")
             elif inspect.isfunction(value):
-                if doc.startswith(("A decorator", "A shortcut decorator")):
-                    # finicky but surprisingly consistent
+                if "This method is a decorator." in doc:
                     key = _("Methods")
                     badge = attributetablebadge("@", "@")
                     badge["badge-type"] = _("decorator")

@@ -21,85 +21,84 @@ class CacheEntry[D: Cachable]:
 
 
 class CacheSettings:
-    """
-    Cache Settings used to determine how cache is handles by a CacheStorage.
+    """Cache Settings used to determine how cache is handles by a CacheStorage.
 
-    In the max limits of cache entries such as :attr:`CacheSettings.max_users_store`, :class:`None` represents infinite or no limit.
+    In the max limits of cache entries such as :attr:`CacheSettings.max_users_store`, :obj:`None` represents infinite or no limit.
 
     Parameters
     ----------
     users : :class:`bool`, optional
-        Toggle caching of :class:`User <mizuki.objects.user.User>` objects. Defaults to ``True``.
+        Toggle caching of :class:`~mizuki.User` objects. Defaults to :obj:`True`.
 
     messages : :class:`bool`, optional
-        Toggle caching of :class:`Message <mizuki.objects.message.Message>` objects. Defaults to ``True``.
+        Toggle caching of :class:`~mizuki.Message` objects. Defaults to :obj:`True`.
 
     channels : :class:`bool`, optional
-        Toggle caching of :class:`PrivateChannel <mizuki.objects.channel.PrivateChannel>`, :class:`ThreadChannel <mizuki.objects.channel.ThreadChannel>` and :class:`GuildChannel <mizuki.objects.channel.GuildChannel>` objects. Defaults to ``True``.
+        Toggle caching of :class:`~mizuki.PrivateChannel`, :class:`~mizuki.ThreadChannel` and :class:`~mizuki.GuildChannel` objects. Defaults to :obj:`True`.
 
     guilds : :class:`bool`, optional
-        Toggle caching of :class:`Guild <mizuki.objects.guild.Guild>` objects. Defaults to ``True``.
+        Toggle caching of :class:`~mizuki.Guild` objects. Defaults to :obj:`True`.
 
     commands: :class:`bool`, optional
-        Toggle caching of :class:`ApplicationCommand <mizuki.objects.command.ApplicationCommand>` objects. Defaults to ``True``.
+        Toggle caching of :class:`~mizuki.ApplicationCommand` objects. Defaults to :obj:`True`.
 
     cache_invalidation : :class:`bool`, optional
-        Toggle if cache should be invalidated based on time. Defaults to ``False``.
+        Toggle if cache should be invalidated based on time. Defaults to :obj:`False`.
 
-    invalidation_time : :class:`timedelta <datetime.timedelta>`, optional
-        Determines how long a CacheEntry object can live without being invalidated. Defaults to ``timedelta(days=1)``.
+    invalidation_time : :class:`datetime.timedelta`, optional
+        Determines how long a CacheEntry object can live without being invalidated. Defaults to 24 hours.
 
-    cleanup_interval : :class:`timedelta <datetime.timedelta>`, optional
-        Determines how often the Cache will be cleaned up. Defaults to ``timedelta(hours=6)``.
+    cleanup_interval : :class:`datetime.timedelta`, optional
+        Determines how often the Cache will be cleaned up. Defaults to 6 hours.
 
-    max_users_store : :class:`int` | :class:`None`, optional
-        Determines the max amount of :class:`User <mizuki.objects.user.User>` objects the cache will store. Defaults to ``None``.
+    max_users_store : :class:`int` | :obj:`None`, optional
+        Determines the max amount of :class:`~mizuki.User` objects the cache will store.
 
-    max_messages_store : :class:`int` | :class:`None`, optional
-        Determines the max amount of :class:`Message <mizuki.objects.message.Message>` objects the cache will store. Defaults to ``2000``.
+    max_messages_store : :class:`int` | :obj:`None`, optional
+        Determines the max amount of :class:`~mizuki.Message` objects the cache will store. Defaults to ``2000``.
 
-    max_channels_store : :class:`int` | :class:`None`, optional
-        Determines the max amount of :class:`PrivateChannel <mizuki.objects.channel.PrivateChannel>`, :class:`ThreadChannel <mizuki.objects.channel.ThreadChannel>` and :class:`GuildChannel <mizuki.objects.channel.GuildChannel>` objects the cache will store. Defaults to ``None``.
+    max_channels_store : :class:`int` | :obj:`None`, optional
+        Determines the max amount of :class:`~mizuki.PrivateChannel`, :class:`~mizuki.ThreadChannel` and :class:`~mizuki.GuildChannel` objects the cache will store.
 
-    max_guilds_store : :class:`int` | :class:`None`, optional
-        Determines the max amount of :class:`Guild <mizuki.objects.guild.Guild>` objects the cache will store. Defaults to ``None``.
+    max_guilds_store : :class:`int` | :obj:`None`, optional
+        Determines the max amount of :class:`~mizuki.Guild` objects the cache will store.
     """
 
-    users: bool
-    "Whether :class:`User <mizuki.objects.user.User>` caching is enabled."
+    # users: bool
+    # "Whether :class:`~mizuki.User` caching is enabled."
 
-    messages: bool
-    "Whether :class:`Message <mizuki.objects.message.Message>` caching is enabled."
+    # messages: bool
+    # "Whether :class:`~mizuki.Message` caching is enabled."
 
-    channels: bool
-    "Whether :class:`PrivateChannel <mizuki.objects.channel.PrivateChannel>`, :class:`ThreadChannel <mizuki.objects.channel.ThreadChannel>` and :class:`GuildChannel <mizuki.objects.channel.GuildChannel>` caching is enabled."
+    # channels: bool
+    # "Whether :class:`~mizuki.PrivateChannel`, :class:`~mizuki.ThreadChannel` and :class:`~mizuki.GuildChannel` caching is enabled."
 
-    guilds: bool
-    "Whether :class:`Guild <mizuki.objects.guild.Guild>` caching is enabled."
+    # guilds: bool
+    # "Whether :class:`~mizuki.Guild` caching is enabled."
 
-    commands: bool
-    "Whether :class:`ApplicationCommand <mizuki.objects.command.ApplicationCommand>` caching is enabled."
+    # commands: bool
+    # "Whether :class:`~mizuki.ApplicationCommand` caching is enabled."
 
-    cache_invalidation: bool
-    "Whether time-based cache invalidation is enabled, commands remain unaffected by this invalidation."
+    # cache_invalidation: bool
+    # "Whether time-based cache invalidation is enabled, commands remain unaffected by this invalidation."
 
-    invalidation_time: timedelta
-    "The amount of time a cach can live, before being invalidated."
+    # invalidation_time: timedelta
+    # "The amount of time a cach can live, before being invalidated."
 
-    cleanup_interval: timedelta
-    "The interval at which the cleanup tasks will happen."
+    # cleanup_interval: timedelta
+    # "The interval at which the cleanup tasks will happen."
 
-    max_users_store: int | None
-    "The max amount of :class:`User <mizuki.objects.user.User>` objects the cache will store."
+    # max_users_store: int | None
+    # "The max amount of :class:`~mizuki.User` objects the cache will store."
 
-    max_messages_store: int | None
-    "The max amount of :class:`Message <mizuki.objects.message.Message>` objects the cache will store."
+    # max_messages_store: int | None
+    # "The max amount of :class:`~mizuki.Message` objects the cache will store."
 
-    max_channels_store: int | None
-    "The max amount of :class:`PrivateChannel <mizuki.objects.channel.PrivateChannel>`, :class:`ThreadChannel <mizuki.objects.channel.ThreadChannel>` and :class:`GuildChannel <mizuki.objects.channel.GuildChannel>` objects the cache will store."
+    # max_channels_store: int | None
+    # "The max amount of :class:`~mizuki.PrivateChannel`, :class:`~mizuki.ThreadChannel` and :class:`~mizuki.GuildChannel` objects the cache will store."
 
-    max_guilds_store: int | None
-    "The max amount of :class:`Guild <mizuki.objects.guild.Guild>` objects the cache will store."
+    # max_guilds_store: int | None
+    # "The max amount of :class:`~mizuki.Guild` objects the cache will store."
 
     __slots__ = (
         "cache_invalidation",

@@ -4,24 +4,15 @@ Client
 Bot
 ---
 
-.. automodule:: mizuki.bot
-   :members:
-   :show-inheritance:
-   :undoc-members:
+.. autoclass:: mizuki.Bot
 
-.. automodule:: mizuki.cache
-   :members:
-   :show-inheritance:
-   :undoc-members:
+.. autoclass:: mizuki.CacheSettings
+   :no-members:
 
-.. autoclass:: mizuki.flags.IntentFlags
-   :members:
-   :no-inherited-members:
+.. autointflag:: mizuki.IntentFlags
        
 Events
 ------
 
-.. automodule:: mizuki.enums.event_dispatch
-   :members:
-   :undoc-members:
+.. autoenum:: mizuki.Event
    :no-inherited-members:

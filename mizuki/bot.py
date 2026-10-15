@@ -42,15 +42,15 @@ class Bot:
 
     Parameters
     ----------
-    intents : :class:`IntentFlags <mizuki.flags.IntentFlags>`
+    intents : :class:`~mizuki.IntentFlags`
         The IntentFlags to be passed to the GatewayClient.
 
-    cache_settings : :class:`CacheSettings <mizuki.cache.CacheSettings>`, optional
+    cache_settings : :class:`~mizuki.CacheSettings`, optional
         The CacheSettings for managing the Cache System of the Bot instance. Defaults to ``CacheSettings()``
     """
 
     intents: IntentFlags
-    "The IntentFlags to be passed to the :class:`GatewayClient <mizuki.gateway.GatewayClient>`."
+    "The intents to be passed to the Discord gateway."
 
     http: HTTPClient
     "The HTTPClient used for the REST API."
@@ -196,12 +196,12 @@ class Bot:
     def listen(self, event: Event | None = None) -> CoroDecorator:
         """Registers an asynchronous listener for a gateway event.
 
-        This function is a decorator.
+        This method is a decorator.
 
         Parameters
         ----------
-        event : :class:`Event <mizuki.enums.event_dispatch.Event>` | :class:`None`, optional
-            The Gateway Event to listen to. Defaults to name of function in format such as ``on_interaction_create``. Defaults to ``None``
+        event : :class:`~mizuki.Event` | :obj:`None`, optional
+            The Gateway Event to listen to. Defaults to name of function in format such as ``on_interaction_create``. Defaults to :obj:`None`.
 
         Raises
         ------
@@ -246,7 +246,9 @@ class Bot:
 
         This decorator should be applied to a method with the following signature:
 
-            `async () -> Any`
+        .. code-block:: python
+
+            async () -> Any
 
         Raises
         ------
@@ -275,14 +277,14 @@ class Bot:
         .. note::
 
             This does not sync your commands to Discord!
-            Use :method:`CommandManager.sync_all() <mizuki.managers.command.CommandManager.sync_all>` to sync all registered commands.
+            Use :meth:`CommandManager.sync_all() <mizuki.managers.command.CommandManager.sync_all>` to sync all registered commands.
 
         Parameters
         ----------
-        command : :class:`PartialApplicationCommand <mizuki.objects.command.PartialApplicationCommand>` | :class:`PartialApplicationCommandGroup <mizuki.objects.command.PartialApplicationCommandGroup>`
+        command : :class:`~mizuki.PartialApplicationCommand` | :class:`~mizuki.PartialApplicationCommandGroup`
             The command/group to register.
 
-        guild_id : :class:`int` | :class:`None`, optional
+        guild_id : :class:`int` | :obj:`None`, optional
             The guild ID to register the command
         """
         self._commands_data[command.name] = guild_id or 0, command
@@ -362,47 +364,51 @@ class Bot:
         nsfw: bool = False,
         autocompletor: AutocompletorCallback = _MISSING,
     ) -> Callable[[CoroFunc], PartialApplicationCommand]:
-        """Creates an applciation command object and registers the function the decorator is applied on as the callback for the command.
+        """Creates an application command object and registers the function the decorator is applied on as the callback for the command.
 
-        This decorator transforms the function into a :class:`PartialApplicationCommand <mizuki.objects.command.PartialApplicationCommand>` object.
+        This method is a decorator.
+
+        This decorator transforms the function into a :class:`~mizuki.PartialApplicationCommand` object.
 
         This decorator should be applied to a method with the following signature:
 
-            `async (Interaction[ApplicationCommandData], ...) -> Any`
+        .. code-block:: python
+
+            async (Interaction[ApplicationCommandData], ...) -> Any
 
         Parameters
         ----------
-        type : :class:`ApplicationCommandType <mizuki.enums.command.ApplicationCommandType>`, optional
+        type : :class:`~mizuki.ApplicationCommandType`, optional
             The type of the command to create.
 
-        guild_id : :class:`int` | :class:`None`, optional
+        guild_id : :class:`int` | :obj:`None`, optional
             The ID of the guild if registering the command to be guild-specific.
 
         name : :class:`str`
             The name of the application command.
 
-        name_localizations : :class:`Localization <mizuki.objects.command.Localization>`, optional
+        name_localizations : :class:`~mizuki.Localization`, optional
             The localizations for the name of the application command.
 
         description : :class:`str`, optional
             The description of the application command.
 
-        description_localizations : :class:`Localization <mizuki.objects.command.Localization>`, optional
+        description_localizations : :class:`~mizuki.Localization`, optional
             The localizations for the description of the application command.
 
-        default_member_permisssions: :class:`Permissions <mizuki.objects.permissions.Permissions>`, optional
+        default_member_permisssions: :class:`~mizuki.Permissions`, optional
             The default permissions that are required to use this command.
 
-        integration_types : list[:class:`ApplicationIntegrationType <mizuki.enums.interaction.ApplicationIntegrationType>`], optional
+        integration_types : list[:class:`~mizuki.ApplicationIntegrationType`], optional
             The installation contexts where this command is available, only allowed for globally-scoped commands.
 
-        contexts : list[:class:`InteractionContextType <mizuki.enums.interaction.InteractionContextType>`], optional
+        contexts : list[:class:`~mizuki.InteractionContextType`], optional
             The interaction contexts where this command can be used, only allowed for globally-scoped commands.
 
         nsfw : :class:`bool`, optional
             Whether this command is age-restricted.
 
-        autocompletor : `async (Interaction[ApplicationCommandData], dict[str, ApplicationCommandDataOption]) -> Any`, optional
+        autocompletor : ``async (Interaction[ApplicationCommandData], dict[str, ApplicationCommandDataOption]) -> Any``, optional
             The autocompletor callback for the command.
 
         Raises
@@ -496,28 +502,28 @@ class Bot:
 
         Parameters
         ----------
-        guild_id : :class:`int` | :class:`None`, optional
+        guild_id : :class:`int` | :obj:`None`, optional
             The ID of the guild if registering the command to be guild-specific.
 
         name : :class:`str`
             The name of the application command.
 
-        name_localizations : :class:`Localization <mizuki.objects.command.Localization>`, optional
+        name_localizations : :class:`~mizuki.Localization`, optional
             The localizations for the name of the application command.
 
         description : :class:`str`, optional
             The description of the application command.
 
-        description_localizations : :class:`Localization <mizuki.objects.command.Localization>`, optional
+        description_localizations : :class:`~mizuki.Localization`, optional
             The localizations for the description of the application command.
 
-        default_member_permisssions: :class:`Permissions <mizuki.objects.permissions.Permissions>`, optional
+        default_member_permisssions: :class:`~mizuki.Permissions`, optional
             The default permissions that are required to use this command.
 
-        integration_types : list[:class:`ApplicationIntegrationType <mizuki.enums.interaction.ApplicationIntegrationType>`], optional
+        integration_types : list[:class:`~mizuki.ApplicationIntegrationType`], optional
             The installation contexts where this command is available, only allowed for globally-scoped commands.
 
-        contexts : list[:class:`InteractionContextType <mizuki.enums.interaction.InteractionContextType>`], optional
+        contexts : list[:class:`~mizuki.InteractionContextType`], optional
             The interaction contexts where this command can be used, only allowed for globally-scoped commands.
 
         nsfw : :class:`bool`, optional
