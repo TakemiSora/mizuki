@@ -1,4 +1,4 @@
-from typing import Self
+from __future__ import annotations
 
 from mizuki.enums.sticker import StickerFormatType
 
@@ -13,7 +13,7 @@ class Asset:
     ----------
     url : :class:`str`
         The URL of the Asset.
-        
+
     animated : :class:`bool`
         Represents if an Asset is animated.
     """
@@ -26,10 +26,9 @@ class Asset:
 
     __slots__ = ("animated", "url")
 
-    CDN_URL = "https://cdn.discordapp.com"
-    "The base CDN URL."
+    _CDN_URL = "https://cdn.discordapp.com"
 
-    def __init__(self, url: str, animated: bool):
+    def __init__(self, url: str, animated: bool) -> None:
         self.url = url
         self.animated = animated
 
@@ -37,115 +36,116 @@ class Asset:
         return self.url
 
     @classmethod
-    def _from_user_avatar(cls, user_id: int, avatar_hash: str | None) -> Self | None:
+    def _from_user_avatar(cls, user_id: int, avatar_hash: str | None) -> Asset | None:
         if avatar_hash is not None:
             is_animated = avatar_hash.startswith("a_")
             return cls(
-                f"{cls.CDN_URL}/avatars/{user_id}/{avatar_hash}.webp{'?animated=true' if is_animated else ''}",
+                f"{cls._CDN_URL}/avatars/{user_id}/{avatar_hash}.webp{'?animated=true' if is_animated else ''}",
                 is_animated,
             )
         return None
 
     @classmethod
-    def _from_user_banner(cls, user_id: int, banner_hash: str | None) -> Self | None:
+    def _from_user_banner(cls, user_id: int, banner_hash: str | None) -> Asset | None:
         if banner_hash is not None:
             is_animated = banner_hash.startswith("a_")
             return cls(
-                f"{cls.CDN_URL}/banners/{user_id}/{banner_hash}.webp{'?animated=true' if is_animated else ''}",
+                f"{cls._CDN_URL}/banners/{user_id}/{banner_hash}.webp{'?animated=true' if is_animated else ''}",
                 is_animated,
             )
         return None
 
     @classmethod
-    def _from_user_avatar_decoration(cls, avatar_decoration_hash: str) -> Self:
+    def _from_user_avatar_decoration(cls, avatar_decoration_hash: str) -> Asset:
         is_animated = avatar_decoration_hash.startswith("a_")
         return cls(
-            f"{cls.CDN_URL}/avatar-decoration-presets/{avatar_decoration_hash}.png",
+            f"{cls._CDN_URL}/avatar-decoration-presets/{avatar_decoration_hash}.png",
             is_animated,
         )
 
     @classmethod
-    def _from_collectibles_nameplate(cls, nameplate_asset: str) -> Self:
+    def _from_collectibles_nameplate(cls, nameplate_asset: str) -> Asset:
         return cls(
-            f"{cls.CDN_URL}/assets/collectibles/{nameplate_asset}asset.webm", True
+            f"{cls._CDN_URL}/assets/collectibles/{nameplate_asset}asset.webm", True
         )
 
     @classmethod
-    def _from_guild_avatar(cls, guild_id: int, avatar_hash: str | None) -> Self | None:
+    def _from_guild_avatar(cls, guild_id: int, avatar_hash: str | None) -> Asset | None:
         if avatar_hash is not None:
             is_animated = avatar_hash.startswith("a_")
             return cls(
-                f"{cls.CDN_URL}/icons/{guild_id}/{avatar_hash}.webp{'?animated=true' if is_animated else ''}",
+                f"{cls._CDN_URL}/icons/{guild_id}/{avatar_hash}.webp{'?animated=true' if is_animated else ''}",
                 is_animated,
             )
         return None
 
     @classmethod
-    def _from_guild_splash(cls, guild_id: int, splash_hash: str | None) -> Self | None:
+    def _from_guild_splash(cls, guild_id: int, splash_hash: str | None) -> Asset | None:
         if splash_hash is not None:
-            return cls(f"{cls.CDN_URL}/splashes/{guild_id}/{splash_hash}.webp", False)
+            return cls(f"{cls._CDN_URL}/splashes/{guild_id}/{splash_hash}.webp", False)
         return None
 
     @classmethod
     def _from_guild_discovery_splash(
         cls, guild_id: int, splash_hash: str | None
-    ) -> Self | None:
+    ) -> Asset | None:
         if splash_hash is not None:
             return cls(
-                f"{cls.CDN_URL}/discovery-splashes/{guild_id}/{splash_hash}.webp", False
+                f"{cls._CDN_URL}/discovery-splashes/{guild_id}/{splash_hash}.webp",
+                False,
             )
         return None
 
     @classmethod
     def _from_guild_tag_badge(
         cls, guild_id: int | None, badge_hash: str | None
-    ) -> Self | None:
+    ) -> Asset | None:
         if guild_id is not None and badge_hash is not None:
             return cls(
-                f"{cls.CDN_URL}/guild-tag-badges/{guild_id}/{badge_hash}.webp", False
+                f"{cls._CDN_URL}/guild-tag-badges/{guild_id}/{badge_hash}.webp", False
             )
         return None
 
     @classmethod
-    def _from_role_icon(cls, role_id: int, role_hash: str | None) -> Self | None:
+    def _from_role_icon(cls, role_id: int, role_hash: str | None) -> Asset | None:
         if role_hash is not None:
-            return cls(f"{cls.CDN_URL}/role-icons/{role_id}/{role_hash}.webp", False)
+            return cls(f"{cls._CDN_URL}/role-icons/{role_id}/{role_hash}.webp", False)
         return None
 
     @classmethod
-    def _from_custom_emoji(cls, emoji_id: int | None, is_animated: bool) -> Self | None:
+    def _from_custom_emoji(cls, emoji_id: int | None, is_animated: bool) -> Asset | None:
         if emoji_id is not None:
             return cls(
-                f"{cls.CDN_URL}/emojis/{emoji_id}.webp{'?animated=true' if is_animated else ''}",
+                f"{cls._CDN_URL}/emojis/{emoji_id}.webp{'?animated=true' if is_animated else ''}",
                 is_animated,
             )
         return None
 
     @classmethod
-    def _from_guild_banner(cls, guild_id: int, banner_hash: str | None) -> Self | None:
+    def _from_guild_banner(cls, guild_id: int, banner_hash: str | None) -> Asset | None:
         if banner_hash is not None:
             is_animated = banner_hash.startswith("a_")
             return cls(
-                f"{cls.CDN_URL}/guilds/{guild_id}/{banner_hash}.webp{'?animated=true' if is_animated else ''}",
+                f"{cls._CDN_URL}/guilds/{guild_id}/{banner_hash}.webp{'?animated=true' if is_animated else ''}",
                 is_animated,
             )
         return None
 
     @classmethod
-    def _from_sticker(cls, sticker_type: StickerFormatType, sticker_id: int) -> Self:
+    def _from_sticker(cls, sticker_type: StickerFormatType, sticker_id: int) -> Asset:
         is_animated = sticker_type != StickerFormatType.PNG
         return cls(
-            f"{cls.CDN_URL}/stickers/{sticker_id}.{sticker_type!s}", is_animated
+            f"{cls._CDN_URL}/stickers/{sticker_id}.{sticker_type!s}", is_animated
         )
 
     @classmethod
     def _from_member_avatar(
         cls, guild_id: int, member_id: int | None, member_avatar_hash: str | None
-    ) -> Self | None:
+    ) -> Asset | None:
         if member_id is not None and member_avatar_hash is not None:
             is_animated = member_avatar_hash.startswith("a_")
             return cls(
-                f"{cls.CDN_URL}/guilds/{guild_id}/users/{member_id}/avatars/{member_avatar_hash}.webp{'?animated=true' if is_animated else ''}",
+                f"{cls._CDN_URL}/guilds/{guild_id}/users/{member_id}/avatars/{member_avatar_hash}.webp{'?animated=true' if is_animated else ''}",
                 is_animated,
             )
         return None
@@ -153,11 +153,11 @@ class Asset:
     @classmethod
     def _from_member_banner(
         cls, guild_id: int, member_id: int | None, member_banner_hash: str | None
-    ) -> Self | None:
+    ) -> Asset | None:
         if member_id is not None and member_banner_hash is not None:
             is_animated = member_banner_hash.startswith("a_")
             return cls(
-                f"{cls.CDN_URL}/guilds/{guild_id}/users/{member_id}/banners/{member_banner_hash}.webp{'?animated=true' if is_animated else ''}",
+                f"{cls._CDN_URL}/guilds/{guild_id}/users/{member_id}/banners/{member_banner_hash}.webp{'?animated=true' if is_animated else ''}",
                 is_animated,
             )
         return None
@@ -165,25 +165,27 @@ class Asset:
     @classmethod
     def _from_application_asset(
         cls, application_id: int | None, asset_hash: str | None
-    ) -> Self | None:
+    ) -> Asset | None:
         if application_id is not None and asset_hash is not None:
-            return cls(f"{cls.CDN_URL}/app-assets/{application_id}/{asset_hash}", False)
+            return cls(
+                f"{cls._CDN_URL}/app-assets/{application_id}/{asset_hash}", False
+            )
         return None
 
     @classmethod
     def _from_guild_scheduled_event_cover(
         cls, event_id: int, cover_hash: str | None
-    ) -> Self | None:
+    ) -> Asset | None:
         if cover_hash is not None:
             return cls(
-                f"{cls.CDN_URL}/guild-events/{event_id}/{cover_hash}.webp", False
+                f"{cls._CDN_URL}/guild-events/{event_id}/{cover_hash}.webp", False
             )
         return None
 
 
 class MediaProxyAsset:
     """
-    Represents a discord MediaProxyAsset.
+    Represents a proxied Asset.
 
     Parameters
     ----------
@@ -196,16 +198,15 @@ class MediaProxyAsset:
 
     __slots__ = ("url",)
 
-    MEDIA_URL = "https://media.discordapp.net"
-    "The base URL."
+    _MEDIA_URL = "https://media.discordapp.net"
 
-    def __init__(self, url: str):
+    def __init__(self, url: str) -> None:
         self.url = url
 
     @classmethod
-    def _from_image_id(cls, image_id: str | None) -> Self | None:
+    def _from_image_id(cls, image_id: str | None) -> MediaProxyAsset | None:
         if image_id is not None:
-            return cls(f"{cls.MEDIA_URL}/{image_id}")
+            return cls(f"{cls._MEDIA_URL}/{image_id}")
         return None
 
 
