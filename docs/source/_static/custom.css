@@ -66,7 +66,7 @@
 }
 
 .py-attribute-table-column li a:hover {
-    color: var(-nftt-link-color);
+    color: var(--nftt-link-color);
     text-decoration: underline;
 }
 
@@ -542,4 +542,25 @@ html.dark dl.py.class > dd > dl.py > dt.sig {
     border-bottom: none;
     padding-bottom: 0;
   }
+}
+
+dl.py.attribute.norm-text {
+  margin: 0;
+  padding: 0;
+}
+
+dl.py.attribute.norm-text > dt.sig,
+dl.py.attribute.norm-text > dt.sig:hover {
+  all: unset !important;
+  display: inline !important;
+  font-family: var(--pst-font-family-monospace, monospace);
+  font-size: 0.85rem;
+  color: var(--gray-12);
+}
+
+dl.py.attribute.norm-text > dt.sig + dd {
+  all: unset !important;
+  display: block;
+  margin-left: 1rem;
+  font-size: 0.92rem;
 }

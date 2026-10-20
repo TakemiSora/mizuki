@@ -32,7 +32,12 @@ class EnumDocumenter(ClassDocumenter):
 
         for name, member in members:
             add_lines(
-                self, f"   * - {name}", f"     - {member.value}", source=source_name
+                self,
+                "   * - .. rst-class:: norm-text",
+                "",
+                f"       .. py:attribute:: {name}",
+                f"     - {member.value}",
+                source=source_name,
             )
 
         self.add_line("", source_name)

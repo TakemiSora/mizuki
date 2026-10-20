@@ -237,7 +237,7 @@ class ChannelManager(BaseManager):
             The flags for the channel.
 
         available_tags : list[:class:`~mizuki.PartialForumTag`]
-            The set of tags that can be used in a :attr:`mizuki.ChannelType.GUILD_FORUM` and :attr:`~mizuki.ChannelType.GUILD_MEDIA` channel. Max 20.
+            The set of tags that can be used in a :attr:`~mizuki.ChannelType.GUILD_FORUM` and :attr:`~mizuki.ChannelType.GUILD_MEDIA` channel. Max 20.
 
         default_reaction_emoji : :class:`~mizuki.DefaultReaction`
             The default emoji reaction shown in the add reaction button on threads.

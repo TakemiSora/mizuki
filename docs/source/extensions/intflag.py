@@ -34,7 +34,9 @@ class IntFlagDocumenter(ClassDocumenter):
         for name, member in members:
             add_lines(
                 self,
-                f"   * - {name}",
+                "   * - .. rst-class:: norm-text",
+                "",
+                f"       .. py:attribute:: {name}",
                 f"     - {member.value.bit_length() - 1}",
                 source=source_name,
             )

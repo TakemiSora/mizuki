@@ -748,7 +748,7 @@ class ThreadChannel(BasePublicChannel):
     ) -> ThreadChannel:
         """Modifies a thread.
 
-        Requires the :attr:`~mizuki.Permissions.MANAGE_THREADS`.
+        Requires the :attr:`~mizuki.Permissions.MANAGE_THREADS` permission.
 
         .. note::
 
@@ -807,7 +807,7 @@ class ThreadChannel(BasePublicChannel):
     async def delete(self) -> None:
         """Deletes a thread.
 
-        Requires the :attr:`~mizuki.Permissions.MANAGE_THREADS`
+        Requires the :attr:`~mizuki.Permissions.MANAGE_THREADS` permission.
 
         Raises
         ------
